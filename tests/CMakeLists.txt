@@ -1,0 +1,43 @@
+# Unit bodies are shared by the standalone runner and the optional --self-test command.
+add_library(church-deck-test-cases STATIC
+    unit/ModelChecks.cpp unit/ModelChecks.h
+    unit/ContentLibraryTests.cpp
+    unit/EditorDocumentTests.cpp
+    unit/MediaLibraryTests.cpp
+    unit/OutputManagerTests.cpp
+    unit/NdiWorkerTests.cpp
+    unit/SlideFactoryTests.cpp
+    unit/ProgramStoreTests.cpp
+    unit/TemplateStoreTests.cpp
+    unit/RemoteControllerTests.cpp
+)
+target_include_directories(church-deck-test-cases PUBLIC unit)
+target_link_libraries(church-deck-test-cases PUBLIC church-deck-core)
+
+if(BUILD_TESTING)
+    qt_add_executable(church-deck-tests unit/main.cpp)
+    target_link_libraries(church-deck-tests PRIVATE church-deck-test-cases)
+    qt_add_resources(church-deck-tests test-fixtures
+        PREFIX "/qt/qml/ChurchDeck"
+        BASE "${PROJECT_SOURCE_DIR}"
+        FILES
+            "${PROJECT_SOURCE_DIR}/assets/scriptures/content-seed.sqlite"
+            "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansTelugu.ttf"
+            "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansDevanagari.ttf"
+    )
+    qt_add_resources(church-deck-tests remote-test-assets PREFIX "/remote" BASE "${PROJECT_SOURCE_DIR}/remote" FILES "${PROJECT_SOURCE_DIR}/remote/index.html" "${PROJECT_SOURCE_DIR}/remote/style.css" "${PROJECT_SOURCE_DIR}/remote/app.js")
+    add_test(NAME model-checks COMMAND church-deck-tests)
+endif()
+
+if(CHURCHDECK_ENABLE_DIAGNOSTICS)
+    add_library(church-deck-diagnostics STATIC
+        smoke/DiagnosticRunner.cpp smoke/DiagnosticRunner.h
+        smoke/ContentChecks.cpp smoke/RoutingChecks.cpp smoke/MediaChecks.cpp
+        smoke/ProgramChecks.cpp smoke/ProgramChecks.h
+        smoke/TemplateChecks.cpp smoke/TemplateChecks.h
+        smoke/PrototypeChecks.cpp smoke/PrototypeChecks.h
+        smoke/RemoteChecks.cpp smoke/RemoteChecks.h
+    )
+    target_include_directories(church-deck-diagnostics PUBLIC smoke)
+    target_link_libraries(church-deck-diagnostics PUBLIC church-deck-test-cases)
+endif()

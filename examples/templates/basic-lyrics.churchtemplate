@@ -1,0 +1,33 @@
+{
+  "format": "churchdeck-template-1",
+  "template": {
+    "name": "Simple centered lyrics",
+    "kind": "song",
+    "slide": {
+      "name": "Template",
+      "background": "#172D3F",
+      "ambientOpacity": 0.0,
+      "notes": "",
+      "elements": [
+        {
+          "kind": "text",
+          "name": "Primary lyrics",
+          "text": "Primary lyrics appear here",
+          "binding": "Primary lyrics",
+          "x": 160,
+          "y": 240,
+          "width": 1600,
+          "height": 600,
+          "fontSize": 88,
+          "fontFamily": "Arial",
+          "color": "#FFFFFF",
+          "opacity": 1.0,
+          "rotation": 0,
+          "visible": true,
+          "locked": false,
+          "alignment": "center"
+        }
+      ]
+    }
+  }
+}

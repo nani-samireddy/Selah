@@ -1,0 +1,56 @@
+{
+  "format": "churchdeck-song-1",
+  "song": {
+    "id": "sample-hindi-your-peace",
+    "title": "तेरी शान्ति में — In Your Peace",
+    "primaryLanguage": "हिन्दी",
+    "secondaryLanguage": "",
+    "sections": [
+      {
+        "key": "v1",
+        "label": "Verse 1",
+        "primary": "प्रभु हम तेरे पास आए\nअपने मन को खोलकर\nतेरी दया को याद करें\nधन्यवाद के गीत गाकर",
+        "secondary": ""
+      },
+      {
+        "key": "c1",
+        "label": "Chorus",
+        "primary": "तेरी शान्ति में चलें हम\nतेरे प्रेम में रहें हम\nहर सुबह नई आशा लेकर\nतेरा नाम गाएँ हम",
+        "secondary": ""
+      },
+      {
+        "key": "v2",
+        "label": "Verse 2",
+        "primary": "थके हुए को बल तू देना\nटूटे मन को जोड़ना\nसेवा करना हमें सिखाना\nसत्य की राह दिखाना",
+        "secondary": ""
+      }
+    ],
+    "arrangement": [
+      "v1",
+      "c1",
+      "v2",
+      "c1"
+    ],
+    "credits": "Church Deck · Original demo lyrics · CC0",
+    "tags": "sample test worship",
+    "activeArrangement": 0,
+    "arrangements": [
+      {
+        "name": "Full service",
+        "order": [
+          "v1",
+          "c1",
+          "v2",
+          "c1"
+        ]
+      },
+      {
+        "name": "Chorus only",
+        "order": [
+          "c1",
+          "c1"
+        ]
+      }
+    ]
+  }
+}

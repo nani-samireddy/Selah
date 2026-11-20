@@ -1,0 +1,8 @@
+{
+  "upstream": "https://github.com/nayuki/QR-Code-generator",
+  "commit": "9a217d443937f60cc56c1458c39a211d7f2d3af5",
+  "files": {
+    "qrcodegen.cpp": "8948b57053deb5d132bfc675ca2688b7abef9f03ec633c0de59770c945a66fc9",
+    "qrcodegen.hpp": "675b7c4f8e849b8bcd2b0bc9113c007d9917357d44d42fb7bf52ea563ca39c3c"
+  }
+}

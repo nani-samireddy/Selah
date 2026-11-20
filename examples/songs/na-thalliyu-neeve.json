@@ -1,0 +1,67 @@
+{
+  "format": "churchdeck-song-1",
+  "song": {
+    "id": "song-na-thalliyu-neeve",
+    "title": "నా తల్లియు నీవే",
+    "primaryLanguage": "తెలుగు",
+    "secondaryLanguage": "",
+    "credits": "",
+    "tags": "Telugu user supplied",
+    "sections": [
+      {
+        "key": "c1",
+        "label": "పల్లవి",
+        "primary": "నా తల్లియు నీవే\nనా తండ్రియు నీవే\nనా తల్లి తండ్రి నీవే యేసయ్యా (2)",
+        "secondary": ""
+      },
+      {
+        "key": "v1",
+        "label": "చరణం 1",
+        "primary": "లోకము నన్ను విడచినా\nనీవు నన్ను విడువనంటివే (2)\nనా బంధువు నీవే\nనా మిత్రుడ నీవే\nనా బంధు మిత్రుడ నీవే యేసయ్యా (2)",
+        "secondary": ""
+      },
+      {
+        "key": "v2",
+        "label": "చరణం 2",
+        "primary": "వ్యాధులు నన్ను చుట్టినా\nబాధలు నన్ను ముట్టినా (2)\nనా కొండయు నీవే\nనా కోటయు నీవే\nనా కొండ కోట నీవే యేసయ్యా (2)",
+        "secondary": ""
+      },
+      {
+        "key": "v3",
+        "label": "చరణం 3",
+        "primary": "నేను నిన్ను నమ్ముకొంటిని\nనీవు నన్ను విడువనంటివే (2)\nనా తోడుయు నీవే\nనా నీడయు నీవే\nనా తోడు నీడ నీవే యేసయ్యా (2) ||అందరు నన్ను||",
+        "secondary": ""
+      }
+    ],
+    "arrangement": [
+      "c1",
+      "v1",
+      "v2",
+      "v3"
+    ],
+    "arrangements": [
+      {
+        "name": "As supplied",
+        "order": [
+          "c1",
+          "v1",
+          "v2",
+          "v3"
+        ]
+      },
+      {
+        "name": "Chorus between verses",
+        "order": [
+          "c1",
+          "v1",
+          "c1",
+          "v2",
+          "c1",
+          "v3",
+          "c1"
+        ]
+      }
+    ],
+    "activeArrangement": 0
+  }
+}

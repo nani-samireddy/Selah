@@ -1,0 +1,56 @@
+{
+  "format": "churchdeck-song-1",
+  "song": {
+    "id": "sample-gather-in-your-light",
+    "title": "Gather in Your Light",
+    "primaryLanguage": "English",
+    "secondaryLanguage": "",
+    "sections": [
+      {
+        "key": "v1",
+        "label": "Verse 1",
+        "primary": "We come with open hands today\nWe leave our hurried thoughts behind\nYour kindness meets us on the way\nYour welcome gives our hearts a home",
+        "secondary": ""
+      },
+      {
+        "key": "c1",
+        "label": "Chorus",
+        "primary": "We gather in Your light\nWe lift one song of praise\nTogether in Your love\nWe walk in hope and grace",
+        "secondary": ""
+      },
+      {
+        "key": "v2",
+        "label": "Verse 2",
+        "primary": "Be near to every weary heart\nGive strength to those who feel alone\nTeach us to serve with willing hands\nAnd make Your mercy daily known",
+        "secondary": ""
+      }
+    ],
+    "arrangement": [
+      "v1",
+      "c1",
+      "v2",
+      "c1"
+    ],
+    "credits": "Church Deck · Original demo lyrics · CC0",
+    "tags": "sample test worship",
+    "activeArrangement": 0,
+    "arrangements": [
+      {
+        "name": "Full service",
+        "order": [
+          "v1",
+          "c1",
+          "v2",
+          "c1"
+        ]
+      },
+      {
+        "name": "Chorus only",
+        "order": [
+          "c1",
+          "c1"
+        ]
+      }
+    ]
+  }
+}

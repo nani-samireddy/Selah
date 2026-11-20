@@ -1,0 +1,56 @@
+{
+  "format": "churchdeck-song-1",
+  "song": {
+    "id": "sample-telugu-your-light",
+    "title": "నీ వెలుగులో — In Your Light",
+    "primaryLanguage": "తెలుగు",
+    "secondaryLanguage": "",
+    "sections": [
+      {
+        "key": "v1",
+        "label": "Verse 1",
+        "primary": "ప్రభువా నీ సన్నిధిలో\nమేమంతా చేరితిమి\nనీ ప్రేమను తలచుకొని\nకృతజ్ఞతతో పాడెదము",
+        "secondary": ""
+      },
+      {
+        "key": "c1",
+        "label": "Chorus",
+        "primary": "నీ వెలుగులో నడిచెదము\nనీ ప్రేమలో నిలిచెదము\nమా హృదయాలు నీకే అర్పణ\nమా జీవితాలు నీకే స్తోత్రం",
+        "secondary": ""
+      },
+      {
+        "key": "b1",
+        "label": "Bridge",
+        "primary": "బలహీనులకు బలమివ్వు\nఅలసిన వారికి విశ్రాంతినివ్వు\nప్రతి అడుగులో తోడుగా ఉండు\nశాంతి మార్గంలో మమ్ము నడిపించు",
+        "secondary": ""
+      }
+    ],
+    "arrangement": [
+      "v1",
+      "c1",
+      "b1",
+      "c1"
+    ],
+    "credits": "Church Deck · Original demo lyrics · CC0",
+    "tags": "sample test worship",
+    "activeArrangement": 0,
+    "arrangements": [
+      {
+        "name": "Full service",
+        "order": [
+          "v1",
+          "c1",
+          "b1",
+          "c1"
+        ]
+      },
+      {
+        "name": "Chorus only",
+        "order": [
+          "c1",
+          "c1"
+        ]
+      }
+    ]
+  }
+}

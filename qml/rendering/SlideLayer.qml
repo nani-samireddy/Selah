@@ -1,0 +1,77 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+
+Item {
+    id: visualLayer
+
+    property var layerData: ({})
+    property bool playing: false
+    property bool audible: false
+    property bool videoEnabled: true
+    property bool showErrors: true
+    property bool suppressed: false
+    readonly property string instanceToken: Math.random().toString(36).slice(2)
+    readonly property var loadedContent: content.item
+    readonly property real playbackPosition: loadedContent && layerData.kind === "video"
+                                             ? loadedContent.playbackPosition : 0
+    readonly property int decodedFrames: loadedContent && layerData.kind === "video"
+                                         ? loadedContent.decodedFrames : 0
+    readonly property string mediaError: loadedContent && layerData.kind !== "text"
+                                         ? loadedContent.problem : ""
+
+    signal mediaProblem(string message)
+
+    x: layerData.x || 0
+    y: layerData.y || 0
+    width: layerData.width || 100
+    height: layerData.height || 100
+    rotation: layerData.rotation || 0
+    visible: layerData.visible !== false
+    opacity: suppressed ? 0 : (layerData.opacity === undefined ? 1 : layerData.opacity)
+
+    Loader {
+        id: content
+
+        anchors.fill: parent
+        sourceComponent: visualLayer.layerData.kind === "image" || visualLayer.layerData.kind
+                         === "video" ? media : text
+    }
+
+    Component {
+        id: text
+
+        TextEdit {
+            objectName: "slide-text-" + visualLayer.layerData.uid
+            textFormat: TextEdit.PlainText
+            text: visualLayer.layerData.text || ""
+            color: visualLayer.layerData.color || "#FFFFFF"
+            font.family: visualLayer.layerData.fontFamily || "Arial"
+            font.pixelSize: visualLayer.layerData.fontSize || 36
+            readOnly: true
+            activeFocusOnPress: false
+            selectByMouse: false
+            wrapMode: TextEdit.Wrap
+            clip: true
+            horizontalAlignment: visualLayer.layerData.alignment === "center"
+                                 ? TextEdit.AlignHCenter : visualLayer.layerData.alignment
+                                   === "right" ? TextEdit.AlignRight : TextEdit.AlignLeft
+        }
+    }
+
+    Component {
+        id: media
+
+        MediaLayer {
+            sourceUrl: visualLayer.layerData.source || ""
+            kind: visualLayer.layerData.kind
+            fit: visualLayer.layerData.fit || "contain"
+            playing: visualLayer.playing && visualLayer.visible
+            audible: visualLayer.audible && !visualLayer.layerData.muted
+            looping: visualLayer.layerData.loop !== false
+            videoEnabled: visualLayer.videoEnabled
+            showErrors: visualLayer.showErrors
+
+            onMediaProblem: message => visualLayer.mediaProblem(message)
+        }
+    }
+}

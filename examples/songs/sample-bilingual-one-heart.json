@@ -1,0 +1,56 @@
+{
+  "format": "churchdeck-song-1",
+  "song": {
+    "id": "sample-bilingual-one-heart",
+    "title": "One Heart / ఒకే హృదయం",
+    "primaryLanguage": "English",
+    "secondaryLanguage": "తెలుగు",
+    "sections": [
+      {
+        "key": "v1",
+        "label": "Verse 1",
+        "primary": "We gather here with grateful hearts\nWe bring our thanks to You\nYour mercy greets the morning light\nYour love will lead us through",
+        "secondary": "కృతజ్ఞత గల హృదయాలతో కూడుదము\nమా కృతజ్ఞతలు నీకు అర్పింతుము\nప్రభాత వెలుగులో నీ కరుణ కనిపించును\nనీ ప్రేమ మమ్మును నడిపించును"
+      },
+      {
+        "key": "c1",
+        "label": "Chorus",
+        "primary": "One heart, one song\nTogether we belong\nOne hope, one prayer\nYour love is everywhere",
+        "secondary": "ఒకే హృదయం, ఒకే గానం\nమనమంతా ఒకే కుటుంబం\nఒకే ఆశ, ఒకే ప్రార్థన\nనీ ప్రేమ అంతటా ఉన్నది"
+      },
+      {
+        "key": "b1",
+        "label": "Bridge",
+        "primary": "Let our hands become a welcome\nLet our words bring gentle peace\n\nLet our doors be open always\nLet our care for others grow",
+        "secondary": "మా చేతులు స్వాగతం పలుకును గాక\nమా మాటలు శాంతిని పంచును గాక\n\nమా తలుపులు ఎల్లప్పుడూ తెరిచి ఉండును గాక\nఇతరుల పట్ల మా ఆదరణ పెరుగును గాక"
+      }
+    ],
+    "arrangement": [
+      "v1",
+      "c1",
+      "b1",
+      "c1"
+    ],
+    "credits": "Church Deck · Original demo lyrics · CC0",
+    "tags": "sample test worship",
+    "activeArrangement": 0,
+    "arrangements": [
+      {
+        "name": "Full service",
+        "order": [
+          "v1",
+          "c1",
+          "b1",
+          "c1"
+        ]
+      },
+      {
+        "name": "Chorus only",
+        "order": [
+          "c1",
+          "c1"
+        ]
+      }
+    ]
+  }
+}

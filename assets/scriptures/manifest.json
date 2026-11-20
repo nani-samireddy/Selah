@@ -1,0 +1,20 @@
+[
+  {
+    "id": "engwebp",
+    "verses": 31103,
+    "sha256": "784e1c1b7036f693ad53cc42006493f6e07861f48b74963a621d6e0d39586d7a",
+    "source": "https://ebible.org/bible/details.php?id=engwebp"
+  },
+  {
+    "id": "tel2017",
+    "verses": 31004,
+    "sha256": "e5a31b4661bba8c5af66792921e665100468a3628edd6de95eeed070be4f7215",
+    "source": "https://ebible.org/bible/details.php?id=tel2017"
+  },
+  {
+    "id": "hin2017",
+    "verses": 31104,
+    "sha256": "c548cb67fc1a85bc3ae3a8c2ea148861737bafea79a1dbaba0defe5a218b5c78",
+    "source": "https://ebible.org/bible/details.php?id=hin2017"
+  }
+]
