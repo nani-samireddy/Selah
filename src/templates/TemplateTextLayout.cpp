@@ -1,4 +1,5 @@
 #include "TemplateTextLayout.h"
+#include "TextLayoutMetrics.h"
 #include <QFont>
 #include <QTextBoundaryFinder>
 #include <QTextLayout>
@@ -7,39 +8,12 @@ bool TemplateTextLayout::fits(const QString &text, const QVariantMap &box, int m
     if (text.isEmpty()) {
         return true;
     }
-    QFont font(box.value("fontFamily", "Arial").toString());
-    font.setPixelSize(box["fontSize"].toInt());
-    const double width = box["width"].toDouble() - 8;
+    const double width = qMax(1.0, box["width"].toDouble() - 8);
     const double availableHeight = box["height"].toDouble() - 8;
-    double height = 0;
-    int lines = 0;
-    for (const auto &paragraph : text.split('\n')) {
-        // An empty paragraph still consumes a rendered line.
-        QTextLayout layout(paragraph.isEmpty() ? QStringLiteral(" ") : paragraph, font);
-        QTextOption option;
-        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-        layout.setTextOption(option);
-        layout.beginLayout();
-        bool fit = true;
-        while (true) {
-            auto line = layout.createLine();
-            if (!line.isValid()) {
-                break;
-            }
-            line.setLineWidth(qMax(1.0, width));
-            height += line.height();
-            if (++lines > maximumLines || height > availableHeight
-                || line.naturalTextWidth() > width + 0.5) {
-                fit = false;
-                break;
-            }
-        }
-        layout.endLayout();
-        if (!fit) {
-            return false;
-        }
-    }
-    return true;
+    const auto layout = TextLayoutMetrics::measure(text, box, width);
+    const int displayLimit = box.value("maxLines", 0).toInt();
+    const int lines = displayLimit > 0 ? qMin(maximumLines, displayLimit) : maximumLines;
+    return layout.lines <= lines && layout.height <= availableHeight && layout.width <= width + 0.5;
 }
 
 bool TemplateTextLayout::fitsBinding(

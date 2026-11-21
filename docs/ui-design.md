@@ -2,6 +2,10 @@
 
 The user's references are the supplied Modfy editor video and https://toolcraft.sh/components. Preserve the video's canvas-first composition and Toolcraft's restrained control styling.
 
+## Navigation and workflow
+
+Programs, Libraries, Design and Present are persistent top-level workspaces. Programs is the starting point; primary workspaces occupy the body instead of stacking over the editor as modal dialogs. Keep the floating canvas composition inside Design. Outputs and Remote remain global settings, and content selection from Programs uses contextual pickers. Preparation selects drafts; explicit present actions publish snapshots. See the [workspace guide](features/workspaces.md).
+
 ## Surface and hierarchy
 
 - Fixed dark editor appearance in this prototype. Canvas background `#111111`, panels `#191919`, controls `#252525`, hairline borders `#343434` to `#414141`.
@@ -10,6 +14,10 @@ The user's references are the supplied Modfy editor video and https://toolcraft.
 - Panels have 9 px corners, fields 5 px, buttons 6 px, subtle shadows, and no decorative gradients. Artwork may use rich color.
 - Keep floating layers at the left, controls at the right, tools centered at the bottom, and a large canvas between them.
 - Keep editing properties compact: thin sliders, small handles, paired numeric fields, segmented alignment, restrained switches, and collapsible sections with reset controls.
+
+## Library controls
+
+Libraries use a shared Toolcraft-inspired component layer with bundled Inter typography, 32 px inputs, compact segmented tabs, single-chevron selects and consistent page/form insets. See the [library styling guide](features/library-ui.md). Slide typography and the floating editor remain independent.
 
 ## Type and assets
 

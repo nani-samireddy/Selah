@@ -13,19 +13,21 @@ ctest --test-dir build --output-on-failure
 
 ## Visual smoke checks
 
-The following macOS executable paths assume the development build. On Windows, use `build/church-deck.exe` instead. Create the capture folder before using standalone screenshot mode.
+The following macOS executable paths assume the development build. On Windows, use `build/Selah.exe` instead. Create the capture folder before using standalone screenshot mode.
 
 ```sh
 mkdir -p captures
-build/church-deck.app/Contents/MacOS/church-deck --fresh --screenshot "$PWD/captures/editor.png"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --compact --template-smoke "$PWD/captures/templates"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --content-smoke "$PWD/captures/content"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --program-smoke "$PWD/captures/program"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --compact --program-smoke "$PWD/captures/program-compact"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --routing-smoke "$PWD/captures/routing"
+build/Selah.app/Contents/MacOS/Selah --fresh --screenshot "$PWD/captures/editor.png"
+build/Selah.app/Contents/MacOS/Selah --fresh --compact --template-smoke "$PWD/captures/templates"
+build/Selah.app/Contents/MacOS/Selah --fresh --workspace-smoke "$PWD/captures/workspaces"
+build/Selah.app/Contents/MacOS/Selah --fresh --compact --workspace-smoke "$PWD/captures/workspaces-compact"
+build/Selah.app/Contents/MacOS/Selah --fresh --content-smoke "$PWD/captures/content"
+build/Selah.app/Contents/MacOS/Selah --fresh --program-smoke "$PWD/captures/program"
+build/Selah.app/Contents/MacOS/Selah --fresh --compact --program-smoke "$PWD/captures/program-compact"
+build/Selah.app/Contents/MacOS/Selah --fresh --routing-smoke "$PWD/captures/routing"
 ./scripts/check-media.sh
 ./scripts/check-ndi.sh
-build/church-deck.app/Contents/MacOS/church-deck --fresh --remote-demo "$PWD/captures/remote"
+build/Selah.app/Contents/MacOS/Selah --fresh --remote-demo "$PWD/captures/remote"
 ```
 
 The remote demo stays running for browser integration checks; close it when finished. It writes test-only pairing data and binds loopback, never a public interface. See the [remote guide](features/remote-control.md).
@@ -43,4 +45,4 @@ cmake --preset release -DCMAKE_PREFIX_PATH=/path/to/Qt
 cmake --build --preset release
 ```
 
-This build excludes model-test bodies and smoke commands. Verify this configuration after changing build boundaries. Packaging, signing and Windows deployment remain separate release work.
+This build excludes model-test bodies and smoke commands. Verify this configuration after changing build boundaries. For self-contained macOS packages, use `python3 scripts/package-macos.py`. The helper audits dependencies, verifies ad-hoc signatures, checks DMG integrity and records checksums. Developer ID notarization and Windows deployment remain separate release work.

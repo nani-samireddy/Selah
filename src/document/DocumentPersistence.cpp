@@ -116,7 +116,7 @@ bool EditorDocument::openProject(const QUrl &url) {
     const auto obj = QJsonDocument::fromJson(file.readAll()).object();
     auto old = snapshot();
     if (!restore(obj)) {
-        setStatus("This is not a valid Church Deck project");
+        setStatus("This is not a valid Selah project");
         return false;
     }
     for (const auto &slide : m_slides) {

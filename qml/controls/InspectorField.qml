@@ -7,27 +7,31 @@ Rectangle {
     property string caption: ""
     property string value: ""
     property bool numeric: true
+    readonly property string currentText: input.text
 
     signal committed(string value)
 
-    implicitHeight: 34
-    color: "#252525"
-    border.color: input.activeFocus ? "#888888" : "#383838"
+    implicitHeight: LibraryStyle.controlHeight
+    color: LibraryStyle.tone("#252525")
+    border.color: input.activeFocus ? LibraryStyle.tone("#888888") : LibraryStyle.tone("#383838")
     radius: 5
 
     Text {
+        renderType: Text.QtRendering
         x: 10
         anchors.verticalCenter: parent.verticalCenter
         text: field.caption
-        color: "#818181"
+        color: LibraryStyle.tone("#818181")
         font.pixelSize: 11
     }
 
     TextField {
         id: input
 
+        renderType: Text.QtRendering
         text: field.value
-        color: "#DDDDDD"
+        color: LibraryStyle.tone("#DDDDDD")
+        font.weight: Font.Normal
         font.pixelSize: 12
         selectByMouse: true
         horizontalAlignment: field.caption.length ? TextInput.AlignRight : TextInput.AlignLeft

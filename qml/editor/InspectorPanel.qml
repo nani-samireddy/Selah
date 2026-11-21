@@ -30,7 +30,7 @@ StudioPanel {
 
             Text {
                 text: "Properties"
-                color: "#E0E0E0"
+                color: LibraryStyle.tone("#E0E0E0")
                 font.pixelSize: 12
                 Layout.fillWidth: true
             }
@@ -38,7 +38,7 @@ StudioPanel {
             Text {
                 text: inspector.host.doc.selected < 0 ? "Canvas" : inspector.host.selectedValue(
                                                             "kind", "text") + " layer"
-                color: "#777777"
+                color: LibraryStyle.tone("#777777")
                 font.pixelSize: 10
             }
         }
@@ -146,7 +146,7 @@ StudioPanel {
 
                         Text {
                             text: "Rotation"
-                            color: "#929292"
+                            color: LibraryStyle.tone("#929292")
                             font.pixelSize: 11
                             Layout.fillWidth: true
                         }
@@ -166,7 +166,7 @@ StudioPanel {
 
                         Text {
                             text: "Snap to grid"
-                            color: "#929292"
+                            color: LibraryStyle.tone("#929292")
                             font.pixelSize: 11
                             Layout.fillWidth: true
                         }
@@ -183,7 +183,8 @@ StudioPanel {
                                 height: 16
                                 y: 4
                                 radius: 8
-                                color: snapSwitch.checked ? "#DEDEDE" : "#4A4A4A"
+                                color: snapSwitch.checked ? LibraryStyle.tone("#DEDEDE") :
+                                                            LibraryStyle.tone("#4A4A4A")
 
                                 Rectangle {
                                     width: 12
@@ -191,7 +192,8 @@ StudioPanel {
                                     y: 2
                                     x: snapSwitch.checked ? 14 : 2
                                     radius: 6
-                                    color: snapSwitch.checked ? "#252525" : "#D0D0D0"
+                                    color: snapSwitch.checked ? LibraryStyle.tone("#252525") :
+                                                                LibraryStyle.tone("#D0D0D0")
 
                                     Behavior on x {
                                         NumberAnimation {
@@ -225,7 +227,7 @@ StudioPanel {
 
                     Text {
                         text: inspector.host.selectedValue("name", "")
-                        color: "#AAAAAA"
+                        color: LibraryStyle.tone("#AAAAAA")
                         font.pixelSize: 11
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
@@ -279,7 +281,7 @@ StudioPanel {
                     Text {
                         text: "Editor playback is always muted.\nEnable preview audio separately."
                         visible: inspector.host.selectedValue("kind", "") === "video"
-                        color: "#888888"
+                        color: LibraryStyle.tone("#888888")
                         font.pixelSize: 10
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
@@ -302,95 +304,17 @@ StudioPanel {
                     }
                 }
 
-                ColumnLayout {
+                TextInspector {
                     Layout.fillWidth: true
-                    spacing: 10
                     visible: typeSection.visible && typeSection.expanded
                     enabled: inspector.host.doc.selected >= 0
+                    host: inspector.host
 
-                    Text {
-                        text: "Font family"
-                        color: "#929292"
-                        font.pixelSize: 11
-                    }
-
-                    StudioSelect {
-                        Layout.fillWidth: true
-                        model: ["Georgia", "Arial", "Avenir Next", "Noto Sans Telugu",
-                            "Noto Sans Devanagari"]
-                        currentIndex: Math.max(0, model.indexOf(inspector.host.selectedValue(
-                                                                    "fontFamily", "Georgia")))
-
-                        onActivated: inspector.host.update("fontFamily", currentText)
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-
-                        Text {
-                            text: "Size"
-                            color: "#929292"
-                            font.pixelSize: 11
-                            Layout.fillWidth: true
-                        }
-
-                        InspectorField {
-                            Layout.preferredWidth: 92
-                            caption: "px"
-                            value: inspector.host.selectedValue("fontSize", 174)
-
-                            onCommitted: value => inspector.host.update("fontSize", Number(value))
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 3
-
-                        Repeater {
-                            model: ["left", "center", "right"]
-
-                            StudioButton {
-                                required property string modelData
-
-                                text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
-                                quiet: false
-                                checked: inspector.host.selectedValue("alignment", "left")
-                                         === modelData
-                                Layout.fillWidth: true
-                                implicitHeight: 30
-
-                                onClicked: inspector.host.update("alignment", modelData)
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        Rectangle {
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            color: inspector.host.selectedValue("color", "#FFFFFF")
-                            radius: 4
-                            border.color: "#696969"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-
-                                onClicked: inspector.host.showTextPicker()
-                            }
-                        }
-
-                        InspectorField {
-                            Layout.fillWidth: true
-                            numeric: false
-                            value: inspector.host.selectedValue("color", "#FFFFFF").toUpperCase()
-
-                            onCommitted: value => inspector.host.update("color", value)
-                        }
+                    onChooseFont: {
+                        fontPicker.currentFamily = inspector.host.selectedValue("fontFamily",
+                                                                                "Arial");
+                        fontPicker.targetId = inspector.host.doc.selectedElement.uid || "";
+                        fontPicker.open();
                     }
                 }
 
@@ -415,14 +339,14 @@ StudioPanel {
 
                         Text {
                             text: "Opacity"
-                            color: "#929292"
+                            color: LibraryStyle.tone("#929292")
                             font.pixelSize: 11
                             Layout.fillWidth: true
                         }
 
                         Text {
                             text: Math.round(opacitySlider.value) + "%"
-                            color: "#AEAEAE"
+                            color: LibraryStyle.tone("#AEAEAE")
                             font.pixelSize: 11
                         }
                     }
@@ -443,12 +367,12 @@ StudioPanel {
                                - height / 2
                             width: opacitySlider.availableWidth
                             height: 1
-                            color: "#474747"
+                            color: LibraryStyle.tone("#474747")
 
                             Rectangle {
                                 width: opacitySlider.visualPosition * parent.width
                                 height: 1
-                                color: "#D7D7D7"
+                                color: LibraryStyle.tone("#D7D7D7")
                             }
                         }
                         handle: Rectangle {
@@ -459,7 +383,8 @@ StudioPanel {
                             width: 8
                             height: 8
                             radius: 2
-                            color: opacitySlider.pressed ? "#FFFFFF" : "#DDDDDD"
+                            color: opacitySlider.pressed ? LibraryStyle.tone("#FFFFFF") :
+                                                           LibraryStyle.tone("#DDDDDD")
                         }
 
                         onPressedChanged: if (!pressed)
@@ -471,7 +396,7 @@ StudioPanel {
 
                         Text {
                             text: "Background tint"
-                            color: "#929292"
+                            color: LibraryStyle.tone("#929292")
                             font.pixelSize: 11
                             Layout.fillWidth: true
                         }
@@ -518,7 +443,7 @@ StudioPanel {
 
                     Text {
                         text: "Save this slide as a template.\nBound text is filled and split automatically."
-                        color: "#777777"
+                        color: LibraryStyle.tone("#777777")
                         font.pixelSize: 10
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
@@ -542,21 +467,39 @@ StudioPanel {
                 implicitWidth: 5
                 implicitHeight: 5
                 radius: 3
-                color: "#AFAFAF"
+                color: LibraryStyle.tone("#AFAFAF")
             }
 
             Text {
                 text: "Local project"
-                color: "#888888"
+                color: LibraryStyle.tone("#888888")
                 font.pixelSize: 10
                 Layout.fillWidth: true
             }
 
             Text {
                 text: "Draft"
-                color: "#B7B7B7"
+                color: LibraryStyle.tone("#B7B7B7")
                 font.pixelSize: 10
             }
+        }
+    }
+
+    FontPicker {
+        id: fontPicker
+
+        objectName: "fontPicker"
+        parent: Overlay.overlay
+        catalog: inspector.host.fonts
+
+        onOpened: inspector.host.fontPickerOpen = true
+        onClosed: inspector.host.fontPickerOpen = false
+        onChosen: (family, elementId) => {
+            if (inspector.host.doc.selectedElement.uid === elementId) {
+                inspector.host.update("fontFamily", family);
+                inspector.host.notify("Font applied: " + family);
+            } else
+                inspector.host.notify("Font is ready. Select a text layer to apply it.");
         }
     }
 }

@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 Popup {
     id: panel
 
+    property bool workspaceMode: false
     required property var store
     required property var controller
     required property var document
@@ -17,14 +18,16 @@ Popup {
     property bool itemDirty: false
     property bool loading: false
     property bool keyboardAllowed: true
-    readonly property bool canNavigate: panel.opened && panel.store.live && !panel.textEntry
-                                        && panel.keyboardAllowed && !newDialog.opened
+    readonly property bool canNavigate: !panel.workspaceMode && panel.opened && panel.store.live &&
+                                        !panel.textEntry && panel.keyboardAllowed &&
+                                        !newDialog.opened
     readonly property var previewSlide: store.selectedSlides[previewIndex] || ({})
     readonly property bool textEntry: {
         let f = operatorWindow.activeFocusItem;
         return !!f && (f.cursorPosition !== undefined || f.currentIndex !== undefined);
     }
 
+    signal presentRequested
     signal songsRequested
     signal bibleRequested
     signal mediaRequested
@@ -34,6 +37,19 @@ Popup {
 
     function choosePresentationFile() {
         presentationFile.open();
+    }
+
+    function suspendItemSave() {
+        notesDebounce.stop();
+    }
+
+    function resumeItemSave() {
+        if (itemDirty)
+            notesDebounce.restart();
+    }
+
+    function focusOrder() {
+        contentItem.forceActiveFocus();
     }
 
     function markItemDirty() {
@@ -67,7 +83,8 @@ Popup {
 
     function takeLive() {
         flushItem();
-        store.present(previewIndex);
+        if (store.present(previewIndex) && workspaceMode)
+            presentRequested();
     }
 
     function navigate(delta) {
@@ -75,18 +92,20 @@ Popup {
             controller.advance(delta);
     }
 
-    width: Math.min(1380, parent.width - 32)
-    height: parent.height - 32
-    x: (parent.width - width) / 2
-    y: 16
-    modal: true
+    closePolicy: workspaceMode ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    width: workspaceMode ? parent.width : Math.min(1380, parent.width - 32)
+    height: workspaceMode ? parent.height : parent.height - 32
+    x: workspaceMode ? 0 : (parent.width - width) / 2
+    y: workspaceMode ? 0 : 16
+    modal: !workspaceMode
     focus: true
     padding: 20
 
     background: Rectangle {
-        color: "#191919"
-        border.color: "#3B3B3B"
-        radius: 12
+        color: LibraryStyle.tone("#191919")
+        border.width: panel.workspaceMode ? 0 : 1
+        border.color: LibraryStyle.tone("#3B3B3B")
+        radius: panel.workspaceMode ? 0 : 12
     }
 
     onOpened: loadItem()
@@ -175,8 +194,8 @@ Popup {
     FileDialog {
         id: presentationFile
 
-        title: "Add a Church Deck presentation"
-        nameFilters: ["Church Deck projects (*.churchdeck)"]
+        title: "Add a Selah presentation"
+        nameFilters: ["Selah projects (*.churchdeck)"]
 
         onAccepted: panel.store.importPresentation(selectedFile)
     }
@@ -187,7 +206,7 @@ Popup {
         title: "Export program"
         fileMode: FileDialog.SaveFile
         defaultSuffix: "churchprogram"
-        nameFilters: ["Church Deck programs (*.churchprogram)"]
+        nameFilters: ["Selah programs (*.churchprogram)"]
 
         onAccepted: panel.store.exportProgram(selectedFile)
     }
@@ -196,7 +215,7 @@ Popup {
         id: importFile
 
         title: "Import program"
-        nameFilters: ["Church Deck programs (*.churchprogram)"]
+        nameFilters: ["Selah programs (*.churchprogram)"]
 
         onAccepted: {
             panel.flushItem();
@@ -213,8 +232,8 @@ Popup {
         title: "New program"
 
         background: Rectangle {
-            color: "#252525"
-            border.color: "#444444"
+            color: LibraryStyle.tone("#252525")
+            border.color: LibraryStyle.tone("#444444")
             radius: 8
         }
         contentItem: ColumnLayout {
@@ -237,7 +256,7 @@ Popup {
 
             Text {
                 text: panel.store.status
-                color: "#AAAAAA"
+                color: LibraryStyle.tone("#AAAAAA")
                 font.pixelSize: 11
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
@@ -282,7 +301,7 @@ Popup {
         RowLayout {
             Text {
                 text: "Programs"
-                color: "#EEEEEE"
+                color: LibraryStyle.tone("#EEEEEE")
                 font.pixelSize: 21
                 font.weight: Font.Medium
             }
@@ -332,6 +351,7 @@ Popup {
 
             StudioButton {
                 text: "Close"
+                visible: !panel.workspaceMode
                 quiet: true
 
                 onClicked: panel.close()
@@ -400,7 +420,7 @@ Popup {
             Rectangle {
                 implicitWidth: 1
                 Layout.fillHeight: true
-                color: "#333333"
+                color: LibraryStyle.tone("#333333")
             }
 
             ProgramItemEditor {
@@ -410,14 +430,16 @@ Popup {
             }
 
             Rectangle {
+                visible: !panel.workspaceMode
                 implicitWidth: 1
                 Layout.fillHeight: true
-                color: "#333333"
+                color: LibraryStyle.tone("#333333")
             }
 
             ProgramLiveControls {
                 id: liveControls
 
+                visible: !panel.workspaceMode
                 programView: panel
             }
         }
@@ -434,13 +456,13 @@ Popup {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: "#333333"
+            color: LibraryStyle.tone("#333333")
         }
 
         RowLayout {
             Text {
                 text: panel.store.status
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
                 Layout.fillWidth: true
                 elide: Text.ElideRight
@@ -448,7 +470,7 @@ Popup {
 
             Text {
                 text: panel.store.items.length + " service items"
-                color: "#777777"
+                color: LibraryStyle.tone("#777777")
                 font.pixelSize: 11
             }
 

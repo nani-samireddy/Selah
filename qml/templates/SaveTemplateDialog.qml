@@ -28,8 +28,8 @@ Dialog {
     anchors.centerIn: parent
 
     background: Rectangle {
-        color: "#252525"
-        border.color: "#444444"
+        color: LibraryStyle.tone("#252525")
+        border.color: LibraryStyle.tone("#444444")
         radius: 8
     }
     contentItem: ColumnLayout {
@@ -66,7 +66,7 @@ Dialog {
         Text {
             Layout.fillWidth: true
             text: "Bind the content boxes in the inspector. Static layers, media, colors and fonts are kept."
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
             font.pixelSize: 12
             wrapMode: Text.Wrap
         }
@@ -74,7 +74,7 @@ Dialog {
         Text {
             Layout.fillWidth: true
             text: dialog.library.status
-            color: "#BBBBBB"
+            color: LibraryStyle.tone("#BBBBBB")
             font.pixelSize: 11
             wrapMode: Text.Wrap
         }

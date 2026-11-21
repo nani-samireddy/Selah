@@ -153,7 +153,7 @@ bool TemplateStore::importTemplate(const QUrl &url) {
     }
     const auto root = QJsonDocument::fromJson(file.readAll()).object();
     if (root["format"] != "churchdeck-template-1") {
-        setStatus("Invalid Church Deck template format");
+        setStatus("Invalid Selah template format");
         return false;
     }
     auto definition = root["template"].toObject().toVariantMap();

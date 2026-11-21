@@ -6,22 +6,22 @@ Click **Programs** in the top bar. A program is a saved service order containing
 
 1. Choose **New program**, enter a title and optional `YYYY-MM-DD` date, and create it. The program selector reopens saved services. The last opened program is restored on launch.
 2. Choose **Add item** and select a song, Bible passage, image/video, the complete current editor presentation, or a `.churchdeck` presentation file. The song/Bible/media libraries show **Add to program** when opened from here.
-3. Select an item and use **Up**, **Down** or **Remove** to curate the order. Removal and changes support Undo/Redo. Repeated additions are independent items.
+3. Drag an item’s grip to reorder it, or use **Up**, **Down** and **Remove**. A drop commits one undoable move; Escape or dropping outside the list cancels. The list scrolls when dragging near its top/bottom edge. Removal and changes support Undo/Redo. Repeated additions are independent items.
 4. Edit the item title or private speaker notes. These save after a brief pause, when switching items, and when closing Programs. Program title/date changes use **Apply details**. Changes to the program model autosave to SQLite after 450 ms; **Save program** or Cmd/Ctrl+S saves immediately.
 5. For a song, choose one of its saved arrangements. For a song or Bible passage, choose **Original**, **Midnight**, or **Warm paper** styling. These are built-in palette styles. **Choose template** previews and applies reusable content layouts; see [templates](templates.md).
-6. Use **Edit slides** to open an item in the presentation editor. This is an undoable replacement of the editor draft. Return to Programs and choose **Update from editor** to explicitly replace that item's slides. Live content remains unchanged. Choosing another song arrangement regenerates its slides from the stored lyrics, replacing manual slide edits.
+6. Use **Edit slides** to open an item in the presentation editor. This is an undoable replacement of the editor draft. Use **Update program item** in Design, or return to Programs and choose **Update from editor**, to explicitly replace that item's slides. Live content remains unchanged. Choosing another song arrangement regenerates its slides from the stored lyrics, replacing manual slide edits.
 
 Songs, passages and applied template definitions/revisions are stored with the program. Renaming or editing their library originals later cannot silently alter a prepared service. Adding songs preserves the chosen arrangement and language pairing. Programs do not currently offer automatic refresh from library sources.
 
 ## Present
 
-- Select an item and a slide thumbnail, then choose **Take slide live**. Double-clicking a thumbnail also takes it live.
+- Select an item and a slide thumbnail, then choose **Present from here**. This explicit action starts live content; selecting or double-clicking preparation thumbnails does not publish them.
 - The live snapshot contains the whole service. **Next** and **Previous** move across item boundaries. The service order marks the live item independently of the selected draft item.
-- Use Right Arrow / Space for Next, Left Arrow for Previous, and Home / End for first/last slide while Programs is open. Navigation shortcuts are disabled while entering text, using a selector, or browsing a content picker. Cmd/Ctrl+Z and the platform redo shortcut affect program history when focus is outside text fields.
-- Current/next previews, audience blackout, audience/stage windowed previews and output settings are available beside the service order. Scroll that column on smaller windows.
-- **Take slide live** updates the snapshot. Reordering, changing an arrangement, editing notes or removing items never updates a running snapshot automatically.
+- Use Right Arrow / Space for Next, Left Arrow for Previous, and Home / End for first/last slide in the Present workspace. Navigation shortcuts are disabled while entering text, using a selector, or browsing a content picker. Cmd/Ctrl+Z and the platform redo shortcut affect program history when focus is outside text fields.
+- Use **Present from here** to enter Present with the prepared service. Current/next previews, live service navigation, audience blackout and audience/stage previews are available there. Outputs and Remote remain available globally.
+- **Present from here** updates the snapshot. Reordering, changing an arrangement, editing notes or removing items never updates a running snapshot automatically.
 - Audience and stage rendering, physical screen assignments and the NDI capture prototype use the existing OutputManager. Item notes are prepended to individual slide notes in the speaker view. NDI network transmission still requires the official SDK/runtime and receiver validation.
-- In Output settings, **Take editor slide live** explicitly switches the live source back to the editor, disabling program navigation until a program slide is taken live again.
+- In Output settings, **Take editor slide live** explicitly switches the live source back to the editor, showing that editor snapshot in Present until a program is explicitly taken live again.
 
 ## Storage and exchange
 
@@ -36,8 +36,8 @@ Media remains referenced from the local managed media folder. Program export doe
 ```sh
 ctest --test-dir build --output-on-failure
 cmake --build build --target church-deck_qmllint
-build/church-deck.app/Contents/MacOS/church-deck --fresh --program-smoke "$PWD/captures/program"
-build/church-deck.app/Contents/MacOS/church-deck --fresh --compact --program-smoke "$PWD/captures/program-compact"
+build/Selah.app/Contents/MacOS/Selah --fresh --program-smoke "$PWD/captures/program"
+build/Selah.app/Contents/MacOS/Selah --fresh --compact --program-smoke "$PWD/captures/program-compact"
 ```
 
 Model checks cover create/save/reopen, independent export/import, arrangements, styles, title/notes, reorder/remove/undo/redo, missing media, opening/updating editor slides, rejecting invalid content without data loss, and live snapshot isolation. Rendering checks cover a mixed service with bilingual lyrics, Telugu Bible passages, media, current/next previews and separate audience/stage windows. Smoke runs use a separate verification profile and original test lyrics, preserving the normal user's programs and editor recovery file.

@@ -19,7 +19,7 @@ ColumnLayout {
             text: "PREVIEW"
             font.pixelSize: 10
             font.letterSpacing: 1
-            color: "#888888"
+            color: LibraryStyle.tone("#888888")
             Layout.fillWidth: true
         }
 
@@ -30,11 +30,11 @@ ColumnLayout {
                                                                        + itemEditor.programView.store.selectedSlides.length :
                                                                        ""
             font.pixelSize: 11
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
         }
 
         StudioButton {
-            text: "Take slide live"
+            text: itemEditor.programView.workspaceMode ? "Present from here" : "Take slide live"
             accented: true
             enabled: itemEditor.programView.store.selectedSlides.length > 0
 
@@ -48,10 +48,10 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredHeight: width * 9 / 16
-        Layout.maximumHeight: 285
+        Layout.maximumHeight: itemEditor.programView.workspaceMode ? 420 : 285
         Layout.minimumHeight: 100
-        color: "#111111"
-        border.color: "#363636"
+        color: LibraryStyle.tone("#111111")
+        border.color: LibraryStyle.tone("#363636")
         radius: 5
         clip: true
 
@@ -63,7 +63,8 @@ ColumnLayout {
             x: (draftFrame.width - width * scale) / 2
             y: (draftFrame.height - height * scale) / 2
             elements: itemEditor.programView.previewSlide.elements || []
-            backgroundColor: itemEditor.programView.previewSlide.background || "#111111"
+            backgroundColor: itemEditor.programView.previewSlide.background || LibraryStyle.tone(
+                                 "#111111")
             ambientOpacity: itemEditor.programView.previewSlide.ambientOpacity === undefined ? 0.5 :
                                                                                                itemEditor.programView.previewSlide.ambientOpacity
             videoEnabled: false
@@ -74,7 +75,7 @@ ColumnLayout {
             anchors.centerIn: parent
             visible: !itemEditor.programView.store.selectedSlides.length
             text: "Select a service item"
-            color: "#777777"
+            color: LibraryStyle.tone("#777777")
             font.pixelSize: 13
         }
     }
@@ -99,10 +100,13 @@ ColumnLayout {
 
             width: 112
             height: 66
-            color: "#111111"
+            color: LibraryStyle.tone("#111111")
             radius: 5
             border.width: 2
-            border.color: index === itemEditor.programView.previewIndex ? "#AAAAAA" : "#383838"
+            border.color: index === itemEditor.programView.previewIndex ? LibraryStyle.tone(
+                                                                              "#AAAAAA") :
+                                                                          LibraryStyle.tone(
+                                                                              "#383838")
             clip: true
 
             SlideRenderer {
@@ -123,10 +127,6 @@ ColumnLayout {
                 anchors.fill: parent
 
                 onClicked: itemEditor.programView.previewIndex = slideThumb.index
-                onDoubleClicked: {
-                    itemEditor.programView.previewIndex = slideThumb.index;
-                    itemEditor.programView.takeLive();
-                }
             }
         }
     }
@@ -179,7 +179,7 @@ ColumnLayout {
 
         Text {
             text: "Style"
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
             font.pixelSize: 11
         }
 
@@ -212,7 +212,7 @@ ColumnLayout {
         Text {
             visible: itemEditor.programView.store.selectedItem.kind === "song"
             text: "Arrangement"
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
             font.pixelSize: 11
         }
 
@@ -236,14 +236,14 @@ ColumnLayout {
 
         Text {
             text: "Layout"
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
             font.pixelSize: 11
         }
 
         Text {
             text: itemEditor.programView.store.selectedItem.layoutTemplate?.name
                   || "Automatic layout"
-            color: "#BBBBBB"
+            color: LibraryStyle.tone("#BBBBBB")
             font.pixelSize: 11
             Layout.fillWidth: true
             elide: Text.ElideRight
@@ -273,7 +273,7 @@ ColumnLayout {
         text: "SPEAKER NOTES · THIS ITEM"
         font.pixelSize: 10
         font.letterSpacing: 1
-        color: "#888888"
+        color: LibraryStyle.tone("#888888")
     }
 
     ScrollView {
@@ -288,16 +288,17 @@ ColumnLayout {
             objectName: "programItemNotes"
             enabled: itemEditor.programView.store.selected >= 0
             placeholderText: "Private notes for the speaker…"
-            placeholderTextColor: "#777777"
-            color: "#DDDDDD"
+            placeholderTextColor: LibraryStyle.tone("#777777")
+            color: LibraryStyle.tone("#DDDDDD")
             font.pixelSize: 12
             padding: 10
             wrapMode: TextEdit.Wrap
             selectByMouse: true
 
             background: Rectangle {
-                color: "#222222"
-                border.color: itemNotes.activeFocus ? "#777777" : "#373737"
+                color: LibraryStyle.tone("#222222")
+                border.color: itemNotes.activeFocus ? LibraryStyle.tone("#777777") :
+                                                      LibraryStyle.tone("#373737")
                 radius: 6
             }
 

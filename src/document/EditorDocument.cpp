@@ -1,6 +1,7 @@
 #include "EditorDocument.h"
 #include "DocumentElements.h"
 #include "SlideFactory.h"
+#include "TextFormatting.h"
 #include <algorithm>
 #include <cmath>
 #include <QColor>
@@ -102,6 +103,15 @@ void EditorDocument::setStatus(const QString &s) {
     emit statusChanged();
 }
 
+void EditorDocument::formatText(const QVariantMap &patch, int start, int end) {
+    const auto element = selectedElement();
+    if (element.isEmpty() || element.value("kind", "text") != "text") {
+        return;
+    }
+    TextFormatting formatter;
+    updateElement(m_selected, formatter.apply(element, patch, start, end));
+}
+
 void EditorDocument::updateElement(int i, const QVariantMap &patch) {
     auto list = elements();
     if (i < 0 || i >= list.size()) {
@@ -112,6 +122,9 @@ void EditorDocument::updateElement(int i, const QVariantMap &patch) {
         return;
     }
     auto before = el;
+    if (el.value("kind", "text") == "text") {
+        el = TextFormatting::normalize(el);
+    }
     for (auto it = patch.begin(); it != patch.end(); ++it) {
         if (!el.contains(it.key()) || QStringList { "uid", "kind", "source" }.contains(it.key())) {
             continue;
@@ -121,7 +134,8 @@ void EditorDocument::updateElement(int i, const QVariantMap &patch) {
             continue;
         }
         if (it.key() == "alignment"
-            && !QStringList { "left", "center", "right" }.contains(it.value().toString())) {
+            && !QStringList { "left", "center", "right", "justify" }.contains(
+                it.value().toString())) {
             continue;
         }
         if (QStringList { "x", "y", "width", "height", "fontSize", "rotation", "opacity" }.contains(
@@ -158,6 +172,9 @@ void EditorDocument::updateElement(int i, const QVariantMap &patch) {
             el[it.key()] = it.value();
         }
     }
+    if (el.value("kind", "text") == "text") {
+        el = TextFormatting::normalize(el);
+    }
     if (el == before) {
         return;
     }
@@ -170,21 +187,32 @@ void EditorDocument::updateElement(int i, const QVariantMap &patch) {
 }
 
 void EditorDocument::moveSelected(int delta) {
+    if (m_selected < 0 || elements().isEmpty()) {
+        return;
+    }
+    moveElementTo(m_selected, std::clamp(m_selected + delta, 0, int(elements().size()) - 1));
+}
+
+bool EditorDocument::moveElementTo(int from, int to) {
     auto list = elements();
-    if (m_selected < 0 || delta == 0) {
-        return;
+    if (from < 0 || to < 0 || from >= list.size() || to >= list.size() || from == to) {
+        return false;
     }
-    const int destination = std::clamp(m_selected + delta, 0, int(list.size()) - 1);
-    if (destination == m_selected) {
-        return;
-    }
+    const auto selectedId = selectedElement().value("uid").toString();
     checkpoint();
-    list.move(m_selected, destination);
-    m_selected = destination;
-    auto s = m_slides[m_current].toMap();
-    s["elements"] = list;
-    m_slides[m_current] = s;
+    list.move(from, to);
+    auto slide = m_slides[m_current].toMap();
+    slide["elements"] = list;
+    m_slides[m_current] = slide;
+    m_selected = -1;
+    for (int i = 0; i < list.size(); ++i) {
+        if (list[i].toMap().value("uid").toString() == selectedId) {
+            m_selected = i;
+            break;
+        }
+    }
     commit();
+    return true;
 }
 
 void EditorDocument::setNotes(const QString &value) {

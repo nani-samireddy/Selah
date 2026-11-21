@@ -48,6 +48,7 @@ def main() -> int:
         # Comparing stdout avoids Qt-version-specific flags for formatting verification.
         result = subprocess.run([qml, str(path)], cwd=ROOT, capture_output=True, check=False)
         if result.returncode:
+            print(f"qmlformat failed: {path.relative_to(ROOT)} (exit {result.returncode})", file=sys.stderr)
             sys.stderr.buffer.write(result.stderr)
             failed = True
             continue

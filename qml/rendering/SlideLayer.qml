@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import ChurchDeck.Formatting
 
 Item {
     id: visualLayer
@@ -41,20 +42,43 @@ Item {
         id: text
 
         TextEdit {
+            id: renderedText
+
+            readonly property var displayData: TextFormatting.display(visualLayer.layerData)
+
+            function restoreFormatting() {
+                TextFormatting.hydrate(textDocument, displayData);
+            }
+
             objectName: "slide-text-" + visualLayer.layerData.uid
-            textFormat: TextEdit.PlainText
-            text: visualLayer.layerData.text || ""
+            textFormat: TextEdit.RichText
+            text: TextFormatting.html(displayData)
             color: visualLayer.layerData.color || "#FFFFFF"
             font.family: visualLayer.layerData.fontFamily || "Arial"
             font.pixelSize: visualLayer.layerData.fontSize || 36
             readOnly: true
             activeFocusOnPress: false
             selectByMouse: false
-            wrapMode: TextEdit.Wrap
-            clip: true
+            wrapMode: visualLayer.layerData.wrap === false ? TextEdit.NoWrap : TextEdit.Wrap
+            clip: visualLayer.layerData.clipText !== false
+            verticalAlignment: visualLayer.layerData.verticalAlignment === "center"
+                               ? TextEdit.AlignVCenter : visualLayer.layerData.verticalAlignment
+                                 === "bottom" ? TextEdit.AlignBottom : TextEdit.AlignTop
             horizontalAlignment: visualLayer.layerData.alignment === "center"
                                  ? TextEdit.AlignHCenter : visualLayer.layerData.alignment
-                                   === "right" ? TextEdit.AlignRight : TextEdit.AlignLeft
+                                   === "right" ? TextEdit.AlignRight :
+                                                 visualLayer.layerData.alignment === "justify"
+                                                 ? TextEdit.AlignJustify : TextEdit.AlignLeft
+
+            Component.onCompleted: Qt.callLater(restoreFormatting)
+
+            Connections {
+                function onLayerDataChanged() {
+                    Qt.callLater(renderedText.restoreFormatting);
+                }
+
+                target: visualLayer
+            }
         }
     }
 

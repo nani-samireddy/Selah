@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 Popup {
     id: panel
 
+    property bool workspaceMode: false
     required property var library
     required property var templates
     required property var document
@@ -16,18 +17,44 @@ Popup {
     property var bookList: library.books(version.id || "")
     property var book: bookList[bookPicker.currentIndex] || ({})
     property var chapterList: library.chapters(version.id || "", book.code || "")
-    property var chapter: chapterList[chapterPicker.currentIndex] || ({})
+    property int chapterIndex: 0
+    property var chapter: chapterList[chapterIndex] || ({})
+    property int highlightedVerse: -1
+    property var chapterVerses: library.passage(version.id || "", book.code || "", chapter.chapter
+                                                || 1, chapter.first || 1, chapter.last || 1)
     property var verses: []
     property var selected: []
     property string message: ""
     property bool searchMode: search.text.trim().length > 0
 
+    signal contentAdded(bool toProgram)
+
+    function addToTarget(programId = "") {
+        const rows = selected.length ? selected.map(i => verses[i]) : verses;
+        const target = programTarget || document;
+        const ok = programTarget ? target.addScripture(rows, lines.value, templateChoice.definition,
+                                                       programId) : target.addScriptureSlides(rows,
+                                                                                              lines.value,
+                                                                                              templateChoice.definition);
+        if (ok && (!programTarget || !programId || programId === programTarget.id))
+            finishAddition();
+        else
+            message = target.status;
+    }
+
+    function finishAddition() {
+        let toProgram = !!programTarget;
+        close();
+        contentAdded(toProgram);
+    }
+
     function refresh() {
+        debounce.stop();
         selected = [];
         message = "";
-        verses = searchMode ? library.searchVerses(version.id || "", search.text) : library.passage(
-                                  version.id || "", book.code || "", chapter.chapter || 1,
-                                  fromVerse.value, toVerse.value);
+        verses = searchMode ? library.searchVerses(version.id || "", search.text) : chapterVerses;
+        highlightedVerse = -1;
+        verseView.positionViewAtBeginning();
     }
 
     function schedule() {
@@ -45,6 +72,31 @@ Popup {
         selected = rows;
     }
 
+    function jumpToVerse(number) {
+        if (searchMode) {
+            search.text = "";
+            debounce.stop();
+            refresh();
+        }
+        debounce.stop();
+        const index = verses.findIndex(verse => verse.verse === number);
+        if (index < 0)
+            return;
+        highlightedVerse = number;
+        selected = [index];
+        verseView.forceLayout();
+        verseView.currentIndex = index;
+        verseView.positionViewAtIndex(index, ListView.Center);
+        Qt.callLater(() => {
+            if (panel.highlightedVerse !== number)
+                return;
+            debounce.stop();
+            verseView.forceLayout();
+            verseView.currentIndex = index;
+            verseView.positionViewAtIndex(index, ListView.Center);
+        });
+    }
+
     function openPassage(translation, code, chapterNumber, first, last) {
         search.text = "";
         for (let i = 0; i < versions.length; i++)
@@ -55,36 +107,44 @@ Popup {
                 bookPicker.currentIndex = i;
         for (let i = 0; i < chapterList.length; i++)
             if (chapterList[i].chapter === chapterNumber)
-                chapterPicker.currentIndex = i;
+                chapterIndex = i;
         Qt.callLater(function () {
-            fromVerse.value = first;
-            toVerse.value = last;
+            debounce.stop();
             panel.refresh();
+            panel.jumpToVerse(first);
+            panel.selected = panel.verses.map((verse, index) => verse.verse >= first && verse.verse
+                                                                <= last ? index : -1).filter(index
+                                                                                             => index
+                                                                                                >= 0);
         });
     }
 
-    width: Math.min(1000, parent.width - 40)
-    height: Math.min(740, parent.height - 40)
-    x: (parent.width - width) / 2
-    y: (parent.height - height) / 2
-    modal: true
+    closePolicy: workspaceMode ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    width: workspaceMode ? parent.width : Math.min(1000, parent.width - 40)
+    height: workspaceMode ? parent.height : Math.min(740, parent.height - 40)
+    x: workspaceMode ? 0 : (parent.width - width) / 2
+    y: workspaceMode ? 0 : (parent.height - height) / 2
+    modal: !workspaceMode
     focus: true
-    padding: 22
+    padding: LibraryStyle.pagePadding
 
     background: Rectangle {
-        color: "#191919"
-        border.color: "#3B3B3B"
-        radius: 12
+        color: LibraryStyle.panel
+        border.width: panel.workspaceMode ? 0 : 1
+        border.color: LibraryStyle.tone("#3B3B3B")
+        radius: panel.workspaceMode ? 0 : 12
     }
 
     onOpened: refresh()
-    onVersionChanged: schedule()
-    onBookChanged: schedule()
-    onChapterChanged: Qt.callLater(function () {
-        fromVerse.value = panel.chapter.first || 1;
-        toVerse.value = panel.chapter.last || 1;
-        panel.schedule();
-    })
+
+    Connections {
+        function onChanged() {
+            if (panel.opened)
+                panel.schedule();
+        }
+
+        target: panel.library
+    }
 
     Timer {
         id: debounce
@@ -98,29 +158,31 @@ Popup {
         id: importDialog
 
         title: "Import Bible translation"
-        nameFilters: ["Church Deck Bible packages (*.json)"]
+        nameFilters: ["Selah Bible packages (*.json)"]
 
         onAccepted: panel.library.importBible(selectedFile)
     }
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 14
+        spacing: 16
 
         RowLayout {
             Column {
                 spacing: 5
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: "Bible"
-                    color: "#EEEEEE"
-                    font.pixelSize: 21
+                    color: LibraryStyle.tone("#EEEEEE")
+                    font.pixelSize: 22
                     font.weight: Font.Medium
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: "Find a passage. Bring the Word to the screen."
-                    color: "#929292"
+                    color: LibraryStyle.tone("#929292")
                     font.pixelSize: 12
                 }
             }
@@ -129,15 +191,16 @@ Popup {
                 Layout.fillWidth: true
             }
 
-            StudioButton {
+            LibraryButton {
                 text: panel.library.busy ? "Importing…" : "Import translation"
                 enabled: !panel.library.busy
 
                 onClicked: importDialog.open()
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Close"
+                visible: !panel.workspaceMode
                 quiet: true
 
                 onClicked: panel.close()
@@ -146,203 +209,237 @@ Popup {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 12
-
-            LibraryCombo {
-                id: versionPicker
-
-                Layout.preferredWidth: 270
-                model: panel.versions
-                textRole: "abbreviation"
-
-                onActivated: {
-                    bookPicker.currentIndex = 0;
-                    chapterPicker.currentIndex = 0;
-                    panel.refresh();
-                }
-            }
-
-            LibraryField {
-                id: search
-
-                objectName: "scriptureSearch"
-                Layout.fillWidth: true
-                placeholderText: "John 3:16–18, or words in this translation…"
-
-                onTextChanged: panel.schedule()
-            }
-
-            StudioButton {
-                text: "Clear"
-                visible: panel.searchMode
-                quiet: true
-
-                onClicked: search.clear()
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
-            enabled: !panel.searchMode
-
-            LibraryCombo {
-                id: bookPicker
-
-                Layout.fillWidth: true
-                model: panel.bookList
-                textRole: "name"
-
-                onActivated: {
-                    chapterPicker.currentIndex = 0;
-                    panel.refresh();
-                }
-            }
-
-            Text {
-                text: "Chapter"
-                color: "#999999"
-                font.pixelSize: 12
-            }
-
-            LibraryCombo {
-                id: chapterPicker
-
-                Layout.preferredWidth: 80
-                model: panel.chapterList
-                textRole: "chapter"
-
-                onActivated: panel.refresh()
-            }
-
-            Text {
-                text: "Verses"
-                color: "#999999"
-                font.pixelSize: 12
-            }
-
-            SpinBox {
-                id: fromVerse
-
-                from: panel.chapter.first || 1
-                to: panel.chapter.last || 1
-                value: from
-                implicitWidth: 100
-
-                onValueModified: {
-                    if (toVerse.value < value)
-                        toVerse.value = value;
-                    panel.refresh();
-                }
-            }
-
-            Text {
-                text: "–"
-                color: "#999999"
-            }
-
-            SpinBox {
-                id: toVerse
-
-                from: fromVerse.value
-                to: panel.chapter.last || 1
-                value: to
-                implicitWidth: 100
-
-                onValueModified: panel.refresh()
-            }
-        }
-
-        RowLayout {
-            Text {
-                text: panel.searchMode ? panel.verses.length + " results · First 100 matches" : (
-                                             panel.book.name || "") + " " + (panel.chapter.chapter
-                                                                             || "") + " · "
-                                         + panel.verses.length + " verses"
-                color: "#999999"
-                font.pixelSize: 11
-                Layout.fillWidth: true
-            }
-
-            StudioButton {
-                text: panel.selected.length ? "Clear selection" : "Select all"
-                quiet: true
-                implicitHeight: 28
-                enabled: panel.verses.length > 0
-
-                onClicked: {
-                    panel.selected = panel.selected.length ? [] : panel.verses.map((v, i) => i);
-                }
-            }
-        }
-
-        ListView {
-            id: verseView
-
-            Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
-            spacing: 7
-            model: panel.verses
+            spacing: 24
 
-            ScrollBar.vertical: ScrollBar {
-            }
-            delegate: ItemDelegate {
-                id: verseItem
+            ColumnLayout {
+                id: scriptureSidebar
 
-                required property var modelData
-                required property int index
-                property bool chosen: panel.selected.indexOf(index) >= 0
+                Layout.preferredWidth: 250
+                Layout.minimumWidth: 220
+                Layout.maximumWidth: 260
+                Layout.fillHeight: true
+                spacing: 12
 
-                width: ListView.view.width - 12
-                height: verseColumn.implicitHeight + 26
+                LibraryCombo {
+                    id: versionPicker
 
-                background: Rectangle {
-                    color: verseItem.chosen ? "#30343E" : verseItem.hovered ? "#262626" : "#222222"
-                    border.color: verseItem.chosen ? "#777D8A" : "#303030"
-                    radius: 7
-                }
-                contentItem: Column {
-                    id: verseColumn
+                    objectName: "bibleVersionPicker"
+                    Layout.fillWidth: true
+                    model: panel.versions
+                    textRole: "abbreviation"
+                    Accessible.name: "Bible translation"
 
-                    spacing: 8
-
-                    Text {
-                        text: (verseItem.chosen ? "Selected · " : "")
-                              + verseItem.modelData.reference
-                        font.pixelSize: 11
-                        color: verseItem.chosen ? "#CFD5E0" : "#999999"
-                    }
-
-                    Text {
-                        width: parent.width
-                        text: verseItem.modelData.text
-                        color: "#E0E0E0"
-                        font.pixelSize: 19
-                        font.family: /[\u0C00-\u0C7F]/.test(text) ? "Noto Sans Telugu" :
-                                                                    /[\u0900-\u097F]/.test(text)
-                                                                    ? "Noto Sans Devanagari" :
-                                                                      "Arial"
-                        wrapMode: Text.Wrap
+                    onActivated: {
+                        bookPicker.currentIndex = 0;
+                        panel.chapterIndex = 0;
+                        search.clear();
+                        panel.refresh();
                     }
                 }
 
-                onClicked: panel.choose(index)
+                LibraryCombo {
+                    id: bookPicker
+
+                    objectName: "bibleBookPicker"
+                    Layout.fillWidth: true
+                    model: panel.bookList
+                    textRole: "name"
+                    Accessible.name: "Bible book"
+
+                    onActivated: {
+                        panel.chapterIndex = 0;
+                        search.clear();
+                        panel.refresh();
+                    }
+                }
+
+                LibraryCaption {
+                    text: "Chapters · " + panel.chapterList.length
+                }
+
+                ScriptureNumberGrid {
+                    objectName: "bibleChapterGrid"
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 32
+                    Layout.maximumHeight: Math.max(32, (panel.availableHeight - 250) * 0.4)
+                    Layout.preferredHeight: Math.min(217, Math.ceil(panel.chapterList.length / 6) * 37,
+                                                     Math.max(32, (panel.availableHeight - 250)
+                                                              * 0.4))
+                    numbers: panel.chapterList.map(chapter => chapter.chapter)
+                    selectedNumber: panel.chapter.chapter || 1
+                    accessiblePrefix: "Chapter"
+
+                    onChosen: number => {
+                        panel.chapterIndex = panel.chapterList.findIndex(chapter => chapter.chapter
+                                                                                    === number);
+                        search.clear();
+                        panel.refresh();
+                    }
+                }
+
+                LibraryCaption {
+                    text: "Verses · " + panel.chapterVerses.length
+                }
+
+                ScriptureNumberGrid {
+                    objectName: "bibleVerseGrid"
+                    Layout.minimumHeight: 69
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    numbers: panel.chapterVerses.map(verse => verse.verse)
+                    selectedNumber: panel.highlightedVerse
+                    accessiblePrefix: "Go to verse"
+
+                    onChosen: number => panel.jumpToVerse(number)
+                }
             }
 
-            Text {
-                anchors.centerIn: parent
-                text: "No matching verses. Try another passage or phrase."
-                visible: panel.verses.length === 0
-                font.pixelSize: 13
-                color: "#888888"
+            Rectangle {
+                Layout.fillHeight: true
+                implicitWidth: 1
+                color: LibraryStyle.divider
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 12
+
+                LibraryField {
+                    id: search
+
+                    leadingIcon: "search"
+                    objectName: "scriptureSearch"
+                    Layout.fillWidth: true
+                    placeholderText: "Find a passage or search this translation…"
+
+                    onTextChanged: panel.schedule()
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: panel.searchMode ? panel.verses.length + " search results" : (
+                                                     panel.book.name || "") + " " + (
+                                                     panel.chapter.chapter || 1) + " · "
+                                                 + panel.verses.length + " verses"
+                        font.family: LibraryStyle.fontFamily
+                        font.pixelSize: 13
+                        color: LibraryStyle.text
+                        Layout.fillWidth: true
+                    }
+
+                    LibraryButton {
+                        text: "Clear search"
+                        visible: panel.searchMode
+                        quiet: true
+
+                        onClicked: search.clear()
+                    }
+
+                    LibraryButton {
+                        text: panel.selected.length ? "Clear selection (" + panel.selected.length
+                                                      + ")" : "Select chapter"
+                        quiet: true
+                        enabled: panel.verses.length > 0
+
+                        onClicked: panel.selected = panel.selected.length ? [] : panel.verses.map((
+                                                                                                      verse, index)
+                                                                                                  => index)
+                    }
+                }
+
+                ListView {
+                    id: verseView
+
+                    objectName: "scriptureVerseList"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: 7
+                    model: panel.verses
+
+                    ScrollBar.vertical: ScrollBar {
+                    }
+                    delegate: ItemDelegate {
+                        id: verseItem
+
+                        required property var modelData
+                        required property int index
+                        property bool chosen: panel.selected.indexOf(index) >= 0
+                        property bool located: !panel.searchMode && panel.highlightedVerse
+                                               === modelData.verse
+
+                        width: ListView.view.width - 12
+                        height: verseColumn.implicitHeight + 32
+                        padding: 16
+
+                        background: Rectangle {
+                            color: verseItem.located ? (LibraryStyle.dark ? "#36303E" : "#EEE7F6") :
+                                                       verseItem.chosen ? LibraryStyle.tone(
+                                                                              "#2D2D2D") :
+                                                                          verseItem.hovered
+                                                                          ? LibraryStyle.tone(
+                                                                                "#262626") :
+                                                                            LibraryStyle.tone(
+                                                                                "#222222")
+                            border.color: verseItem.located ? (LibraryStyle.dark ? "#B99BCD" :
+                                                                                   "#79528F") :
+                                                              verseItem.chosen ? LibraryStyle.tone(
+                                                                                     "#686868") :
+                                                                                 LibraryStyle.tone(
+                                                                                     "#303030")
+                            radius: 7
+                        }
+                        contentItem: Column {
+                            id: verseColumn
+
+                            spacing: 8
+
+                            Text {
+                                font.family: LibraryStyle.fontFamily
+                                text: (verseItem.chosen ? "Selected · " : "")
+                                      + verseItem.modelData.reference
+                                font.pixelSize: 11
+                                color: verseItem.chosen ? LibraryStyle.tone("#E2E2E2") :
+                                                          LibraryStyle.tone("#999999")
+                            }
+
+                            Text {
+                                font.family: /[\u0C00-\u0C7F]/.test(text) ? "Noto Sans Telugu" :
+                                                                            /[\u0900-\u097F]/.test(
+                                                                                text) ? "Noto Sans Devanagari" :
+                                                                                        LibraryStyle.fontFamily
+                                width: parent.width
+                                text: verseItem.modelData.text
+                                color: LibraryStyle.tone("#E0E0E0")
+                                font.pixelSize: 19
+                                wrapMode: Text.Wrap
+                            }
+                        }
+
+                        onClicked: panel.choose(index)
+                    }
+
+                    Text {
+                        font.family: LibraryStyle.fontFamily
+                        anchors.centerIn: parent
+                        text: "No matching verses. Try another passage or phrase."
+                        visible: panel.verses.length === 0
+                        font.pixelSize: 13
+                        color: LibraryStyle.tone("#888888")
+                    }
+                }
             }
         }
 
         RowLayout {
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: "Layout"
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
             }
 
@@ -358,7 +455,7 @@ Popup {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: "#333333"
+            color: LibraryStyle.tone("#333333")
         }
 
         RowLayout {
@@ -367,29 +464,32 @@ Popup {
                 spacing: 4
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     Layout.fillWidth: true
                     text: panel.version.title || ""
                     font.pixelSize: 11
-                    color: "#BBBBBB"
+                    color: LibraryStyle.tone("#BBBBBB")
                     elide: Text.ElideRight
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     Layout.fillWidth: true
                     text: (panel.version.copyright || "") + " · " + (panel.version.license || "")
                     font.pixelSize: 10
-                    color: "#888888"
+                    color: LibraryStyle.tone("#888888")
                     wrapMode: Text.Wrap
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: panel.message || panel.library.status
                     font.pixelSize: 11
-                    color: "#AAAAAA"
+                    color: LibraryStyle.tone("#AAAAAA")
                 }
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Source"
                 quiet: true
 
@@ -397,12 +497,13 @@ Popup {
             }
 
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: "Lines / slide"
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
             }
 
-            SpinBox {
+            LibrarySpinBox {
                 id: lines
 
                 from: 1
@@ -411,27 +512,24 @@ Popup {
                 implicitWidth: 100
             }
 
-            StudioButton {
-                text: panel.programTarget ? "Add to program" : panel.selected.length ? "Add "
-                                                                                       + panel.selected.length
-                                                                                       + " verses" :
-                                                                                       "Add passage"
+            ProgramAddButton {
+                objectName: "bibleProgramDestination"
+                visible: !!panel.programTarget
+                store: panel.programTarget
+                ready: panel.verses.length > 0
+
+                onAddRequested: programId => panel.addToTarget(programId)
+            }
+
+            LibraryButton {
+                visible: !panel.programTarget
+                text: panel.selected.length ? "Add " + panel.selected.length + " verses" :
+                                              "Add passage"
                 iconName: "plus"
                 accented: true
                 enabled: panel.verses.length > 0
 
-                onClicked: {
-                    let rows = panel.selected.length ? panel.selected.map(i => panel.verses[i]) :
-                                                       panel.verses;
-                    let target = panel.programTarget || panel.document;
-                    if (target.addScriptureSlides ? target.addScriptureSlides(rows, lines.value,
-                                                                              templateChoice.definition) :
-                                                    target.addScripture(rows, lines.value,
-                                                                        templateChoice.definition))
-                        panel.close();
-                    else
-                        panel.message = target.status;
-                }
+                onClicked: panel.addToTarget()
             }
         }
     }

@@ -21,6 +21,9 @@ QVariantMap populate(const QVariantMap &definition, const QVariantMap &context, 
                 return {};
             }
             box["text"] = text;
+            // Placeholder character ranges do not describe newly bound content.
+            box.remove("richText");
+            box.remove("textRuns");
             const bool body = binding == "Primary lyrics" || binding == "Translated lyrics"
                 || binding == "Scripture text";
             // Metadata may scale down; body fonts and pagination always follow the design.

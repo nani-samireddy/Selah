@@ -72,14 +72,16 @@ public:
     Q_INVOKABLE bool openProgram(const QString &id);
     Q_INVOKABLE void updateDetails(const QString &title, const QString &date);
     Q_INVOKABLE bool save();
-    Q_INVOKABLE bool addSong(
-        const QVariantMap &song, int maxLines = 3, const QVariantMap &definition = {});
-    Q_INVOKABLE bool addScripture(
-        const QVariantList &verses, int maxLines = 4, const QVariantMap &definition = {});
-    Q_INVOKABLE bool addPresentation(const QVariantList &slides, const QString &title);
+    Q_INVOKABLE bool addSong(const QVariantMap &song, int maxLines = 3,
+        const QVariantMap &definition = {}, const QString &programId = QString());
+    Q_INVOKABLE bool addScripture(const QVariantList &verses, int maxLines = 4,
+        const QVariantMap &definition = {}, const QString &programId = QString());
+    Q_INVOKABLE bool addPresentation(
+        const QVariantList &slides, const QString &title, const QString &programId = QString());
     Q_INVOKABLE bool importPresentation(const QUrl &url);
-    Q_INVOKABLE bool addMedia(const QVariantMap &asset);
+    Q_INVOKABLE bool addMedia(const QVariantMap &asset, const QString &programId = QString());
     Q_INVOKABLE void moveItem(int delta);
+    Q_INVOKABLE bool moveItemTo(int from, int to);
     Q_INVOKABLE void removeSelected();
     Q_INVOKABLE void setItemDetails(const QString &title, const QString &notes);
     Q_INVOKABLE bool setArrangement(int index);
@@ -96,9 +98,11 @@ signals:
     void liveChanged();
 
 private:
-    bool append(QVariantMap item, const QVariantList &slides, const QString &error = QString());
+    bool append(QVariantMap item, const QVariantList &slides, const QString &error = QString(),
+        const QString &programId = QString());
     void replaceItem(const QVariantMap &item);
     void checkpoint();
+    void restoreSelection(const QString &itemId);
     void commit();
 
     void statusMessage(const QString &message) {

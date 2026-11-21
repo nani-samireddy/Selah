@@ -210,7 +210,7 @@ void runNdiCaptureChecks(NdiController &ndi, OutputManager &outputs, EditorDocum
         state->video = document.addMedia(QUrl::fromLocalFile(videoPath));
     }
     outputs.takeLive(document.slides(), 0);
-    if (!ndi.start("Church Deck Capture Check", 1280, 720, 30, false, true)) {
+    if (!ndi.start("Selah Capture Check", 1280, 720, 30, false, true)) {
         qCritical() << ndi.status();
         deferExit(40);
         return;
@@ -266,6 +266,13 @@ void runNdiCaptureChecks(NdiController &ndi, OutputManager &outputs, EditorDocum
             state->phase = 1;
             state->clock.restart();
         } else if (state->phase == 1 && !ndi.busy()) {
+            // Keep the antialiased-text probe independent of authored media.
+            auto slide = document.slides().first().toMap();
+            auto elements = slide["elements"].toList();
+            elements.removeIf(
+                [](const QVariant &element) { return element.toMap()["kind"] != "text"; });
+            slide["elements"] = elements;
+            outputs.takeLive({ slide }, 0);
             if (!ndi.start("Alpha check", 1280, 720, 30, true, true)) {
                 fail("Could not start overlay capture");
                 return;
@@ -320,6 +327,75 @@ void runNdiCaptureChecks(NdiController &ndi, OutputManager &outputs, EditorDocum
             if (!allTransparent(ndi.lastFrame())) {
                 fail("Clear text retained overlay pixels");
                 return;
+            }
+            outputs.clearText(false);
+            // An authored graphic has opaque, translucent, and uncovered regions.
+            QImage graphic(600, 120, QImage::Format_RGBA8888);
+            graphic.fill(Qt::transparent);
+            for (int y = 0; y < graphic.height(); ++y) {
+                for (int x = 0; x < 300; ++x) {
+                    graphic.setPixelColor(x, y, QColor(0, 255, 0, x < 150 ? 255 : 128));
+                }
+            }
+            const auto path = folder + "/overlay-graphic.png";
+            graphic.save(path);
+            QVariantList layers { QVariantMap { { "uid", "overlay-text" }, { "kind", "text" },
+                                      { "text", "Lower third" }, { "x", 300 }, { "y", 450 },
+                                      { "width", 600 }, { "height", 100 }, { "fontSize", 60 } },
+                QVariantMap { { "uid", "overlay-graphic" }, { "kind", "image" },
+                    { "source", QUrl::fromLocalFile(path).toString() }, { "x", 300 }, { "y", 600 },
+                    { "width", 600 }, { "height", 120 } } };
+            if (state->video) {
+                layers.append(QVariantMap { { "uid", "overlay-video" }, { "kind", "video" },
+                    { "source", QUrl::fromLocalFile(folder + "/test-loop.mp4").toString() },
+                    { "x", 1200 }, { "y", 600 }, { "width", 480 }, { "height", 270 } });
+            }
+            outputs.takeLive({ QVariantMap { { "elements", layers }, { "background", "#FF00FF" },
+                                 { "ambientOpacity", 1.0 } } },
+                0);
+            state->phase = 8;
+            state->clock.restart();
+        } else if (state->phase == 8 && age > 1500) {
+            const auto frame = ndi.lastFrame();
+            const auto opaque = frame.pixelColor(230, 430);
+            const auto translucent = frame.pixelColor(330, 430);
+            if (opaque != QColor(0, 255, 0) || qAbs(translucent.alpha() - 128) > 2
+                || translucent.green() < 250 || frame.pixelColor(500, 430).alpha() != 0
+                || frame.pixelColor(0, 0).alpha() != 0) {
+                fail("Transparent canvas lost authored graphic alpha or retained its base fill");
+                return;
+            }
+            if (state->video) {
+                bool decoded = false;
+                for (const auto &v : ndi.rendererProbe()) {
+                    const auto layer = v.toMap();
+                    if (layer["uid"] == "overlay-video") {
+                        decoded = layer["frames"].toInt() > 3 && layer["position"].toInt() > 500;
+                    }
+                }
+                if (!decoded || frame.pixelColor(900, 450).alpha() != 255) {
+                    fail("Transparent canvas excluded video");
+                    return;
+                }
+            }
+            frame.save(folder + "/ndi-transparent-canvas.png");
+            state->report["transparentCanvasMediaAndAlphaVerified"] = true;
+            outputs.clearText(true);
+            state->phase = 9;
+            state->clock.restart();
+        } else if (state->phase == 9 && age > 350) {
+            const auto frame = ndi.lastFrame();
+            if (frame.pixelColor(230, 430) != QColor(0, 255, 0)) {
+                fail("Clear text incorrectly hid graphic layers");
+                return;
+            }
+            for (int y = 300; y < 365; ++y) {
+                for (int x = 200; x < 600; ++x) {
+                    if (frame.pixelColor(x, y).alpha() != 0) {
+                        fail("Clear text retained lower-third text");
+                        return;
+                    }
+                }
             }
             outputs.clearText(false);
             ndi.setBlackout(true);

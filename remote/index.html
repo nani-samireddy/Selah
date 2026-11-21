@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><title>Church Deck Remote</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><title>Selah Remote</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
 <body>
-<header><a href="/" class="brand">◉ <span>church deck</span></a><span id="connection" role="status">Not paired</span></header>
+<header><a href="/" class="brand">◉ <span>Selah</span></a><span id="connection" role="status">Not paired</span></header>
 <main>
 <section id="pairing" class="pairing"><div class="eyebrow">LOCAL NETWORK REMOTE</div><h1>Your service.<br>Within reach.</h1><p>Connect to the same Wi-Fi as the presentation computer. Enter the code shown in Outputs → Remote.</p><form id="pairForm"><label for="name">Device name</label><input id="name" maxlength="60" placeholder="e.g. Worship leader’s phone" autocomplete="nickname"><label for="code">Pairing code</label><input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off" placeholder="000000"><button class="primary" id="connect">Connect</button></form><p id="pairError" role="alert"></p><small>Use a trusted local network. The connection uses HTTP.</small></section>
 <section id="remote" hidden><div class="service"><div><div id="role" class="eyebrow"></div><h1 id="programTitle">Live presentation</h1></div><button id="disconnect" class="subtle">Disconnect</button></div>

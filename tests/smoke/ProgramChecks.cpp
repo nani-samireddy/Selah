@@ -30,7 +30,7 @@ void runProgramChecks(ProgramStore &programs, ContentLibrary &library, EditorDoc
         return;
     }
     QVariantMap song { { "title", "Together in hope / ఆశతో కలిసి" }, { "primaryLanguage", "English" },
-        { "secondaryLanguage", "తెలుగు" }, { "credits", "Church Deck · Original test lyrics" },
+        { "secondaryLanguage", "తెలుగు" }, { "credits", "Selah · Original test lyrics" },
         { "sections",
             QVariantList {
                 QVariantMap { { "key", "v1" }, { "label", "Verse 1" },

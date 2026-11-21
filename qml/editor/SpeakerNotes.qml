@@ -10,15 +10,15 @@ Rectangle {
     property bool expanded: false
 
     height: expanded ? 69 : 32
-    color: "#181818"
-    border.color: "#2D2D2D"
+    color: LibraryStyle.tone("#181818")
+    border.color: LibraryStyle.tone("#2D2D2D")
     radius: 7
 
     Text {
         x: 13
         y: 10
         text: "SPEAKER NOTES"
-        color: "#747474"
+        color: LibraryStyle.tone("#747474")
         font.pixelSize: 9
         font.letterSpacing: 1
     }
@@ -38,9 +38,9 @@ Rectangle {
         visible: notesBox.expanded
         text: notesBox.host.doc.notes
         placeholderText: "Add a note for the speaker…"
-        placeholderTextColor: "#626262"
+        placeholderTextColor: LibraryStyle.tone("#626262")
         font.pixelSize: 11
-        color: "#BBBBBB"
+        color: LibraryStyle.tone("#BBBBBB")
         selectByMouse: true
 
         background: Item {

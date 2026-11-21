@@ -1,49 +1,134 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
+import QtQml.Models
 import QtQuick.Layouts
 
-// Reflects document layer order and delegates every persistent edit to the document model.
+// Frontmost layers appear first. The document remains the owner of stacking order.
 StudioPanel {
-    id: layersPanel
+    id: panel
 
     required property var host
+    property bool listReady: false
+
+    // Reconcile by UID so editing text never destroys a row holding a drag gesture.
+    function syncSelection() {
+        const selected = host.doc.selected;
+        layerView.currentIndex = selected < 0 ? -1 : layerRows.count - 1 - selected;
+    }
+
+    function syncLayers() {
+        if (!listReady)
+            return;
+        const incoming = host.doc.elements.slice().reverse();
+        let keys = [];
+        for (let i = 0; i < layerRows.count; i++)
+            keys.push(layerRows.get(i).key);
+        for (let i = 0; i < incoming.length; i++) {
+            const record = incoming[i], position = keys.indexOf(record.uid, i);
+            if (position < 0) {
+                layerRows.insert(i, {
+                                     key: record.uid,
+                                     record: record
+                                 });
+                keys.splice(i, 0, record.uid);
+            } else {
+                if (position !== i) {
+                    layerRows.move(position, i, 1);
+                    keys.splice(i, 0, keys.splice(position, 1)[0]);
+                }
+                if (JSON.stringify(layerRows.get(i).record) !== JSON.stringify(record))
+                    layerRows.setProperty(i, "record", record);
+            }
+        }
+        if (layerRows.count > incoming.length)
+            layerRows.remove(incoming.length, layerRows.count - incoming.length);
+        // Let ListView finish its model update before selecting a newly created row.
+        Qt.callLater(panel.syncSelection);
+    }
 
     x: 18
     y: 20
     width: 218
-    height: Math.min(520, layersContent.implicitHeight + 18)
+    height: Math.max(140, Math.min(520, parent.height - 40, 150 + host.doc.elements.length * 38))
+
+    Component.onCompleted: {
+        listReady = true;
+        syncLayers();
+    }
+
+    ListModel {
+        id: layerRows
+
+        dynamicRoles: true
+    }
+
+    Connections {
+        function onChanged() {
+            panel.syncLayers();
+        }
+
+        function onSelectionChanged() {
+            Qt.callLater(panel.syncSelection);
+        }
+
+        target: panel.host.doc
+    }
 
     ColumnLayout {
-        id: layersContent
-
+        anchors.fill: parent
+        anchors.margins: 10
         spacing: 8
-
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            margins: 10
-        }
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.margins: 3
+            spacing: 2
 
             Text {
                 text: "Layers"
-                color: "#E4E4E4"
+                color: LibraryStyle.text
                 font.pixelSize: 12
                 Layout.fillWidth: true
             }
 
-            StudioButton {
+            LayerAction {
+                iconName: "chevron-up"
+                hint: "Bring selected layer forward"
+                enabled: panel.host.doc.selected >= 0 && panel.host.doc.selected
+                         < panel.host.doc.elements.length - 1
+
+                onClicked: panel.host.doc.moveSelected(1)
+            }
+
+            LayerAction {
+                iconName: "chevron-down"
+                hint: "Send selected layer backward"
+                enabled: panel.host.doc.selected > 0
+
+                onClicked: panel.host.doc.moveSelected(-1)
+            }
+
+            LayerAction {
+                iconName: "copy"
+                hint: "Duplicate selected layer"
+                enabled: panel.host.doc.selected >= 0
+
+                onClicked: panel.host.doc.duplicateSelected()
+            }
+
+            LayerAction {
+                iconName: "trash-2"
+                hint: "Delete selected layer"
+                enabled: panel.host.doc.selected >= 0
+
+                onClicked: panel.host.doc.deleteSelected()
+            }
+
+            LayerAction {
                 iconName: "plus"
-                implicitHeight: 26
-                implicitWidth: 26
-                quiet: true
                 hint: "Add text layer"
 
-                onClicked: layersPanel.host.doc.addText()
+                onClicked: panel.host.doc.addText()
             }
         }
 
@@ -52,28 +137,18 @@ StudioPanel {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.topMargin: 5
-            Layout.bottomMargin: 5
-
-            StudioIcon {
-                name: "chevron-down"
-                tone: "#7B7B7B"
-                Layout.preferredWidth: 12
-                Layout.preferredHeight: 12
-            }
 
             StudioIcon {
                 name: "layers"
-                tone: "#9E9E9E"
-                Layout.preferredWidth: 14
-                Layout.preferredHeight: 14
+                tone: LibraryStyle.muted
             }
 
             Text {
-                text: layersPanel.host.doc.slides[layersPanel.host.doc.currentSlide].name
-                elide: Text.ElideRight
-                color: "#C1C1C1"
+                text: panel.host.doc.slides[panel.host.doc.currentSlide].name
+                textFormat: Text.PlainText
+                color: LibraryStyle.muted
                 font.pixelSize: 11
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
 
@@ -84,154 +159,138 @@ StudioPanel {
             }
         }
 
-        Repeater {
-            model: layersPanel.host.doc.elements
-
-            delegate: Rectangle {
-                id: layerRow
-
-                required property var modelData
-                required property int index
-
-                Layout.fillWidth: true
-                implicitHeight: 36
-                radius: 5
-                color: layersPanel.host.doc.selected === index ? "#343434" :
-                                                                 layerMouse.containsMouse
-                                                                 ? "#242424" : "transparent"
-                border.width: layersPanel.host.doc.selected === index ? 1 : 0
-                border.color: "#494949"
-
-                MouseArea {
-                    id: layerMouse
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-
-                    onClicked: layersPanel.host.doc.selected = layerRow.index
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 4
-                    spacing: 8
-
-                    StudioIcon {
-                        name: layerRow.modelData.kind === "image" ? "image" :
-                                                                    layerRow.modelData.kind
-                                                                    === "video" ? "play" : "type"
-                        tone: "#909090"
-                        Layout.preferredWidth: 14
-                        Layout.preferredHeight: 14
-                    }
-
-                    Text {
-                        text: layerRow.modelData.name
-                        color: layersPanel.host.doc.selected === layerRow.index ? "#F1F1F1" :
-                                                                                  "#ADADAD"
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    StudioButton {
-                        iconName: layerRow.modelData.visible ? "eye" : "eye-off"
-                        quiet: true
-                        implicitWidth: 23
-                        implicitHeight: 25
-                        hint: "Toggle layer visibility"
-
-                        onClicked: layersPanel.host.doc.updateElement(layerRow.index, {
-                                                                          visible:
-                                                                              !layerRow.modelData.visible
-                                                                      })
-                    }
-                }
-            }
-        }
-
-        Rectangle {
+        Item {
             Layout.fillWidth: true
-            implicitHeight: 35
-            color: "transparent"
+            Layout.fillHeight: true
 
-            MouseArea {
+            ListView {
+                id: layerView
+
+                objectName: "layerOrderList"
                 anchors.fill: parent
+                model: layerRows
+                currentIndex: -1
+                spacing: 2
+                clip: true
+                cacheBuffer: layerDrag.dragging ? contentHeight : height
+                boundsBehavior: Flickable.StopAtBounds
 
-                onClicked: {
-                    layersPanel.host.doc.selected = -1;
-                    layersPanel.host.showBackgroundPicker();
+                ScrollBar.vertical: ScrollBar {
                 }
+                delegate: Rectangle {
+                    id: row
+
+                    required property var record
+                    required property int index
+                    readonly property var modelData: record
+                    readonly property int sourceIndex: panel.host.doc.elements.length - 1 - index
+                    readonly property bool selected: panel.host.doc.selected === sourceIndex
+
+                    width: layerView.width
+                    height: 36
+                    radius: 5
+                    color: selected ? LibraryStyle.tone("#343434") : mouse.containsMouse
+                                      ? LibraryStyle.hover : "transparent"
+                    border.width: selected ? 1 : 0
+                    border.color: LibraryStyle.border
+                    opacity: layerDrag.dragging && layerDrag.sourceId === modelData.uid ? 0.3 : 1
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: row.modelData.name
+                    Accessible.selected: row.selected
+
+                    Accessible.onPressAction: panel.host.doc.selected = row.sourceIndex
+
+                    MouseArea {
+                        id: mouse
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        preventStealing: true
+                        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+
+                        onPressed: event => layerDrag.arm(row.index, mapToItem(layerDrag, event.x,
+                                                                               event.y))
+                        onPositionChanged: event => {
+                            if (pressed)
+                                layerDrag.update(mapToItem(layerDrag, event.x, event.y));
+                        }
+                        onReleased: layerDrag.finish()
+                        onCanceled: layerDrag.cancel()
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 4
+                        spacing: 7
+
+                        StudioIcon {
+                            name: row.modelData.kind === "image" ? "image" : row.modelData.kind === "video"
+                                                                   ? "play" : "type"
+                            tone: LibraryStyle.muted
+                        }
+
+                        Text {
+                            text: row.modelData.name
+                            textFormat: Text.PlainText
+                            color: row.selected ? LibraryStyle.text : LibraryStyle.muted
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+
+                        LayerAction {
+                            iconName: row.modelData.visible ? "eye" : "eye-off"
+                            hint: row.modelData.visible ? "Hide " + row.modelData.name : "Show "
+                                                          + row.modelData.name
+
+                            onClicked: panel.host.doc.updateElement(row.sourceIndex, {
+                                                                        visible:
+                                                                            !row.modelData.visible
+                                                                    })
+                        }
+                    }
+                }
+
+                Keys.onUpPressed: panel.host.doc.selected = panel.host.doc.selected < 0 ? count - 1 :
+                                                                                          Math.min(count
+                                                                                                   - 1, panel.host.doc.selected
+                                                                                                   + 1)
+                Keys.onDownPressed: panel.host.doc.selected = panel.host.doc.selected < 0 ? count - 1 :
+                                                                                            Math.max(0,
+                                                                                                     panel.host.doc.selected
+                                                                                                     - 1)
             }
 
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
-                x: 12
-                spacing: 10
+            LayerOrderDrag {
+                id: layerDrag
 
-                StudioIcon {
-                    name: "image"
-                    tone: "#909090"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Text {
-                    text: "Ambient background"
-                    color: "#888888"
-                    font.pixelSize: 11
-                }
+                anchors.fill: parent
+                view: layerView
+                host: panel.host
             }
         }
 
         StudioRule {
         }
 
-        RowLayout {
+        LibraryButton {
+            text: "Background"
+            iconName: "image"
+            quiet: true
             Layout.fillWidth: true
+            hint: "Edit canvas background color"
 
-            StudioButton {
-                text: "Lower"
-                quiet: true
-                enabled: layersPanel.host.doc.selected > 0
-                Layout.fillWidth: true
-                hint: "Move selected layer backward"
-
-                onClicked: layersPanel.host.doc.moveSelected(-1)
-            }
-
-            StudioButton {
-                text: "Raise"
-                quiet: true
-                enabled: layersPanel.host.doc.selected >= 0 && layersPanel.host.doc.selected
-                         < layersPanel.host.doc.elements.length - 1
-                Layout.fillWidth: true
-                hint: "Move selected layer forward"
-
-                onClicked: layersPanel.host.doc.moveSelected(1)
+            onClicked: {
+                panel.host.doc.selected = -1;
+                panel.host.showBackgroundPicker();
             }
         }
+    }
 
-        RowLayout {
-            Layout.fillWidth: true
-
-            StudioButton {
-                text: "Duplicate"
-                quiet: true
-                enabled: layersPanel.host.doc.selected >= 0
-                Layout.fillWidth: true
-
-                onClicked: layersPanel.host.doc.duplicateSelected()
-            }
-
-            StudioButton {
-                text: "Delete"
-                quiet: true
-                enabled: layersPanel.host.doc.selected >= 0
-                Layout.fillWidth: true
-
-                onClicked: layersPanel.host.doc.deleteSelected()
-            }
-        }
+    component LayerAction: StudioButton {
+        implicitWidth: 24
+        implicitHeight: 26
+        quiet: true
     }
 }

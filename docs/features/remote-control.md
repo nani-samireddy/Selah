@@ -1,6 +1,6 @@
 # Local-network remote control
 
-Church Deck serves a bundled, responsive browser controller from its native Qt application. No remote account, cloud service, Electron process or internet assets are required. The desktop editor remains Qt Quick.
+Selah serves a bundled, responsive browser controller from its native Qt application. No remote account, cloud service, Electron process or internet assets are required. The desktop editor remains Qt Quick.
 
 ## Pair a phone or tablet
 
@@ -45,7 +45,7 @@ The standalone test runner exercises actual loopback HTTP: bundled assets, authe
 For interactive browser checks, run the isolated diagnostic fixture:
 
 ```sh
-build/church-deck.app/Contents/MacOS/church-deck --fresh --remote-demo "$PWD/captures/remote"
+build/Selah.app/Contents/MacOS/Selah --fresh --remote-demo "$PWD/captures/remote"
 ```
 
 It binds only `127.0.0.1`, publishes an original four-slide Telugu/English/Hindi fixture, opens the desktop pairing panel and writes a test-only `connection.json`, QR PNG and desktop screenshot. It stays running until closed. Treat its generated codes as ephemeral diagnostic data; do not commit captures.

@@ -22,7 +22,7 @@ ScrollView {
 
         Text {
             text: liveControls.programView.store.live ? "LIVE PROGRAM" : "LIVE OUTPUT"
-            color: liveControls.programView.store.live ? "#ABD3BC" : "#888888"
+            color: liveControls.programView.store.live ? "#ABD3BC" : LibraryStyle.tone("#888888")
             font.pixelSize: 10
             font.letterSpacing: 1
         }
@@ -40,7 +40,7 @@ ScrollView {
 
                 Text {
                     text: liveCard.index === 0 ? "Current" : "Next"
-                    color: "#999999"
+                    color: LibraryStyle.tone("#999999")
                     font.pixelSize: 11
                 }
 
@@ -49,8 +49,8 @@ ScrollView {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: width * 9 / 16
-                    color: "#111111"
-                    border.color: "#353535"
+                    color: LibraryStyle.tone("#111111")
+                    border.color: LibraryStyle.tone("#353535")
                     radius: 5
                     clip: true
 
@@ -78,7 +78,7 @@ ScrollView {
                                                   liveControls.programView.controller.nextTitle)
                           || "No slide"
                     font.pixelSize: 11
-                    color: "#AAAAAA"
+                    color: LibraryStyle.tone("#AAAAAA")
                     elide: Text.ElideRight
                 }
             }
@@ -92,7 +92,7 @@ ScrollView {
                                                         + liveControls.programView.controller.liveCount :
                                                         "Take a program slide live to start."
             font.pixelSize: 11
-            color: "#999999"
+            color: LibraryStyle.tone("#999999")
             wrapMode: Text.Wrap
         }
 
@@ -121,7 +121,7 @@ ScrollView {
 
         Text {
             text: "← Previous   ·   → / Space Next\nHome / End   ·   First / last slide"
-            color: "#777777"
+            color: LibraryStyle.tone("#777777")
             font.pixelSize: 10
             lineHeight: 1.5
         }
@@ -129,7 +129,7 @@ ScrollView {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: "#333333"
+            color: LibraryStyle.tone("#333333")
         }
 
         StudioButton {
@@ -168,7 +168,7 @@ ScrollView {
         Text {
             Layout.fillWidth: true
             text: "Library and draft edits stay off the live service until taken live again."
-            color: "#888888"
+            color: LibraryStyle.tone("#888888")
             font.pixelSize: 11
             wrapMode: Text.Wrap
         }

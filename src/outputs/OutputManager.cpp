@@ -275,6 +275,7 @@ void OutputManager::takeLive(const QVariantList &slides, int index, const QStrin
     m_liveSlides = slides;
     m_index = index;
     m_playing = true;
+    emit snapshotChanged();
     emit liveChanged();
     emit stateChanged();
 }
@@ -362,4 +363,15 @@ void OutputManager::startCountdown(int minutes) {
 void OutputManager::stopCountdown() {
     m_timer.stop();
     emit stateChanged();
+}
+
+QVariantList OutputManager::liveOrder() const {
+    QVariantList result;
+    for (int index = 0; index < m_liveSlides.size(); ++index) {
+        const auto slide = m_liveSlides[index].toMap();
+        result.append(QVariantMap { { "index", index }, { "title", slide.value("name") },
+            { "itemId", slide.value("programItemId") },
+            { "itemTitle", slide.value("programItemTitle") } });
+    }
+    return result;
 }

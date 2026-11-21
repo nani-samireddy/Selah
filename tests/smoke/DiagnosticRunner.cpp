@@ -12,6 +12,7 @@
 #include "SlideFactory.h"
 #include "TemplateChecks.h"
 #include "TemplateStore.h"
+#include "WorkspaceChecks.h"
 #include <QDebug>
 #include <QDir>
 #include <QFontDatabase>
@@ -33,6 +34,18 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
             window->setWidth(1120);
             window->setHeight(760);
         }
+    }
+    int workspaceIndex = app.arguments().indexOf("--workspace-smoke");
+    const bool workspaceDemo = app.arguments().contains("--workspace-demo");
+    if (workspaceDemo) {
+        workspaceIndex = app.arguments().indexOf("--workspace-demo");
+    }
+    if (workspaceIndex >= 0) {
+        if (workspaceIndex + 1 >= app.arguments().size()) {
+            return 209;
+        }
+        runWorkspaceChecks(content, document, outputs, programs, engine,
+            app.arguments()[workspaceIndex + 1], workspaceDemo);
     }
     const int remoteIndex = app.arguments().indexOf("--remote-demo");
     if (remoteIndex >= 0) {

@@ -5,19 +5,21 @@ import QtQuick.Controls
 ComboBox {
     id: box
 
-    implicitHeight: 32
+    implicitHeight: LibraryStyle.controlHeight
+    font.weight: Font.Normal
     font.pixelSize: 12
 
     background: Rectangle {
         radius: 5
-        color: box.hovered ? "#2D2D2D" : "#252525"
-        border.color: box.activeFocus ? "#888888" : "#383838"
+        color: box.hovered ? LibraryStyle.tone("#2D2D2D") : LibraryStyle.tone("#252525")
+        border.color: box.activeFocus ? LibraryStyle.tone("#888888") : LibraryStyle.tone("#383838")
     }
     contentItem: Text {
+        renderType: Text.QtRendering
         leftPadding: 10
         rightPadding: 26
         text: box.displayText
-        color: "#D6D6D6"
+        color: LibraryStyle.tone("#D6D6D6")
         font: box.font
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -26,7 +28,7 @@ ComboBox {
         name: "chevron-down"
         x: box.width - 24
         y: (box.height - height) / 2
-        tone: "#8B8B8B"
+        tone: LibraryStyle.tone("#8B8B8B")
     }
     delegate: ItemDelegate {
         id: optionDelegate
@@ -37,13 +39,15 @@ ComboBox {
         height: 32
 
         contentItem: Text {
+            renderType: Text.QtRendering
             text: optionDelegate.modelData
-            color: "#DEDEDE"
+            color: LibraryStyle.tone("#DEDEDE")
             font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
         }
         background: Rectangle {
-            color: optionDelegate.hovered ? "#383838" : "#242424"
+            color: optionDelegate.hovered ? LibraryStyle.tone("#383838") : LibraryStyle.tone(
+                                                "#242424")
         }
     }
     popup: Popup {
@@ -53,9 +57,9 @@ ComboBox {
         implicitHeight: Math.min(240, contentItem.implicitHeight + 8)
 
         background: Rectangle {
-            color: "#242424"
+            color: LibraryStyle.tone("#242424")
             radius: 7
-            border.color: "#444444"
+            border.color: LibraryStyle.tone("#444444")
         }
         contentItem: ListView {
             clip: true

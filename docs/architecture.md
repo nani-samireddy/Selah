@@ -1,6 +1,6 @@
 # Architecture
 
-Church Deck is a native Qt Quick application. QML owns views and transient interaction state. C++ models own persisted data, validation and live state. An optional Qt Network HTTP server supplies a bundled browser remote on a selected private IPv4 interface; the editor itself remains native. There is no cloud dependency.
+Selah is a native Qt Quick application. QML owns views and transient interaction state. C++ models own persisted data, validation and live state. An optional Qt Network HTTP server supplies a bundled browser remote on a selected private IPv4 interface; the editor itself remains native. There is no cloud dependency.
 
 ## Build boundaries
 
@@ -42,6 +42,8 @@ NDI rendering stays on the GUI thread. Readback frames are handed to `NdiWorker`
 `SlideRenderer`, `SlideLayer` and `MediaLayer` are shared by editor previews and outputs. Reconciliation uses element IDs to preserve media delegates through unrelated edits. Duplicated/imported snapshots receive fresh IDs. Thumbnail views disable video decoding.
 
 ## QML composition
+
+The shell has persistent Programs, Libraries, Design and Present workspaces under `qml/workspaces`. Programs opens by default. Main owns transitions and content destinations; existing content panels share workspace and contextual-picker modes. Present reads the copied live order, independently of the current program selection. See the [workspace guide](features/workspaces.md).
 
 `qml/app/Main.qml` wires required model properties, application dialogs, shortcuts and top-level windows. `EditorWorkspace` handles panel placement; canvas, inspector, layers, notes, strip and dock are separate files. Programs separates order, selected-item editing and live controls. Shared controls belong in `qml/controls`, while the renderer must remain usable without operator widgets.
 

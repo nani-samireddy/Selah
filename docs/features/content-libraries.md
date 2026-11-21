@@ -8,7 +8,7 @@ Create a song, enter its title, language names, attribution and optional tags. E
 
 Type section keys into the arrangement in presentation order, for example `v1 c1 v2 c1`. Keys may repeat. **+ Arrangement** creates a named alternative using the same lyrics. Save stores all alternatives and the selected arrangement. **Add slides** saves and appends the selected arrangement as one undoable operation. Line count is a maximum: shaping, available space and long-line wrapping may produce fewer lines per page. Generated slides include credits and remain editable.
 
-Unsaved drafts survive switching between songs and closing/reopening the library within the current app session. Save before quitting the app. The library starts with no copyrighted song lyrics. Import/export currently supports Church Deck JSON, not OpenLyrics, SongSelect, ProPresenter or FreeShow formats.
+Unsaved drafts survive switching between songs and closing/reopening the library within the current app session. Save before quitting the app. The library starts with no copyrighted song lyrics. Import/export currently supports Selah JSON, not OpenLyrics, SongSelect, ProPresenter or FreeShow formats.
 
 Song exchange example:
 
@@ -73,9 +73,47 @@ Book IDs use the standard 66-book USFM codes; localized book names are optional.
 ```sh
 ctest --test-dir build --output-on-failure
 cmake --build build --target church-deck_qmllint
-build/church-deck.app/Contents/MacOS/church-deck --fresh --content-smoke "$PWD/captures/content"
+build/Selah.app/Contents/MacOS/Selah --fresh --content-smoke "$PWD/captures/content"
 ```
 
 The smoke run uses a separate verification profile and original sample lyrics, opens both native panels, searches Telugu, generates slides, verifies atomic undo/redo and renders a Telugu audience output. It does not edit the normal user's library or recovery file. Rebuild the checked-in seed using `python3 scripts/prepare-scriptures.py` (network required only for initial source downloads). The application itself does not require a network connection for library use.
 
 Programs are now implemented; see [PROGRAMS.md](programs.md). Reusable template population is also implemented; see [templates](templates.md). Song/Bible synchronization with external providers, transliteration, bilingual Bible slides and app-wide localization remain separate work.
+
+Song language fields use dropdowns covering English and the 22 scheduled Indian languages. Imported language names remain selectable. The optional second language has an explicit single-language choice. The most recently chosen pair and up to six recent languages are stored in the local `SongLanguages` settings category. New songs inherit these choices; opening an existing song keeps its saved languages.
+
+## Song overview
+
+All sections are shown as cards in a continuous overview. Single-language songs use two columns when space permits; bilingual sections pair the primary and translated lyrics within each card. Editors expand with their content instead of hiding long lyrics behind an inner scroll area. Section names remain visible; the Details toggle exposes names, credits, and tags for editing.
+
+Song order uses named section chips. Add a section to repeat it; a chip's action menu edits its lyrics, moves it earlier/later, or removes that occurrence from the order. Removing an occurrence leaves its lyrics available in the section overview. Alternate named orders remain available.
+
+## Bible navigation
+
+The sidebar contains translation/book dropdowns, a chapter grid, and a verse-number grid. Choosing a book opens chapter one. The reading area shows the complete chapter, and verse-grid navigation scrolls to and highlights that verse. Grid clicks select that verse for addition; the main verse cards support a multiple-verse selection. Search remains available and does not replace the chapter/verse navigation. Large chapter and verse grids scroll independently to keep both available in the sidebar.
+
+### Song tags
+
+Tags are visible below the song languages as removable chips. Type a tag and press Enter or click +; commas, semicolons, and line breaks separate multiple tags. Spaces remain part of a label, so “Holy Spirit” is one tag. Existing library tags are suggested as you type. Save song persists edits; export/import includes the tags.
+
+The sidebar tag filter matches a complete tag, without case sensitivity, and combines with the text search. Text search also matches tags. Song rows show their saved tags. Multilingual labels are Unicode-normalized and duplicate labels are removed. Clearing the last use of a tag removes it from suggestions and filters. Older string metadata and imported tag arrays remain compatible; storage uses a comma-separated string inside the existing song JSON, with no database migration.
+
+### Custom slides
+
+Libraries → Custom slides catalogs named custom presentations separately from songs, scripture, media, and templates. New presentation creates a blank slide and opens it in Design. Edit opens one saved presentation in the same editor. The editor no longer offers a Design/Template mode switch: its context comes from the item opened in Libraries.
+
+Save presentation updates that library entry; Save a copy creates another entry. Uncataloged drafts and program items can be saved through Save to library. The selected custom presentation's ID/name are remembered with local preferences alongside the existing recovery document. Templates retain their own Save template flow.
+
+Add to program copies the saved slides into the currently open program. Editing the library source later does not modify that prepared program or live output. Custom presentations persist in the local `presentations.sqlite` database using validated slide JSON; editor recovery and exported `.churchdeck` files remain separate.
+
+### Add to a program
+
+Songs, Bible passages, media, and custom presentations use a shared split button labeled **Add to program: {program title}**. It defaults to the currently open program. The primary action adds to the displayed destination; the arrow lists the other saved programs, with dates to distinguish matching titles. Choosing a menu entry immediately adds the item there and updates the button's destination.
+
+Adding to another program keeps the library open and leaves the current program's selection, pending edits, undo history, and live output intact. The destination is saved atomically without changing the last-opened program preference. An add to the current program keeps the usual undo behavior. Switching the open program resets the split button's destination to that program.
+
+### Quick Song
+
+Quick Song opens a modal with only Name, Lyrics, and Tags. A blank line (including whitespace-only lines) starts a new section; single line breaks remain inside the section. Consecutive gaps do not create empty sections. Sections are named Section 1, Section 2, and so on, with a default song order that includes each section once. Windows, Unix, and legacy Mac line endings are accepted.
+
+Saving creates a normal library song and opens it in the full song editor for later refinement. Tags entered without pressing + are included on Save. Quick Song uses the most recently chosen primary language and starts as a single-language song. Cancel leaves the existing song and library unchanged. It does not add anything to a program or alter live output.

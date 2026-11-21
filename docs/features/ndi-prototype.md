@@ -6,7 +6,7 @@ The offscreen capture path is implemented and tested on this Mac. The network ba
 
 - Shared live slide rendering through `QQuickRenderControl`, with no visible/native capture window or assigned monitor.
 - Metal GPU composition and CPU readback at 1280×720 or 1920×1080. The UI accepts 30 or 60 fps; only 30 fps has been checked.
-- Full slides, including decoded video, or transparent text-only overlays.
+- Full slides, including decoded video, or transparent-canvas overlays preserving all authored text, images, video, and graphics.
 - Explicit conversion from premultiplied GPU pixels to straight RGBA for NDI. Channel order, vertical orientation, transparent corners, antialiased text, clear text, and transparent blackout have automated pixel checks.
 - Grayscale text antialiasing to prevent LCD color fringes in transparent broadcast text. The setting applies consistently across the application.
 - A dedicated sender thread with one pending frame and one frame in flight. Superseded pending frames are dropped instead of accumulating latency or memory.
@@ -19,11 +19,13 @@ The first implementation uses CPU readback, and synchronizes/renders on the GUI 
 
 1. Take a slide live with **Go live**.
 2. Open **Outputs → NDI network output → Configure prototype**.
-3. Choose Full slide or Transparent text, resolution, and frame rate.
+3. Choose Full slide or Transparent canvas, resolution, and frame rate.
 4. Choose **Test capture**. The status explicitly says no network transmission.
 5. Stop when finished. Closing the panel leaves capture running; closing the app stops it.
 
 The hardware rendering path uses Qt's `GuiPrivate` QRhi API. It must be rebuilt and packaged with the **same Qt build** used to compile it. The tested development installation is Qt 6.12.0; private QRhi APIs have no cross-version binary compatibility guarantee. Software-only Qt Quick rendering is not supported by this capture prototype.
+
+Transparent canvas removes the slide’s base color and ambient background. Authored layers keep their position, stacking, opacity, and intrinsic transparency. An opaque full-canvas image or video covers the canvas; use transparent artwork or smaller media layers for lower thirds. Clear text hides only text, while Blackout clears the entire transparent output.
 
 ## Enable actual NDI sending
 
@@ -52,7 +54,8 @@ The script uses FFmpeg only to generate the video fixture. Capture itself uses Q
 
 - `captures/ndi-prototype-report.json`: measured capture-only results, detected displays, and explicit SDK/network/hot-plug validation flags.
 - `captures/ndi-full-720.png`, `ndi-full-1080.png`: actual offscreen frames.
-- `captures/ndi-transparent-text.png`: actual straight-alpha overlay.
+- `captures/ndi-transparent-text.png`: straight-alpha text check.
+- `captures/ndi-transparent-canvas.png`: transparent canvas with text, an alpha graphic, and video.
 - `captures/ndi-settings.png`: prototype controls.
 
 The queue test deliberately stalls the consumer and checks bounded storage, frame dropping, and shutdown. It does not simulate an NDI protocol or claim SDK interoperability.
@@ -60,7 +63,7 @@ The queue test deliberately stalls the consumer and checks bounded storage, fram
 For real display routing (temporarily shows test output on a non-operator display):
 
 ```sh
-build/church-deck.app/Contents/MacOS/church-deck --fresh --physical-smoke "$PWD/captures"
+build/Selah.app/Contents/MacOS/Selah --fresh --physical-smoke "$PWD/captures"
 ```
 
 This checks audience and stage fullscreen **sequentially** on the second display, audience blackout, operator screen retention, and concurrent offscreen capture. Results go to `captures/physical-display-report.json`. It skips if no non-operator screen is available. It does not physically disconnect a cable or test three simultaneous screens.

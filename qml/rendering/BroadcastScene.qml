@@ -23,7 +23,8 @@ Item {
         backgroundColor: scene.controller.liveBackground
         ambientOpacity: scene.controller.liveAmbientOpacity
         transparentBackground: scene.overlayOnly
-        textOnly: scene.overlayOnly
+        // Only the canvas fill is removed; every authored layer keeps its own alpha.
+        textOnly: false
         clearText: scene.controller.textCleared
         playing: scene.controller.playing
         audible: false

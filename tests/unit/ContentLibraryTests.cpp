@@ -58,6 +58,34 @@ int ContentLibrary::selfTest() {
     if (!library.exportSong(id, file) || !library.importSong(file) || library.songs().size() != 2) {
         return 7;
     }
+    auto tagged = library.song(id);
+    tagged["tags"] = " Worship, Holy Spirit, ఆరాధన, worship ;  ";
+    if (library.saveSong(tagged) != id
+        || library.parseSongTags(library.song(id)["tags"])
+            != QStringList { "Worship", "Holy Spirit", "ఆరాధన" }
+        || library.searchSongs("", "WORSHIP").size() != 1
+        || library.searchSongs("పాడుదము", "ఆరాధన").size() != 1
+        || !library.searchSongs("", "Holy").isEmpty()
+        || !library.searchSongs("missing lyric", "Worship").isEmpty()
+        || !library.songTags().contains("Holy Spirit")) {
+        return 11;
+    }
+    // Structured imports and older comma-separated metadata share the same persistent format.
+    tagged["tags"] = QVariantList { "Praise", "praise", "Holy Spirit" };
+    if (library.saveSong(tagged) != id
+        || library.parseSongTags(library.song(id)["tags"])
+            != QStringList { "Praise", "Holy Spirit" }
+        || !library.exportSong(id, file) || !library.importSong(file)
+        || library.searchSongs("", "Praise").size() != 2) {
+        return 12;
+    }
+    {
+        ContentLibrary reopened(nullptr, directory.path());
+        if (reopened.searchSongs("", "holy spirit").size() != 2
+            || reopened.songTags().contains("Worship")) {
+            return 13;
+        }
+    }
     if (library.searchVerses("engwebp", "John 3:16-18").size() != 3
         || !library.searchVerses("engwebp", "John 3:18-16").isEmpty()) {
         return 8;
@@ -90,6 +118,24 @@ int ContentLibrary::selfTest() {
         || library.translations().size() != 4
         || library.searchVerses("test", "original import").size() != 1) {
         return 10;
+    }
+    const auto quickId = library.createQuickSong("Quick Telugu song",
+        "\r\n  మొదటి పంక్తి\r\nరెండవ పంక్తి\r\n \t\r\nChorus line\r\n\r\n\r\nFinal section\n",
+        QVariantList { "Praise", "praise", "ఆరాధన" }, "Telugu");
+    const auto quick = library.song(quickId);
+    const auto quickSections = quick["sections"].toList();
+    if (quickId.isEmpty() || quickSections.size() != 3
+        || quickSections[0].toMap()["primary"] != "మొదటి పంక్తి\nరెండవ పంక్తి"
+        || quickSections[1].toMap()["primary"] != "Chorus line"
+        || quick["arrangement"].toList() != QVariantList { "s1", "s2", "s3" }
+        || quick["primaryLanguage"] != "Telugu"
+        || library.parseSongTags(quick["tags"]).size() != 2) {
+        return 14;
+    }
+    const auto songCount = library.songs().size();
+    if (!library.createQuickSong("Empty", " \n\n\t ", {}, "English").isEmpty()
+        || library.songs().size() != songCount) {
+        return 15;
     }
     qInfo() << "Content library checks passed: three offline translations, Unicode indexed search, "
                "songs, arrangements, and import/export.";

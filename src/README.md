@@ -6,6 +6,7 @@
 - [document](document/README.md): editing, persistence, media insertion and history.
 - [content](content/README.md): song/Bible queries, imports and slide generation.
 - [templates](templates/README.md): reusable layout definitions, text fitting and content population.
+- [fonts](fonts/README.md): complete Google Fonts catalog, explicit downloads, offline cache and license notices.
 - [media](media/README.md): asset catalog and thumbnails.
 - [programs](programs/README.md): curated service snapshots and exchange.
 - [outputs](outputs/README.md): physical routing and live state.

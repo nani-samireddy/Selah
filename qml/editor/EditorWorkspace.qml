@@ -20,13 +20,18 @@ Item {
     anchors.fill: parent
 
     Canvas {
+        id: workspaceGrid
+
+        property bool darkTheme: LibraryStyle.dark
+
         anchors.fill: parent
 
+        onDarkThemeChanged: requestPaint()
         onPaint: {
             let ctx = getContext("2d");
-            ctx.fillStyle = "#111111";
+            ctx.fillStyle = LibraryStyle.tone("#111111");
             ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = "#2B2B2B";
+            ctx.fillStyle = LibraryStyle.tone("#2B2B2B");
             for (let x = 12; x < width; x += 20)
                 for (let y = 12; y < height; y += 20) {
                     ctx.beginPath();
@@ -56,14 +61,14 @@ Item {
 
         Text {
             text: "Double-click text to edit.\nDrag a layer to move it.\nUse the corner to resize."
-            color: "#777777"
+            color: LibraryStyle.tone("#777777")
             font.pixelSize: 11
             lineHeight: 1.7
         }
 
         Text {
             text: "⌘ Z  Undo    ·    ⌘ S  Save"
-            color: "#686868"
+            color: LibraryStyle.tone("#686868")
             font.pixelSize: 10
         }
     }
@@ -92,54 +97,19 @@ Item {
                 topMargin: 22
             }
 
-            Rectangle {
-                width: 176
-                height: 32
-                radius: 6
-                color: "#1D1D1D"
-                border.color: "#343434"
+            StudioButton {
+                text: workspace.host.templateMode ? "Templates" : "Custom slides"
+                iconName: "layers"
+                hint: "Return to library"
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 2
-
-                    StudioButton {
-                        text: "Design"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
-                        quiet: true
-                        checked: !workspace.host.templateMode
-
-                        onClicked: workspace.host.templateMode = false
-                    }
-
-                    StudioButton {
-                        text: "Template"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
-                        quiet: true
-                        checked: workspace.host.templateMode
-
-                        onClicked: workspace.host.templateMode = true
-                    }
-                }
+                onClicked: workspace.host.browseLibrary(workspace.host.templateMode ? "templates" :
+                                                                                      "custom")
             }
 
-            StudioButton {
-                text: "Templates"
-                visible: workspace.host.templateMode
-
-                onClicked: workspace.host.showTemplates(null)
-            }
-
-            StudioButton {
-                text: "Save template"
-                visible: workspace.host.templateMode
-
-                onClicked: workspace.host.saveCurrentTemplate()
+            Text {
+                text: workspace.host.templateMode ? "Template layout" : "Custom presentation"
+                color: LibraryStyle.muted
+                font.pixelSize: 11
             }
 
             Item {
@@ -149,7 +119,7 @@ Item {
             Text {
                 visible: !workspace.host.templateMode
                 text: "Audience layout"
-                color: "#959595"
+                color: LibraryStyle.tone("#959595")
                 font.pixelSize: 11
             }
         }
@@ -213,8 +183,8 @@ Item {
         width: toastText.implicitWidth + 32
         height: 36
         radius: 7
-        color: "#303030"
-        border.color: "#515151"
+        color: LibraryStyle.tone("#303030")
+        border.color: LibraryStyle.tone("#515151")
         visible: workspace.host.toast.length > 0
         z: 100
 
@@ -229,7 +199,7 @@ Item {
 
             anchors.centerIn: parent
             text: workspace.host.toast
-            color: "#F0F0F0"
+            color: LibraryStyle.tone("#F0F0F0")
             font.pixelSize: 12
         }
     }

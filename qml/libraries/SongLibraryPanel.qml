@@ -3,15 +3,28 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtCore
 
 Popup {
     id: panel
 
+    property bool workspaceMode: false
+    readonly property bool quickSongOpen: quickSong.opened
     required property var library
     required property var templates
     required property var document
     property var programTarget: null
     property var results: []
+    property string selectedTag: ""
+    readonly property var tagOptions: [
+        {
+            text: "All tags",
+            value: ""
+        }
+    ].concat(library.songTags.map(tag => ({
+        text: tag,
+        value: tag
+    })))
     property var draft: ({})
     property var sections: []
     property int sectionIndex: -1
@@ -21,21 +34,55 @@ Popup {
     property string message: ""
     property bool dirty: false
     property bool loading: false
+    property bool detailsOpen: false
+    property var sectionOrder: []
 
-    function refresh() {
-        results = library.searchSongs(search.text);
+    signal contentAdded(bool toProgram)
+
+    function rememberLanguages() {
+        songPreferences.primaryLanguage = language.value;
+        songPreferences.secondaryLanguage = translation.value;
+        let recent = [language.value, translation.value].concat(songPreferences.recentLanguages);
+        songPreferences.recentLanguages = recent.filter((name, index) => name && recent.indexOf(
+                                                                             name) === index).slice(
+                    0, 6);
+        changed();
     }
 
-    function commitSection() {
-        if (sectionIndex < 0 || sectionIndex >= sections.length)
+    function addToTarget(programId = "") {
+        if (!save())
             return;
-        let list = sections.slice();
-        let row = Object.assign({}, list[sectionIndex]);
-        row.label = sectionName.text;
-        row.primary = primary.text;
-        row.secondary = secondary.text;
-        list[sectionIndex] = row;
-        sections = list;
+        const target = programTarget || document;
+        const song = library.song(draft.id);
+        const ok = programTarget ? target.addSong(song, lineCount.value, templateChoice.definition,
+                                                  programId) : target.addSongSlides(song,
+                                                                                    lineCount.value,
+                                                                                    templateChoice.definition);
+        if (ok && (!programTarget || !programId || programId === programTarget.id))
+            finishAddition();
+        else
+            message = target.status;
+    }
+
+    function finishAddition() {
+        let toProgram = !!programTarget;
+        close();
+        contentAdded(toProgram);
+    }
+
+    function lyricFont(text) {
+        if (/[\u0C00-\u0C7F]/.test(text))
+            return "Noto Sans Telugu";
+        if (/[\u0900-\u097F]/.test(text))
+            return "Noto Sans Devanagari";
+        return LibraryStyle.fontFamily;
+    }
+
+    function refresh() {
+        if (selectedTag && !library.songTags.some(tag => tag.toLocaleLowerCase()
+                                                         === selectedTag.toLocaleLowerCase()))
+            selectedTag = "";
+        results = library.searchSongs(search.text, selectedTag);
     }
 
     function commitArrangement() {
@@ -44,7 +91,7 @@ Popup {
         let list = arrangements.slice();
         list[arrangementIndex] = {
             name: list[arrangementIndex].name,
-            order: arrangement.text.trim().split(/[\s,]+/).filter(s => s.length > 0)
+            order: sectionOrder.slice()
         };
         arrangements = list;
     }
@@ -52,18 +99,18 @@ Popup {
     function selectArrangement(index) {
         commitArrangement();
         arrangementIndex = index;
-        arrangement.text = (arrangements[index].order || []).join(" ");
+        sectionOrder = (arrangements[index].order || []).slice();
         dirty = true;
     }
 
     function gather() {
-        commitSection();
         let song = Object.assign({}, draft);
         song.title = titleField.text;
-        song.primaryLanguage = language.text;
-        song.secondaryLanguage = translation.text;
+        song.primaryLanguage = language.value;
+        song.secondaryLanguage = translation.value;
         song.credits = credits.text;
-        song.tags = tags.text;
+        tagEditor.commit();
+        song.tags = tagEditor.tags.join(", ");
         song.sections = sections;
         commitArrangement();
         song.arrangements = arrangements;
@@ -73,14 +120,18 @@ Popup {
     }
 
     function selectSection(index) {
-        commitSection();
-        loading = true;
         sectionIndex = index;
-        let row = sections[index] || {};
-        sectionName.text = row.label || "";
-        primary.text = row.primary || "";
-        secondary.text = row.secondary || "";
-        loading = false;
+    }
+
+    function focusSection(index) {
+        selectSection(index);
+        const card = sectionCards.sectionItem(index);
+        if (!card)
+            return;
+        card.focusLyrics();
+        const flick = songDetailsScroll.contentItem;
+        const y = card.mapToItem(flick.contentItem, 0, 0).y;
+        flick.contentY = Math.max(0, Math.min(y, flick.contentHeight - flick.height));
     }
 
     function load(song) {
@@ -94,10 +145,10 @@ Popup {
         sections = draft.sections || [];
         sectionIndex = -1;
         titleField.text = draft.title || "";
-        language.text = draft.primaryLanguage || "English";
-        translation.text = draft.secondaryLanguage || "";
+        language.value = draft.primaryLanguage || "English";
+        translation.value = draft.secondaryLanguage || "";
         credits.text = draft.credits || "";
-        tags.text = draft.tags || "";
+        tagEditor.reset(draft.tags || "");
         arrangements = draft.arrangements || [
                     {
                         name: "Default",
@@ -105,7 +156,7 @@ Popup {
                     }
                 ];
         arrangementIndex = draft.activeArrangement || 0;
-        arrangement.text = (arrangements[arrangementIndex].order || []).join(" ");
+        sectionOrder = (arrangements[arrangementIndex].order || []).slice();
         dirty = !!drafts[song.id || "new"];
         loading = false;
         selectSection(sections.length ? 0 : -1);
@@ -115,6 +166,8 @@ Popup {
     function create() {
         load({
                  title: "",
+                 primaryLanguage: songPreferences.primaryLanguage,
+                 secondaryLanguage: songPreferences.secondaryLanguage,
                  sections: [
                      {
                          key: "v1",
@@ -133,7 +186,6 @@ Popup {
     }
 
     function addSection(kind) {
-        commitSection();
         let count = 1;
         while (sections.some(s => s.key === kind + count))
             count++;
@@ -144,7 +196,7 @@ Popup {
             secondary: ""
         };
         sections = sections.concat([row]);
-        arrangement.text = (arrangement.text.trim() + " " + row.key).trim();
+        sectionOrder = sectionOrder.concat([row.key]);
         selectSection(sections.length - 1);
         dirty = true;
     }
@@ -164,24 +216,40 @@ Popup {
         return true;
     }
 
-    width: Math.min(1080, parent.width - 40)
-    height: Math.min(740, parent.height - 40)
-    x: (parent.width - width) / 2
-    y: (parent.height - height) / 2
-    modal: true
+    closePolicy: workspaceMode ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    width: workspaceMode ? parent.width : Math.min(1080, parent.width - 40)
+    height: workspaceMode ? parent.height : Math.min(740, parent.height - 40)
+    x: workspaceMode ? 0 : (parent.width - width) / 2
+    y: workspaceMode ? 0 : (parent.height - height) / 2
+    modal: !workspaceMode
     focus: true
-    padding: 22
+    padding: LibraryStyle.pagePadding
 
     background: Rectangle {
-        color: "#191919"
-        border.color: "#3B3B3B"
-        radius: 12
+        color: LibraryStyle.panel
+        border.width: panel.workspaceMode ? 0 : 1
+        border.color: LibraryStyle.tone("#3B3B3B")
+        radius: panel.workspaceMode ? 0 : 12
     }
 
     onOpened: {
         refresh();
-        if (sectionIndex < 0)
-            create();
+        if (sectionIndex < 0) {
+            if (results.length > 0)
+                load(library.song(results[0].id));
+            else
+                create();
+        }
+    }
+
+    Settings {
+        id: songPreferences
+
+        property string primaryLanguage: "English"
+        property string secondaryLanguage: ""
+        property var recentLanguages: []
+
+        category: "SongLanguages"
     }
 
     Connections {
@@ -192,11 +260,27 @@ Popup {
         target: panel.library
     }
 
+    QuickSongDialog {
+        id: quickSong
+
+        parent: Overlay.overlay
+        library: panel.library
+        primaryLanguage: songPreferences.primaryLanguage
+
+        onSongCreated: songId => {
+            panel.selectedTag = "";
+            search.clear();
+            panel.load(panel.library.song(songId));
+            panel.refresh();
+            panel.message = "Song created";
+        }
+    }
+
     FileDialog {
         id: importDialog
 
-        title: "Import Church Deck song"
-        nameFilters: ["Church Deck songs (*.json)"]
+        title: "Import Selah song"
+        nameFilters: ["Selah songs (*.json)"]
 
         onAccepted: {
             panel.library.importSong(selectedFile);
@@ -211,7 +295,7 @@ Popup {
         title: "Export song"
         fileMode: FileDialog.SaveFile
         defaultSuffix: "json"
-        nameFilters: ["Church Deck songs (*.json)"]
+        nameFilters: ["Selah songs (*.json)"]
 
         onAccepted: {
             panel.library.exportSong(panel.draft.id, selectedFile);
@@ -229,8 +313,8 @@ Popup {
         standardButtons: Dialog.Ok | Dialog.Cancel
 
         background: Rectangle {
-            color: "#252525"
-            border.color: "#444444"
+            color: LibraryStyle.tone("#252525")
+            border.color: LibraryStyle.tone("#444444")
             radius: 8
         }
         contentItem: LibraryField {
@@ -266,15 +350,17 @@ Popup {
                 spacing: 5
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: "Songs"
-                    color: "#EEEEEE"
-                    font.pixelSize: 21
+                    color: LibraryStyle.tone("#EEEEEE")
+                    font.pixelSize: 22
                     font.weight: Font.Medium
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: "Your lyrics. Every language. Ready for worship."
-                    color: "#929292"
+                    color: LibraryStyle.tone("#929292")
                     font.pixelSize: 12
                 }
             }
@@ -283,14 +369,15 @@ Popup {
                 Layout.fillWidth: true
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Import song"
 
                 onClicked: importDialog.open()
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Close"
+                visible: !panel.workspaceMode
                 quiet: true
 
                 onClicked: panel.close()
@@ -300,28 +387,58 @@ Popup {
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 22
+            spacing: 24
 
             ColumnLayout {
-                Layout.preferredWidth: 230
+                Layout.preferredWidth: 260
+                Layout.minimumWidth: 240
+                Layout.maximumWidth: 280
                 Layout.fillHeight: true
-                spacing: 10
+                spacing: LibraryStyle.fieldGap
 
                 LibraryField {
                     id: search
 
+                    leadingIcon: "search"
                     Layout.fillWidth: true
-                    placeholderText: "Search title or lyrics…"
+                    placeholderText: "Search title, lyrics or tags…"
 
                     onTextChanged: panel.refresh()
                 }
 
-                StudioButton {
+                LibraryButton {
                     text: "New song"
                     iconName: "plus"
                     Layout.fillWidth: true
 
                     onClicked: panel.create()
+                }
+
+                LibraryButton {
+                    objectName: "quickSongAction"
+                    text: "Quick Song"
+                    iconName: "type"
+                    Layout.fillWidth: true
+
+                    onClicked: quickSong.open()
+                }
+
+                LibraryCombo {
+                    id: tagFilter
+
+                    objectName: "songTagFilter"
+                    Layout.fillWidth: true
+                    model: panel.tagOptions
+                    textRole: "text"
+                    valueRole: "value"
+                    currentIndex: Math.max(0, panel.tagOptions.findIndex(row => row.value
+                                                                                === panel.selectedTag))
+                    Accessible.name: "Filter songs by tag"
+
+                    onActivated: {
+                        panel.selectedTag = currentValue;
+                        panel.refresh();
+                    }
                 }
 
                 ListView {
@@ -338,13 +455,20 @@ Popup {
 
                         required property var modelData
 
+                        Accessible.name: songItem.modelData.title
                         width: ListView.view.width
-                        height: 66
+                        height: panel.library.parseSongTags(modelData.tags || "").length ? 82 : 64
+                        padding: 12
 
                         background: Rectangle {
-                            color: panel.draft.id === songItem.modelData.id ? "#323232" :
+                            border.width: 1
+                            border.color: panel.draft.id === songItem.modelData.id
+                                          ? LibraryStyle.tone("#505050") : "transparent"
+                            color: panel.draft.id === songItem.modelData.id ? LibraryStyle.tone(
+                                                                                  "#323232") :
                                                                               songItem.hovered
-                                                                              ? "#242424" :
+                                                                              ? LibraryStyle.tone(
+                                                                                    "#242424") :
                                                                                 "transparent"
                             radius: 6
                         }
@@ -352,20 +476,33 @@ Popup {
                             spacing: 6
 
                             Text {
+                                font.family: LibraryStyle.fontFamily
                                 width: parent.width
                                 text: songItem.modelData.title
-                                color: "#DDDDDD"
+                                color: LibraryStyle.tone("#DDDDDD")
                                 font.pixelSize: 13
                                 elide: Text.ElideRight
                             }
 
                             Text {
+                                font.family: LibraryStyle.fontFamily
                                 width: parent.width
                                 text: [songItem.modelData.primaryLanguage,
                                     songItem.modelData.secondaryLanguage].filter(Boolean).join(
                                     " · ")
-                                color: "#888888"
+                                color: LibraryStyle.tone("#888888")
                                 font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: panel.library.parseSongTags(songItem.modelData.tags
+                                                                  || "").join(" · ")
+                                visible: text.length > 0
+                                color: LibraryStyle.muted
+                                font.family: LibraryStyle.fontFamily
+                                font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
                         }
@@ -374,12 +511,13 @@ Popup {
                     }
 
                     Text {
+                        font.family: LibraryStyle.fontFamily
                         anchors.centerIn: parent
                         width: parent.width - 20
                         visible: panel.results.length === 0
-                        text: search.text ? "No matching songs" :
-                                            "Create your first song\nor import your lyrics."
-                        color: "#888888"
+                        text: search.text || panel.selectedTag ? "No matching songs" :
+                                                                 "Create your first song\nor import your lyrics."
+                        color: LibraryStyle.tone("#888888")
                         font.pixelSize: 12
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
@@ -387,8 +525,9 @@ Popup {
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: panel.results.length + " songs · On this computer"
-                    color: "#777777"
+                    color: LibraryStyle.tone("#777777")
                     font.pixelSize: 10
                 }
             }
@@ -396,274 +535,202 @@ Popup {
             Rectangle {
                 Layout.fillHeight: true
                 implicitWidth: 1
-                color: "#333333"
+                color: LibraryStyle.tone("#333333")
             }
 
-            ColumnLayout {
+            ScrollView {
+                id: songDetailsScroll
+
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 10
+                contentWidth: availableWidth
+                clip: true
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                RowLayout {
-                    LibraryField {
-                        id: titleField
+                ColumnLayout {
+                    width: songDetailsScroll.availableWidth
+                    spacing: LibraryStyle.fieldGap
 
-                        Layout.fillWidth: true
-                        placeholderText: "Song title"
-                        font.pixelSize: 16
+                    RowLayout {
+                        LibraryField {
+                            id: titleField
 
-                        onTextEdited: panel.changed()
-                    }
+                            Layout.fillWidth: true
+                            placeholderText: "Song title"
+                            font.pixelSize: 14
 
-                    Text {
-                        text: panel.dirty ? "Unsaved" : "Saved"
-                        color: "#929292"
-                        font.pixelSize: 11
-                    }
-
-                    StudioButton {
-                        text: "Save song"
-
-                        onClicked: panel.save()
-                    }
-                }
-
-                RowLayout {
-                    LibraryField {
-                        id: language
-
-                        Layout.fillWidth: true
-                        placeholderText: "Primary language"
-
-                        onTextEdited: panel.changed()
-                    }
-
-                    LibraryField {
-                        id: translation
-
-                        Layout.fillWidth: true
-                        placeholderText: "Second language (optional)"
-
-                        onTextEdited: panel.changed()
-                    }
-                }
-
-                RowLayout {
-                    LibraryField {
-                        id: credits
-
-                        Layout.fillWidth: true
-                        placeholderText: "Author / copyright / licence"
-
-                        onTextEdited: panel.changed()
-                    }
-
-                    LibraryField {
-                        id: tags
-
-                        Layout.preferredWidth: 170
-                        placeholderText: "Tags"
-
-                        onTextEdited: panel.changed()
-                    }
-                }
-
-                RowLayout {
-                    LibraryCombo {
-                        model: panel.sections
-                        textRole: "label"
-                        currentIndex: panel.sectionIndex
-                        Layout.fillWidth: true
-
-                        onActivated: index => panel.selectSection(index)
-                    }
-
-                    StudioButton {
-                        text: "+ Verse"
-
-                        onClicked: panel.addSection("v")
-                    }
-
-                    StudioButton {
-                        text: "+ Chorus"
-
-                        onClicked: panel.addSection("c")
-                    }
-                }
-
-                RowLayout {
-                    Text {
-                        text: panel.sectionIndex >= 0
-                              ? panel.sections[panel.sectionIndex].key.toUpperCase() : ""
-                        font.pixelSize: 11
-                        color: "#888888"
-                        Layout.preferredWidth: 30
-                    }
-
-                    LibraryField {
-                        id: sectionName
-
-                        Layout.fillWidth: true
-                        placeholderText: "Section name"
-
-                        onTextEdited: panel.changed()
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 10
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
+                            onTextEdited: panel.changed()
+                        }
 
                         Text {
-                            text: "PRIMARY LYRICS"
-                            color: "#888888"
-                            font.pixelSize: 10
-                            font.letterSpacing: 1
+                            font.family: LibraryStyle.fontFamily
+                            text: panel.dirty ? "Unsaved" : panel.draft.id ? "Saved" : "New song"
+                            color: LibraryStyle.tone("#929292")
+                            font.pixelSize: 11
                         }
 
-                        ScrollView {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
+                        LibraryButton {
+                            text: "Save song"
 
-                            TextArea {
-                                id: primary
-
-                                objectName: "primaryLyrics"
-                                color: "#DDDDDD"
-                                placeholderTextColor: "#666666"
-                                placeholderText: "One lyric line per row…"
-                                font.pixelSize: 17
-                                font.family: /[\u0C00-\u0C7F]/.test(text) ? "Noto Sans Telugu" :
-                                                                            /[\u0900-\u097F]/.test(
-                                                                                text) ? "Noto Sans Devanagari" :
-                                                                                        "Arial"
-                                padding: 12
-                                selectByMouse: true
-                                wrapMode: TextEdit.Wrap
-
-                                background: Rectangle {
-                                    color: "#222222"
-                                    border.color: primary.activeFocus ? "#777777" : "#363636"
-                                    radius: 6
-                                }
-
-                                onTextChanged: panel.changed()
-                            }
+                            onClicked: panel.save()
                         }
                     }
 
-                    ColumnLayout {
+                    RowLayout {
+                        SongLanguageCombo {
+                            id: language
+
+                            objectName: "songPrimaryLanguage"
+                            Layout.fillWidth: true
+                            value: "English"
+                            recent: songPreferences.recentLanguages
+
+                            onChosen: panel.rememberLanguages()
+                        }
+
+                        LibraryButton {
+                            text: panel.detailsOpen ? "Hide details" : "Details"
+                            quiet: true
+
+                            onClicked: panel.detailsOpen = !panel.detailsOpen
+                        }
+
+                        SongLanguageCombo {
+                            id: translation
+
+                            objectName: "songSecondaryLanguage"
+                            Layout.fillWidth: true
+                            optional: true
+                            value: ""
+                            recent: songPreferences.recentLanguages
+
+                            onChosen: panel.rememberLanguages()
+                        }
+                    }
+
+                    RowLayout {
+                        visible: panel.detailsOpen
+
+                        LibraryField {
+                            id: credits
+
+                            Layout.fillWidth: true
+                            placeholderText: "Author / copyright / licence"
+
+                            onTextEdited: panel.changed()
+                        }
+                    }
+
+                    SongTagEditor {
+                        id: tagEditor
+
+                        objectName: "songTagEditor"
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
+                        library: panel.library
 
-                        Text {
-                            text: "TRANSLATED LYRICS"
-                            color: "#888888"
-                            font.pixelSize: 10
-                            font.letterSpacing: 1
+                        onEdited: panel.changed()
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 12
+
+                        LibraryCaption {
+                            text: "Sections & lyrics"
+                            Layout.fillWidth: true
                         }
 
-                        ScrollView {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
+                        LibraryButton {
+                            text: "Verse"
+                            iconName: "plus"
 
-                            TextArea {
-                                id: secondary
+                            onClicked: panel.addSection("v")
+                        }
 
-                                objectName: "secondaryLyrics"
-                                color: "#DDDDDD"
-                                placeholderTextColor: "#666666"
-                                placeholderText: "Matching translation on each row…"
-                                font.pixelSize: 17
-                                font.family: /[\u0C00-\u0C7F]/.test(text) ? "Noto Sans Telugu" :
-                                                                            /[\u0900-\u097F]/.test(
-                                                                                text) ? "Noto Sans Devanagari" :
-                                                                                        "Arial"
-                                padding: 12
-                                selectByMouse: true
-                                wrapMode: TextEdit.Wrap
+                        LibraryButton {
+                            text: "Chorus"
+                            iconName: "plus"
 
-                                background: Rectangle {
-                                    color: "#222222"
-                                    border.color: secondary.activeFocus ? "#777777" : "#363636"
-                                    radius: 6
-                                }
-
-                                onTextChanged: panel.changed()
-                            }
+                            onClicked: panel.addSection("c")
                         }
                     }
-                }
 
-                Text {
-                    text: "Keep paired languages on matching rows. A blank row starts a new slide."
-                    color: "#888888"
-                    font.pixelSize: 11
-                }
+                    SongSectionsEditor {
+                        id: sectionCards
 
-                RowLayout {
+                        objectName: "songSectionsEditor"
+                        Layout.fillWidth: true
+                        sections: panel.sections
+                        primaryLanguage: language.value
+                        secondaryLanguage: translation.value
+                        fontForText: text => panel.lyricFont(text)
+                        showDetails: panel.detailsOpen
+
+                        onEdited: sections => {
+                            panel.sections = sections;
+                            panel.changed();
+                        }
+                        onFocused: index => panel.sectionIndex = index
+                    }
+
                     Text {
-                        text: "Arrangement"
-                        color: "#AAAAAA"
-                        font.pixelSize: 12
-                    }
-
-                    LibraryField {
-                        id: arrangement
-
+                        text: "All sections are shown above. Leave a blank line to start a new slide."
+                        color: LibraryStyle.muted
+                        font.family: LibraryStyle.fontFamily
+                        font.pixelSize: 11
+                        wrapMode: Text.Wrap
                         Layout.fillWidth: true
-                        placeholderText: "v1 c1 v2 c1"
-
-                        onTextEdited: panel.changed()
-                    }
-                }
-
-                RowLayout {
-                    LibraryCombo {
-                        model: panel.arrangements
-                        textRole: "name"
-                        currentIndex: panel.arrangementIndex
-                        Layout.preferredWidth: 180
-
-                        onActivated: index => panel.selectArrangement(index)
                     }
 
-                    StudioButton {
-                        text: "+ Arrangement"
-                        implicitHeight: 30
+                    SongOrderEditor {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 12
+                        sections: panel.sections
+                        order: panel.sectionOrder
 
-                        onClicked: {
-                            arrangementName.text = "";
-                            arrangementDialog.open();
+                        onEdited: keys => {
+                            panel.sectionOrder = keys;
+                            panel.changed();
+                        }
+                        onEditSection: index => panel.focusSection(index)
+                    }
+
+                    RowLayout {
+                        visible: panel.detailsOpen || panel.arrangements.length > 1
+
+                        LibraryCombo {
+                            model: panel.arrangements
+                            textRole: "name"
+                            currentIndex: panel.arrangementIndex
+                            Layout.preferredWidth: 180
+
+                            onActivated: index => panel.selectArrangement(index)
+                        }
+
+                        LibraryButton {
+                            text: "New order"
+                            iconName: "plus"
+                            implicitHeight: 30
+
+                            onClicked: {
+                                arrangementName.text = "";
+                                arrangementDialog.open();
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
                         }
                     }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                Text {
-                    text: "Use section keys in order; repeat a key to repeat its lyrics."
-                    color: "#777777"
-                    font.pixelSize: 11
                 }
             }
         }
 
         RowLayout {
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: "Layout"
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
             }
 
@@ -671,11 +738,8 @@ Popup {
                 id: templateChoice
 
                 library: panel.templates
-                kind: panel.sections.some((section, index) => index === panel.sectionIndex ? !
-                                                                                             !secondary.text.trim(
-                                                                                                 ) : !!section.secondary
-                                                                                             ?.trim())
-                      ? "bilingual" : "song"
+                kind: panel.sections.some(section => !!section.secondary?.trim()) ? "bilingual" :
+                                                                                    "song"
                 Layout.fillWidth: true
             }
         }
@@ -683,19 +747,20 @@ Popup {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: "#333333"
+            color: LibraryStyle.tone("#333333")
         }
 
         RowLayout {
             Text {
+                font.family: LibraryStyle.fontFamily
                 Layout.fillWidth: true
                 text: panel.message
-                color: "#AAAAAA"
+                color: LibraryStyle.tone("#AAAAAA")
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Export"
                 enabled: !!panel.draft.id && !panel.dirty
 
@@ -703,43 +768,39 @@ Popup {
             }
 
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: "Lines / slide"
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
             }
 
-            SpinBox {
+            LibrarySpinBox {
                 id: lineCount
 
                 from: 1
                 to: 6
                 value: 3
                 implicitWidth: 100
-                palette.text: "#DDDDDD"
-                palette.button: "#303030"
-                palette.base: "#242424"
+                palette.text: LibraryStyle.tone("#DDDDDD")
+                palette.button: LibraryStyle.tone("#303030")
+                palette.base: LibraryStyle.tone("#242424")
             }
 
-            StudioButton {
-                text: panel.programTarget ? "Add to program" : "Add slides"
+            ProgramAddButton {
+                objectName: "songProgramDestination"
+                visible: !!panel.programTarget
+                store: panel.programTarget
+
+                onAddRequested: programId => panel.addToTarget(programId)
+            }
+
+            LibraryButton {
+                visible: !panel.programTarget
+                text: "Add slides"
                 iconName: "plus"
                 accented: true
 
-                onClicked: {
-                    if (panel.save()) {
-                        let target = panel.programTarget || panel.document;
-                        if (target.addSongSlides ? target.addSongSlides(panel.library.song(
-                                                                            panel.draft.id),
-                                                                        lineCount.value,
-                                                                        templateChoice.definition) :
-                                                   target.addSong(panel.library.song(panel.draft.id),
-                                                                  lineCount.value,
-                                                                  templateChoice.definition))
-                            panel.close();
-                        else
-                            panel.message = target.status;
-                    }
-                }
+                onClicked: panel.addToTarget()
             }
         }
     }

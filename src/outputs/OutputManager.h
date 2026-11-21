@@ -11,6 +11,8 @@
 // Owns display routing and the immutable live snapshot, independent of editor drafts.
 class OutputManager final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QVariantList liveOrder READ liveOrder NOTIFY snapshotChanged)
+    Q_PROPERTY(QString snapshotId READ snapshotId NOTIFY snapshotChanged)
     Q_PROPERTY(QVariantList displays READ displays NOTIFY displaysChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
     Q_PROPERTY(bool audienceEnabled READ audienceEnabled NOTIFY stateChanged)
@@ -42,6 +44,7 @@ class OutputManager final : public QObject {
 public:
     explicit OutputManager(QObject *parent = nullptr);
     QVariantList displays() const;
+    QVariantList liveOrder() const;
 
     QString status() const { return m_status; }
 
@@ -135,6 +138,7 @@ signals:
     void displaysChanged();
     void stateChanged();
     void liveChanged();
+    void snapshotChanged();
 
 private:
     static QString screenId(QScreen *screen);

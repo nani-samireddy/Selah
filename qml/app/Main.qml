@@ -3,23 +3,37 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtCore
 
 ApplicationWindow {
     id: app
 
+    required property var fonts
     required property var doc
     required property var library
     required property var content
     required property var programs
+    property string startupWorkspace: "programs"
+    property string activeWorkspace: "design"
+    property string librarySection: "songs"
+    property string libraryDestination: "program"
+    property bool fontPickerOpen: false
+    readonly property bool settingsOpen: savePresentationDialog.opened || fontPickerOpen
+                                         || outputPanel.opened || ndiPanel.opened
+                                         || remotePanel.opened || saveTemplateDialog.opened
     property string programEditingItem: ""
     required property var outputs
+    required property var presentations
+    property alias editingPresentationId: customDraft.recordId
+    property alias customPresentationTitle: customDraft.title
     required property var templates
-    property string editingTemplateId: ""
+    property alias editingTemplateId: customDraft.templateId
     required property var remote
     required property var ndi
     property var element: app.doc.selectedElement
-    property bool templateMode: false
+    property alias templateMode: customDraft.templateEditing
     property string editingId: ""
+    property var activeTextEditor: null
     property bool videosPlaying: false
     property bool snap: true
     property bool handTool: false
@@ -28,14 +42,43 @@ ApplicationWindow {
     property real panY: 0
     property string toast: ""
     property bool libraryImportOnly: false
-    readonly property bool editorShortcutsAllowed: !programPanel.opened && !templatePanel.opened &&
-                                                   !saveTemplateDialog.opened && !songPanel.opened
-                                                   && !biblePanel.opened && !libraryPanel.opened &&
-                                                   !outputPanel.opened && !ndiPanel.opened &&
-                                                   !remotePanel.opened
+    readonly property bool editorShortcutsAllowed: activeWorkspace === "design" && !fontPickerOpen
+                                                   && !programPanel.opened && !templatePanel.opened
+                                                   && !saveTemplateDialog.opened &&
+                                                   !songPanel.opened && !biblePanel.opened &&
+                                                   !libraryPanel.opened && !outputPanel.opened &&
+                                                   !ndiPanel.opened && !remotePanel.opened
+
+    function formatText(patch) {
+        if (app.activeTextEditor)
+            app.activeTextEditor.applyFormat(patch);
+        else
+            app.doc.formatText(patch);
+    }
 
     function update(key, value) {
         if (app.doc.selected >= 0) {
+            if (app.selectedValue("kind", "text") === "text" && ["fontFamily", "fontSize", "color",
+                                                                 "alignment", "fontWeight", "italic",
+                                                                 "underline", "strikethrough",
+                                                                 "letterSpacing", "lineHeight",
+                                                                 "lineHeightUnit",
+                                                                 "paragraphSpacing",
+                                                                 "paragraphIndent", "textCase",
+                                                                 "verticalAlignment", "textSizing",
+                                                                 "wrap", "clipText", "baseline",
+                                                                 "listStyle", "listIndent",
+                                                                 "fontFeatures", "fontAxes",
+                                                                 "maxLines", "ellipsis"].includes(
+                        key)) {
+                let style = {};
+                style[key] = value;
+                if (app.activeTextEditor)
+                    app.activeTextEditor.applyFormat(style);
+                else
+                    app.doc.formatText(style);
+                return;
+            }
             let patch = {};
             patch[key] = value;
             app.doc.updateElement(app.doc.selected, patch);
@@ -43,6 +86,13 @@ ApplicationWindow {
     }
 
     function selectedValue(key, fallback) {
+        if (activeTextEditor && ["fontFamily", "fontSize", "fontWeight", "italic", "underline",
+                                 "strikethrough", "color", "letterSpacing", "baseline", "alignment",
+                                 "paragraphSpacing", "paragraphIndent", "lineHeight",
+                                 "lineHeightUnit", "textCase", "listStyle", "listIndent",
+                                 "fontFeatures", "fontAxes"].includes(key)
+                && activeTextEditor.style[key] !== undefined)
+            return activeTextEditor.style[key];
         return element[key] === undefined ? fallback : element[key];
     }
 
@@ -50,35 +100,132 @@ ApplicationWindow {
         return workspace.rendererProbe();
     }
 
-    function showSongs() {
+    function editCustomPresentation(definition) {
+        if (activeTextEditor)
+            activeTextEditor.finish();
+        if (!doc.replaceSlides(definition.slides))
+            return;
+        editingTemplateId = "";
+        programEditingItem = "";
+        templateMode = false;
+        editingPresentationId = definition.id;
+        customPresentationTitle = definition.title;
+        doc.saveProject();
+        switchWorkspace("design");
+    }
+
+    function saveCustomPresentation() {
+        savePresentationDialog.createBlank = false;
+        savePresentationDialog.open();
+    }
+
+    function closeContentPanels() {
+        programPanel.flushItem();
+        programPanel.close();
+        songPanel.close();
+        biblePanel.close();
         libraryPanel.close();
-        songPanel.programTarget = null;
-        songPanel.open();
+        templatePanel.close();
+        customSlidesPanel.close();
+    }
+
+    function switchWorkspace(name) {
+        if (!["programs", "libraries", "design", "present"].includes(name))
+            return;
+        if (app.activeTextEditor)
+            app.activeTextEditor.finish();
+        app.contentItem.forceActiveFocus();
+        closeContentPanels();
+        activeWorkspace = name;
+        if (name === "programs")
+            Qt.callLater(() => {
+                if (activeWorkspace === "programs")
+                    programPanel.open();
+            });
+        if (name === "libraries")
+            Qt.callLater(() => {
+                if (activeWorkspace === "libraries")
+                    showLibrarySection(librarySection);
+            });
+    }
+
+    function refreshLibraryTarget() {
+        let target = libraryDestination === "program" && programs.id ? programs : null;
+        songPanel.programTarget = target;
+        biblePanel.programTarget = target;
+        libraryPanel.programTarget = target;
+    }
+
+    function showLibrarySection(section) {
+        songPanel.close();
+        biblePanel.close();
+        libraryPanel.close();
+        templatePanel.close();
+        customSlidesPanel.close();
+        librarySection = section;
+        refreshLibraryTarget();
+        if (section === "custom") {
+            customSlidesPanel.programTarget = programs;
+            customSlidesPanel.open();
+        }
+        if (section === "songs")
+            songPanel.open();
+        if (section === "bible")
+            biblePanel.open();
+        if (section === "media")
+            libraryPanel.open();
+        if (section === "templates") {
+            templatePanel.programTarget = null;
+            templatePanel.open();
+        }
+    }
+
+    function browseLibrary(section) {
+        librarySection = section;
+        switchWorkspace("libraries");
+    }
+
+    function showSongs() {
+        browseLibrary("songs");
     }
 
     function showBible() {
-        libraryPanel.close();
-        biblePanel.programTarget = null;
-        biblePanel.open();
+        browseLibrary("bible");
     }
 
     function showLibrary() {
-        outputPanel.close();
-        libraryPanel.programTarget = null;
-        libraryPanel.open();
+        if (activeWorkspace === "design") {
+            libraryPanel.programTarget = null;
+            libraryPanel.open();
+        } else
+            browseLibrary("media");
     }
 
     function showTemplates(target) {
-        templatePanel.programTarget = target || null;
-        templatePanel.open();
+        if (target) {
+            templatePanel.programTarget = target;
+            templatePanel.open();
+        } else
+            browseLibrary("templates");
+    }
+
+    function contentAdded(toProgram, embedded) {
+        app.notify(toProgram ? "Added to " + programs.title : "Added to the Design presentation");
+        if (embedded)
+            switchWorkspace(toProgram ? "programs" : "design");
     }
 
     function editTemplate(definition) {
+        if (app.activeTextEditor)
+            app.activeTextEditor.finish();
         if (app.doc.replaceSlides([definition.slide])) {
             programPanel.close();
+            app.editingPresentationId = "";
+            app.customPresentationTitle = "";
             app.editingTemplateId = definition.id;
             app.programEditingItem = "";
             app.templateMode = true;
+            app.switchWorkspace("design");
         }
     }
 
@@ -87,20 +234,19 @@ ApplicationWindow {
     }
 
     function showPrograms() {
-        libraryPanel.close();
-        songPanel.close();
-        biblePanel.close();
-        outputPanel.close();
-        programPanel.open();
+        switchWorkspace("programs");
     }
 
     function showOutputs() {
-        libraryPanel.close();
         outputPanel.open();
     }
 
+    function showRemote() {
+        outputPanel.close();
+        remotePanel.open();
+    }
+
     function showNdi() {
-        libraryPanel.close();
         outputPanel.close();
         ndiPanel.open();
     }
@@ -139,178 +285,29 @@ ApplicationWindow {
     height: 940
     minimumWidth: 1120
     minimumHeight: 760
+    // Extend the toolbar beneath native caption controls while retaining the OS window frame.
+    flags: Qt.Window | Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
     visible: true
-    title: "Church Deck — Sunday Worship"
-    color: "#111111"
-    palette.window: "#171717"
-    palette.text: "#DDDDDD"
-    palette.base: "#252525"
-    palette.button: "#252525"
-    palette.buttonText: "#DDDDDD"
-    font.family: "Arial"
+    title: "Selah — " + (app.programs.title || "Presentation")
+    color: LibraryStyle.tone("#111111")
+    palette.window: LibraryStyle.tone("#171717")
+    palette.text: LibraryStyle.tone("#DDDDDD")
+    palette.base: LibraryStyle.tone("#252525")
+    palette.button: LibraryStyle.tone("#252525")
+    palette.buttonText: LibraryStyle.tone("#DDDDDD")
+    font.family: LibraryStyle.fontFamily
 
-    header: Rectangle {
-        height: 62
-        color: "#191919"
-
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: 1
-            color: "#303030"
-        }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
-            spacing: app.width > 1300 ? 16 : 9
-
-            Image {
-                source: "../assets/icons/aperture.svg"
-                sourceSize.width: 48
-                sourceSize.height: 48
-                Layout.preferredWidth: 24
-                Layout.preferredHeight: 24
-            }
-
-            Text {
-                text: "church deck"
-                color: "#F2F2F2"
-                font.pixelSize: 15
-                font.weight: Font.DemiBold
-                font.letterSpacing: -0.4
-            }
-
-            Rectangle {
-                implicitWidth: 1
-                implicitHeight: 18
-                color: "#3A3A3A"
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-            }
-
-            Column {
-                spacing: 3
-                visible: app.width > 1250
-
-                Text {
-                    text: app.programs.title || "Presentation editor"
-                    elide: Text.ElideRight
-                    width: 150
-                    color: "#DADADA"
-                    font.pixelSize: 12
-                }
-
-                Text {
-                    text: app.programs.id ? (app.programs.date || "Service program") :
-                                            "Local presentation"
-                    color: "#777777"
-                    font.pixelSize: 10
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                text: app.doc.importing ? "Importing media…" : app.doc.status
-                color: "#858585"
-                font.pixelSize: 11
-                visible: app.width > 1300
-            }
-
-            StudioButton {
-                text: "Programs"
-
-                onClicked: app.showPrograms()
-            }
-
-            StudioButton {
-                text: "Libraries"
-                iconName: "layers"
-
-                onClicked: librariesMenu.popup()
-            }
-
-            Menu {
-                id: librariesMenu
-
-                MenuItem {
-                    text: "Songs"
-
-                    onTriggered: app.showSongs()
-                }
-
-                MenuItem {
-                    text: "Bible"
-
-                    onTriggered: app.showBible()
-                }
-
-                MenuItem {
-                    text: "Templates"
-
-                    onTriggered: app.showTemplates(null)
-                }
-
-                MenuItem {
-                    text: "Media"
-
-                    onTriggered: app.showLibrary()
-                }
-            }
-
-            StudioButton {
-                text: "Outputs"
-
-                onClicked: outputPanel.open()
-            }
-
-            StudioButton {
-                text: "Open"
-                quiet: true
-
-                onClicked: openDialog.open()
-            }
-
-            StudioButton {
-                text: "Export"
-                iconName: "upload"
-
-                onClicked: exportDialog.open()
-            }
-
-            StudioButton {
-                text: "Preview"
-                iconName: "play"
-                accented: true
-                hint: "Open a clean output preview"
-
-                onClicked: app.preview()
-            }
-
-            StudioButton {
-                text: "Go live"
-                hint: "Take the selected slide live"
-
-                onClicked: {
-                    workspace.forceActiveFocus();
-                    app.outputs.takeLive(app.doc.slides, app.doc.currentSlide);
-                    app.notify("Live: " + app.outputs.liveTitle);
-                }
-            }
-        }
+    header: WorkspaceNavigation {
+        host: app
     }
     footer: Rectangle {
         height: 30
-        color: "#171717"
+        color: LibraryStyle.tone("#171717")
 
         Rectangle {
             width: parent.width
             height: 1
-            color: "#2A2A2A"
+            color: LibraryStyle.tone("#2A2A2A")
         }
 
         RowLayout {
@@ -319,9 +316,15 @@ ApplicationWindow {
             anchors.rightMargin: 20
 
             Text {
-                text: app.templateMode ? "Template editor  /  Reusable layout" :
-                                         "Design mode  /  Changes stay in draft"
-                color: "#777777"
+                text: app.activeWorkspace === "design" ? (app.templateMode
+                                                          ? "Template design · Reusable layout" :
+                                                            "Design · Draft changes stay off live output") :
+                                                         app.activeWorkspace === "programs"
+                                                         ? "Prepare your service · Select content, arrange, then present" :
+                                                           app.activeWorkspace === "libraries"
+                                                           ? "Your content · Available offline on this computer" :
+                                                             "Present · Controls affect the live output"
+                color: LibraryStyle.tone("#777777")
                 font.pixelSize: 10
                 Layout.fillWidth: true
             }
@@ -329,14 +332,19 @@ ApplicationWindow {
             Text {
                 text: app.outputs.liveIndex >= 0 ? "LIVE  /  " + app.outputs.liveTitle + "  ·  "
                                                    + app.outputs.status : "Outputs stopped"
-                color: "#929292"
+                color: LibraryStyle.tone("#929292")
                 font.pixelSize: 10
             }
         }
     }
 
-    Component.onCompleted: app.outputs.bindWindows(audienceOutput, stageOutput, app)
+    Component.onCompleted: {
+        app.outputs.bindWindows(audienceOutput, stageOutput, app);
+        app.switchWorkspace(app.startupWorkspace);
+    }
     onClosing: {
+        if (app.activeTextEditor)
+            app.activeTextEditor.finish();
         programPanel.flushItem();
         app.programs.save();
         workspace.forceActiveFocus();
@@ -345,6 +353,23 @@ ApplicationWindow {
         app.outputs.stop("stage");
         app.ndi.stop();
         app.remote.stop();
+    }
+
+    Settings {
+        id: customDraft
+
+        property string templateId: ""
+        property bool templateEditing: false
+        property string recordId: ""
+        property string title: ""
+
+        category: "EditorContext"
+    }
+
+    Binding {
+        target: InteractionFeedback
+        property: "presentationMode"
+        value: app.activeWorkspace === "present"
     }
 
     Timer {
@@ -385,8 +410,7 @@ ApplicationWindow {
             if (app.templateMode)
                 app.saveCurrentTemplate();
             else {
-                app.doc.saveProject();
-                app.notify("Project saved on this computer");
+                app.saveCustomPresentation();
             }
         }
     }
@@ -429,9 +453,9 @@ ApplicationWindow {
     FileDialog {
         id: exportDialog
 
-        title: "Export Church Deck project"
+        title: "Export Selah project"
         fileMode: FileDialog.SaveFile
-        nameFilters: ["Church Deck projects (*.churchdeck)"]
+        nameFilters: ["Selah projects (*.churchdeck)"]
         defaultSuffix: "churchdeck"
 
         onAccepted: app.doc.saveProject(selectedFile)
@@ -440,14 +464,17 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
 
-        title: "Open Church Deck project"
-        nameFilters: ["Church Deck projects (*.churchdeck)"]
+        title: "Open Selah project"
+        nameFilters: ["Selah projects (*.churchdeck)"]
 
         onAccepted: {
             if (app.doc.openProject(selectedFile)) {
+                app.editingPresentationId = "";
+                app.customPresentationTitle = "";
                 app.editingTemplateId = "";
                 app.programEditingItem = "";
                 app.templateMode = false;
+                app.switchWorkspace("design");
             }
         }
     }
@@ -484,18 +511,86 @@ ApplicationWindow {
         onAccepted: app.doc.setBackground(selectedColor.toString())
     }
 
-    EditorWorkspace {
-        id: workspace
+    Item {
+        id: workspaceRoot
 
-        host: app
         anchors.fill: parent
+
+        LibraryWorkspaceBar {
+            id: libraryBar
+
+            host: app
+            width: parent.width
+            visible: app.activeWorkspace === "libraries"
+        }
+
+        Item {
+            id: librarySurface
+
+            anchors.top: libraryBar.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            visible: app.activeWorkspace === "libraries"
+        }
+
+        DesignWorkspaceBar {
+            id: designBar
+
+            host: app
+            width: parent.width
+            visible: app.activeWorkspace === "design"
+        }
+
+        Item {
+            anchors.top: designBar.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            visible: app.activeWorkspace === "design"
+
+            EditorWorkspace {
+                id: workspace
+
+                host: app
+                anchors.fill: parent
+            }
+        }
+
+        PresentWorkspace {
+            host: app
+            anchors.fill: parent
+            visible: app.activeWorkspace === "present"
+        }
+    }
+
+    CustomSlidesPanel {
+        id: customSlidesPanel
+
+        workspaceMode: app.activeWorkspace === "libraries" && app.librarySection === "custom"
+        parent: workspaceMode ? librarySurface : Overlay.overlay
+        library: app.presentations
+
+        onEditRequested: definition => app.editCustomPresentation(definition)
+        onCreateRequested: {
+            savePresentationDialog.createBlank = true;
+            savePresentationDialog.open();
+        }
+    }
+
+    SavePresentationDialog {
+        id: savePresentationDialog
+
+        parent: Overlay.overlay
+        host: app
     }
 
     TemplateLibraryPanel {
         id: templatePanel
 
         objectName: "templatePanel"
-        parent: Overlay.overlay
+        workspaceMode: app.activeWorkspace === "libraries" && app.librarySection === "templates"
+        parent: workspaceMode ? librarySurface : Overlay.overlay
         library: app.templates
 
         onEditRequested: definition => app.editTemplate(definition)
@@ -519,7 +614,8 @@ ApplicationWindow {
         id: programPanel
 
         objectName: "programPanel"
-        parent: Overlay.overlay
+        workspaceMode: app.activeWorkspace === "programs"
+        parent: workspaceMode ? workspaceRoot : Overlay.overlay
         store: app.programs
         controller: app.outputs
         document: app.doc
@@ -527,8 +623,10 @@ ApplicationWindow {
         editingItemId: app.programEditingItem
         keyboardAllowed: !songPanel.opened && !biblePanel.opened && !libraryPanel.opened &&
                          !outputPanel.opened && !templatePanel.opened && !saveTemplateDialog.opened
-                         && !remotePanel.opened
+                         && !remotePanel.opened && !customSlidesPanel.opened &&
+                         !savePresentationDialog.opened
 
+        onPresentRequested: app.switchWorkspace("present")
         onSongsRequested: {
             songPanel.programTarget = app.programs;
             songPanel.open();
@@ -544,11 +642,14 @@ ApplicationWindow {
         onOutputsRequested: outputPanel.open()
         onTemplatesRequested: app.showTemplates(app.programs)
         onEditRequested: (slides, itemId) => {
+            app.editingPresentationId = "";
+            app.customPresentationTitle = "";
             app.editingTemplateId = "";
             app.templateMode = false;
             if (app.doc.replaceSlides(slides)) {
                 app.programEditingItem = itemId;
-                app.notify("Edit this item, then Programs → Update from editor");
+                app.switchWorkspace("design");
+                app.notify("Editing a program item. Use Update program item when ready.");
             }
         }
     }
@@ -557,29 +658,37 @@ ApplicationWindow {
         id: songPanel
 
         objectName: "songsPanel"
-        parent: Overlay.overlay
+        workspaceMode: app.activeWorkspace === "libraries" && app.librarySection === "songs"
+        parent: workspaceMode ? librarySurface : Overlay.overlay
         library: app.content
         document: app.doc
         templates: app.templates
+
+        onContentAdded: toProgram => app.contentAdded(toProgram, workspaceMode)
     }
 
     BibleLibraryPanel {
         id: biblePanel
 
         objectName: "biblePanel"
-        parent: Overlay.overlay
+        workspaceMode: app.activeWorkspace === "libraries" && app.librarySection === "bible"
+        parent: workspaceMode ? librarySurface : Overlay.overlay
         library: app.content
         document: app.doc
         templates: app.templates
+
+        onContentAdded: toProgram => app.contentAdded(toProgram, workspaceMode)
     }
 
     MediaLibraryPanel {
         id: libraryPanel
 
-        parent: Overlay.overlay
+        workspaceMode: app.activeWorkspace === "libraries" && app.librarySection === "media"
+        parent: workspaceMode ? librarySurface : Overlay.overlay
         library: app.library
         document: app.doc
 
+        onContentAdded: toProgram => app.contentAdded(toProgram, workspaceMode)
         onImportRequested: {
             app.libraryImportOnly = true;
             mediaDialog.open();
@@ -640,7 +749,7 @@ ApplicationWindow {
 
         width: 960
         height: 540
-        title: "Church Deck — Output preview"
+        title: "Selah — Output preview"
         color: "#000000"
 
         onVisibleChanged: if (!visible)

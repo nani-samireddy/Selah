@@ -10,6 +10,9 @@ add_library(church-deck-test-cases STATIC
     unit/ProgramStoreTests.cpp
     unit/TemplateStoreTests.cpp
     unit/RemoteControllerTests.cpp
+    unit/FontLibraryTests.cpp
+    unit/PresentationLibraryTests.cpp
+    unit/TextFormattingTests.cpp
 )
 target_include_directories(church-deck-test-cases PUBLIC unit)
 target_link_libraries(church-deck-test-cases PUBLIC church-deck-core)
@@ -22,10 +25,12 @@ if(BUILD_TESTING)
         BASE "${PROJECT_SOURCE_DIR}"
         FILES
             "${PROJECT_SOURCE_DIR}/assets/scriptures/content-seed.sqlite"
+            "${PROJECT_SOURCE_DIR}/assets/fonts/Inter.ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansTelugu.ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansDevanagari.ttf"
     )
     qt_add_resources(church-deck-tests remote-test-assets PREFIX "/remote" BASE "${PROJECT_SOURCE_DIR}/remote" FILES "${PROJECT_SOURCE_DIR}/remote/index.html" "${PROJECT_SOURCE_DIR}/remote/style.css" "${PROJECT_SOURCE_DIR}/remote/app.js")
+    qt_add_resources(church-deck-tests google-font-fixtures PREFIX "/google-fonts" BASE "${PROJECT_SOURCE_DIR}/assets/google-fonts" FILES "${PROJECT_SOURCE_DIR}/assets/google-fonts/catalog.json" "${PROJECT_SOURCE_DIR}/assets/google-fonts/OFL.txt")
     add_test(NAME model-checks COMMAND church-deck-tests)
 endif()
 
@@ -37,6 +42,7 @@ if(CHURCHDECK_ENABLE_DIAGNOSTICS)
         smoke/TemplateChecks.cpp smoke/TemplateChecks.h
         smoke/PrototypeChecks.cpp smoke/PrototypeChecks.h
         smoke/RemoteChecks.cpp smoke/RemoteChecks.h
+        smoke/WorkspaceChecks.cpp smoke/WorkspaceChecks.h
     )
     target_include_directories(church-deck-diagnostics PUBLIC smoke)
     target_link_libraries(church-deck-diagnostics PUBLIC church-deck-test-cases)

@@ -6,12 +6,15 @@ Item {
     id: icon
 
     property string name: ""
-    property color tone: "#A3A3A3"
+    property alias source: iconImage.source
+    property color tone: LibraryStyle.tone("#A3A3A3")
 
     implicitWidth: 14
     implicitHeight: 14
 
     Image {
+        id: iconImage
+
         anchors.fill: parent
         source: icon.name.length ? "../assets/icons/" + icon.name + ".svg" : ""
         sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)

@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 Popup {
     id: panel
 
+    property bool workspaceMode: false
     required property var library
     property var programTarget: null
     property string selectedId: ""
@@ -42,18 +43,20 @@ Popup {
         previewIndex = 0;
     }
 
-    width: Math.min(1100, parent.width - 40)
-    height: Math.min(740, parent.height - 40)
-    x: (parent.width - width) / 2
-    y: (parent.height - height) / 2
-    modal: true
+    closePolicy: workspaceMode ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    width: workspaceMode ? parent.width : Math.min(1100, parent.width - 40)
+    height: workspaceMode ? parent.height : Math.min(740, parent.height - 40)
+    x: workspaceMode ? 0 : (parent.width - width) / 2
+    y: workspaceMode ? 0 : (parent.height - height) / 2
+    modal: !workspaceMode
     focus: true
-    padding: 22
+    padding: LibraryStyle.pagePadding
 
     background: Rectangle {
-        color: "#191919"
-        border.color: "#3B3B3B"
-        radius: 12
+        color: LibraryStyle.panel
+        border.width: panel.workspaceMode ? 0 : 1
+        border.color: LibraryStyle.tone("#3B3B3B")
+        radius: panel.workspaceMode ? 0 : 12
     }
 
     onOpened: {
@@ -75,7 +78,7 @@ Popup {
         id: importFile
 
         title: "Import template"
-        nameFilters: ["Church Deck templates (*.churchtemplate)"]
+        nameFilters: ["Selah templates (*.churchtemplate)"]
 
         onAccepted: panel.library.importTemplate(selectedFile)
     }
@@ -86,7 +89,7 @@ Popup {
         title: "Export template"
         fileMode: FileDialog.SaveFile
         defaultSuffix: "churchtemplate"
-        nameFilters: ["Church Deck templates (*.churchtemplate)"]
+        nameFilters: ["Selah templates (*.churchtemplate)"]
 
         onAccepted: panel.library.exportTemplate(panel.selectedId, selectedFile)
     }
@@ -100,8 +103,8 @@ Popup {
         width: 360
 
         background: Rectangle {
-            color: "#252525"
-            border.color: "#444444"
+            color: LibraryStyle.tone("#252525")
+            border.color: LibraryStyle.tone("#444444")
             radius: 8
         }
         contentItem: ColumnLayout {
@@ -134,8 +137,9 @@ Popup {
             }
 
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: panel.library.status
-                color: "#AAAAAA"
+                color: LibraryStyle.tone("#AAAAAA")
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
@@ -146,13 +150,13 @@ Popup {
                     Layout.fillWidth: true
                 }
 
-                StudioButton {
+                LibraryButton {
                     text: "Cancel"
 
                     onClicked: createDialog.close()
                 }
 
-                StudioButton {
+                LibraryButton {
                     text: "Create & edit"
                     accented: true
 
@@ -178,24 +182,26 @@ Popup {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 14
+        spacing: 16
 
         RowLayout {
             Column {
                 spacing: 5
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: panel.programTarget ? "Choose a layout" : "Templates"
-                    color: "#EEEEEE"
-                    font.pixelSize: 21
+                    color: LibraryStyle.tone("#EEEEEE")
+                    font.pixelSize: 22
                     font.weight: Font.Medium
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     text: panel.programTarget
                           ? "Preview this service item before applying a new layout." :
                             "Design once. Reuse for lyrics, translations, and scripture."
-                    color: "#929292"
+                    color: LibraryStyle.tone("#929292")
                     font.pixelSize: 12
                 }
             }
@@ -204,59 +210,51 @@ Popup {
                 Layout.fillWidth: true
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "New template"
                 iconName: "plus"
 
                 onClicked: createDialog.open()
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Import"
 
                 onClicked: importFile.open()
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Close"
+                visible: !panel.workspaceMode
                 quiet: true
 
                 onClicked: panel.close()
             }
         }
 
-        RowLayout {
+        LibraryTabs {
             visible: !panel.programTarget
-
-            Repeater {
-                model: [
-                    {
-                        title: "All",
-                        kind: "all"
-                    },
-                    {
-                        title: "Lyrics",
-                        kind: "song"
-                    },
-                    {
-                        title: "Bilingual",
-                        kind: "bilingual"
-                    },
-                    {
-                        title: "Scripture",
-                        kind: "scripture"
-                    }
-                ]
-
-                StudioButton {
-                    required property var modelData
-
-                    text: modelData.title
-                    checked: panel.filter === modelData.kind
-
-                    onClicked: panel.filter = modelData.kind
+            options: [
+                {
+                    text: "All",
+                    value: "all"
+                },
+                {
+                    text: "Lyrics",
+                    value: "song"
+                },
+                {
+                    text: "Bilingual",
+                    value: "bilingual"
+                },
+                {
+                    text: "Scripture",
+                    value: "scripture"
                 }
-            }
+            ]
+            currentValue: panel.filter
+
+            onChosen: value => panel.filter = value
         }
 
         RowLayout {
@@ -280,30 +278,40 @@ Popup {
                     required property var modelData
 
                     width: ListView.view.width
-                    height: 76
+                    height: 72
+                    padding: 12
                     Accessible.name: modelData.name
 
                     background: Rectangle {
-                        color: panel.selectedId === record.modelData.id ? "#323232" :
+                        color: panel.selectedId === record.modelData.id ? LibraryStyle.tone(
+                                                                              "#323232") :
                                                                           record.hovered
-                                                                          ? "#242424" : "#202020"
+                                                                          ? LibraryStyle.tone(
+                                                                                "#242424") :
+                                                                            LibraryStyle.tone(
+                                                                                "#202020")
                         radius: 7
-                        border.color: "#363636"
+                        border.color: panel.selectedId === record.modelData.id ? LibraryStyle.tone(
+                                                                                     "#565656") :
+                                                                                 LibraryStyle.tone(
+                                                                                     "#303030")
                     }
                     contentItem: Column {
                         spacing: 7
 
                         Text {
+                            font.family: LibraryStyle.fontFamily
                             width: parent.width
                             text: record.modelData.name
                             elide: Text.ElideRight
-                            color: "#DDDDDD"
+                            color: LibraryStyle.tone("#DDDDDD")
                             font.pixelSize: 13
                         }
 
                         Text {
+                            font.family: LibraryStyle.fontFamily
                             text: record.modelData.kind + " · revision " + record.modelData.revision
-                            color: "#888888"
+                            color: LibraryStyle.tone("#888888")
                             font.pixelSize: 11
                         }
                     }
@@ -315,7 +323,7 @@ Popup {
             Rectangle {
                 implicitWidth: 1
                 Layout.fillHeight: true
-                color: "#333333"
+                color: LibraryStyle.tone("#333333")
             }
 
             ColumnLayout {
@@ -325,14 +333,15 @@ Popup {
 
                 RowLayout {
                     Text {
+                        font.family: LibraryStyle.fontFamily
                         text: panel.definition.name || "No template selected"
-                        color: "#DDDDDD"
+                        color: LibraryStyle.tone("#DDDDDD")
                         font.pixelSize: 16
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
 
-                    StudioButton {
+                    LibraryButton {
                         text: "Edit layout"
                         enabled: !!panel.selectedId
 
@@ -349,8 +358,8 @@ Popup {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 180
-                    color: "#111111"
-                    border.color: "#383838"
+                    color: LibraryStyle.tone("#111111")
+                    border.color: LibraryStyle.tone("#383838")
                     radius: 6
                     clip: true
 
@@ -362,31 +371,34 @@ Popup {
                         x: (frame.width - width * scale) / 2
                         y: (frame.height - height * scale) / 2
                         elements: panel.previewSlide.elements || []
-                        backgroundColor: panel.previewSlide.background || "#111111"
+                        backgroundColor: panel.previewSlide.background || LibraryStyle.tone(
+                                             "#111111")
                         ambientOpacity: panel.previewSlide.ambientOpacity === undefined ? 0.5 :
                                                                                           panel.previewSlide.ambientOpacity
                         videoEnabled: false
                     }
 
                     Text {
+                        font.family: LibraryStyle.fontFamily
                         anchors.centerIn: parent
                         visible: !panel.result.slides.length
                         text: "No preview available"
-                        color: "#777777"
+                        color: LibraryStyle.tone("#777777")
                         font.pixelSize: 13
                     }
                 }
 
                 RowLayout {
                     Text {
+                        font.family: LibraryStyle.fontFamily
                         text: panel.programTarget ? "Service content preview" :
                                                     "Sample content preview"
-                        color: "#888888"
+                        color: LibraryStyle.tone("#888888")
                         font.pixelSize: 11
                         Layout.fillWidth: true
                     }
 
-                    StudioButton {
+                    LibraryButton {
                         text: "Previous"
                         enabled: panel.previewIndex > 0
 
@@ -394,13 +406,14 @@ Popup {
                     }
 
                     Text {
+                        font.family: LibraryStyle.fontFamily
                         text: panel.result.slides.length ? (panel.previewIndex + 1) + " / "
                                                            + panel.result.slides.length : "0 / 0"
-                        color: "#AAAAAA"
+                        color: LibraryStyle.tone("#AAAAAA")
                         font.pixelSize: 11
                     }
 
-                    StudioButton {
+                    LibraryButton {
                         text: "Next"
                         enabled: panel.previewIndex < panel.result.slides.length - 1
 
@@ -409,15 +422,17 @@ Popup {
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     Layout.fillWidth: true
                     text: panel.result.error
                           || "Text splits to fit the template's boxes, fonts, and selected line limit."
-                    color: panel.result.error ? "#E1AD80" : "#999999"
+                    color: panel.result.error ? "#E1AD80" : LibraryStyle.tone("#999999")
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                 }
 
                 Text {
+                    font.family: LibraryStyle.fontFamily
                     Layout.fillWidth: true
                     visible: !!panel.result.missingMedia?.length
                     text: "Missing media: " + (panel.result.missingMedia || []).join(", ")
@@ -431,26 +446,27 @@ Popup {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: "#333333"
+            color: LibraryStyle.tone("#333333")
         }
 
         RowLayout {
             Text {
+                font.family: LibraryStyle.fontFamily
                 text: panel.library.status
-                color: "#999999"
+                color: LibraryStyle.tone("#999999")
                 font.pixelSize: 11
                 Layout.fillWidth: true
                 elide: Text.ElideRight
             }
 
-            StudioButton {
+            LibraryButton {
                 text: "Export"
                 enabled: !!panel.selectedId
 
                 onClicked: exportFile.open()
             }
 
-            StudioButton {
+            LibraryButton {
                 objectName: "applyLayoutButton"
                 text: "Apply layout"
                 accented: true

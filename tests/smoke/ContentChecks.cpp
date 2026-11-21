@@ -8,6 +8,7 @@
 #include "ProgramStore.h"
 #include "PrototypeChecks.h"
 #include "SlideFactory.h"
+#include "VisualLookup.h"
 #include <QDebug>
 #include <QDir>
 #include <QFontDatabase>
@@ -37,7 +38,7 @@ int startContentChecks(QGuiApplication &app, EditorDocument &document, MediaLibr
         }
         QVariantMap song { { "id", "content-smoke-original" }, { "title", "Together in hope" },
             { "primaryLanguage", "English" }, { "secondaryLanguage", "తెలుగు" },
-            { "credits", "Church Deck · Original verification lyrics" }, { "tags", "Gathering" },
+            { "credits", "Selah · Original verification lyrics" }, { "tags", "Gathering" },
             { "sections",
                 QVariantList { QVariantMap { { "key", "v1" }, { "label", "Verse 1" },
                                    { "primary",
@@ -63,7 +64,12 @@ int startContentChecks(QGuiApplication &app, EditorDocument &document, MediaLibr
             QTimer::singleShot(300, &app, [&, window, folder, id, object]() mutable {
                 window->grabWindow().save(folder + "/songs-library.png");
                 // Editing fields must survive section switches and saving a named alternative.
-                auto lyrics = window->findChild<QObject *>("primaryLyrics");
+                auto lyrics = VisualLookup::find(window->contentItem(), "primaryLyrics");
+                if (!lyrics) {
+                    qCritical() << "No first section card editor";
+                    app.exit(89);
+                    return;
+                }
                 lyrics->setProperty("text",
                     "Edited line one\nEdited line two\nEdited line three\nEdited line four");
                 object.property("selectSection").callWithInstance(object, { QJSValue(1) });
@@ -119,7 +125,8 @@ int startContentChecks(QGuiApplication &app, EditorDocument &document, MediaLibr
                             { QJSValue("tel2017"), QJSValue("JHN"), QJSValue(3), QJSValue(16),
                                 QJSValue(18) });
                     QTimer::singleShot(350, &app, [&, window, folder, panel]() mutable {
-                        if (panel.property("verses").toVariant().toList().size() != 3) {
+                        if (panel.property("verses").toVariant().toList().size() < 3
+                            || panel.property("selected").toVariant().toList().size() != 3) {
                             qCritical() << "Passage UI failed";
                             app.exit(86);
                             return;

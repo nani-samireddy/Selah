@@ -4,8 +4,8 @@ import QtQuick
 import QtQuick.Effects
 
 Rectangle {
-    color: "#191919"
-    border.color: "#343434"
+    color: LibraryStyle.tone("#191919")
+    border.color: LibraryStyle.tone("#343434")
     radius: 9
     layer.enabled: true
 

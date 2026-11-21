@@ -53,7 +53,7 @@ Item {
         Text {
             text: String(viewport.host.doc.currentSlide + 1).padStart(2, "0") + "  /  "
                   + viewport.host.doc.slides[viewport.host.doc.currentSlide].name
-            color: "#949494"
+            color: LibraryStyle.tone("#949494")
             font.pixelSize: 10
 
             anchors {
@@ -65,7 +65,7 @@ Item {
 
         Text {
             text: "1920 × 1080"
-            color: "#686868"
+            color: LibraryStyle.tone("#686868")
             font.pixelSize: 10
 
             anchors {
@@ -108,7 +108,17 @@ Item {
                 anchors.fill: parent
                 enabled: !viewport.host.handTool
 
-                onClicked: viewport.host.doc.selected = -1
+                onClicked: {
+                    richEditor.finish();
+                    viewport.host.doc.selected = -1;
+                }
+            }
+
+            RichTextEditor {
+                id: richEditor
+
+                host: viewport.host
+                z: 10000
             }
 
             Repeater {
@@ -119,7 +129,7 @@ Item {
 
                     required property var modelData
                     required property int index
-                    property bool editing: false
+                    readonly property bool editing: viewport.host.editingId === modelData.uid
                     property bool selected: viewport.host.doc.selected === index
 
                     function previewGeometry() {
@@ -139,44 +149,6 @@ Item {
                     rotation: modelData.rotation
                     opacity: modelData.visible ? modelData.opacity : 0
                     visible: modelData.visible
-
-                    TextEdit {
-                        id: slideText
-
-                        textFormat: TextEdit.PlainText
-                        anchors.fill: parent
-                        visible: objectBlock.editing
-                        text: objectBlock.modelData.text
-                        color: objectBlock.modelData.color
-                        font.family: objectBlock.modelData.fontFamily
-                        font.pixelSize: objectBlock.modelData.fontSize
-                        wrapMode: TextEdit.Wrap
-                        horizontalAlignment: objectBlock.modelData.alignment === "center"
-                                             ? TextEdit.AlignHCenter :
-                                               objectBlock.modelData.alignment === "right"
-                                               ? TextEdit.AlignRight : TextEdit.AlignLeft
-                        readOnly: !objectBlock.editing
-                        selectByMouse: objectBlock.editing
-                        selectionColor: "#7F4B93"
-                        clip: true
-
-                        onActiveFocusChanged: if (!activeFocus && objectBlock.editing) {
-                                                  objectBlock.editing = false;
-                                                  viewport.host.editingId = "";
-                                                  viewport.host.doc.updateElement(objectBlock.index,
-                                                                                  {
-                                                                                      text: text
-                                                                                  });
-                                              }
-                        Keys.onEscapePressed: {
-                            objectBlock.editing = false;
-                            viewport.host.editingId = "";
-                            viewport.host.doc.updateElement(objectBlock.index, {
-                                                                text: text
-                                                            });
-                            viewport.forceActiveFocus();
-                        }
-                    }
 
                     MouseArea {
                         id: moveMouse
@@ -199,10 +171,7 @@ Item {
                             if (!objectBlock.modelData.locked && (!objectBlock.modelData.kind
                                                                   || objectBlock.modelData.kind
                                                                   === "text")) {
-                                objectBlock.editing = true;
-                                viewport.host.editingId = objectBlock.modelData.uid;
-                                slideText.forceActiveFocus();
-                                slideText.selectAll();
+                                richEditor.begin(objectBlock.index);
                             }
                         }
                         onReleased: {

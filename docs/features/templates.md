@@ -62,7 +62,7 @@ The slide uses the same element format as `.churchdeck` projects. Media URLs rem
 python3 scripts/format.py --check
 cmake --build build --target church-deck_qmllint
 ctest --test-dir build --output-on-failure
-build/church-deck.app/Contents/MacOS/church-deck --fresh --compact --template-smoke "$PWD/captures/templates"
+build/Selah.app/Contents/MacOS/Selah --fresh --compact --template-smoke "$PWD/captures/templates"
 ```
 
 Model checks cover type/binding validation, text fit, lossless multilingual splitting, repeated arrangements, static layers, revision persistence, exchange, legacy passage recovery, program snapshots and undo. The native check previews service content, opens the editor, changes the layout, checks rendered text bounds/background updates and verifies live isolation. It uses the verification profile and original test lyrics.

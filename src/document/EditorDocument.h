@@ -43,6 +43,7 @@ public:
     QString notes() const;
     void setNotes(const QString &notes);
     Q_INVOKABLE void updateElement(int index, const QVariantMap &patch);
+    Q_INVOKABLE void formatText(const QVariantMap &patch, int start = -1, int end = -1);
     Q_INVOKABLE void addText();
     Q_INVOKABLE bool addMedia(const QUrl &url);
     Q_INVOKABLE void importMedia(const QUrl &url, bool insertOnSlide = true);
@@ -51,6 +52,7 @@ public:
     bool importing() const { return m_importing; }
 
     Q_INVOKABLE void moveSelected(int delta);
+    Q_INVOKABLE bool moveElementTo(int from, int to);
     Q_INVOKABLE void duplicateSelected();
     Q_INVOKABLE void deleteSelected();
     Q_INVOKABLE void undo();

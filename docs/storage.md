@@ -1,5 +1,7 @@
 # Local storage and formats
 
+Selah retains the original `ChurchDeck` / `Church Deck` storage and settings namespace so existing libraries, programs, recovery drafts and preferences remain available after the rename. The display name and packaged executable are Selah.
+
 All current storage is local. Qt chooses the platform's application-data directory using organization `ChurchDeck` and application `Church Deck`. On macOS this is `~/Library/Application Support/ChurchDeck/Church Deck/`; on Windows it normally resides under the user's roaming application-data directory. The app does not currently synchronize data to a server.
 
 | Data | File/format | Owner |
@@ -30,3 +32,5 @@ See [content formats](features/content-libraries.md) and [programs](features/pro
 Exports reference managed media files by local URL; they do not package the files yet. Back up the application-data directory together with media, not only the JSON exports. Close the app before making a simple filesystem backup of SQLite databases, or use SQLite's backup facilities; copying a database while ignoring its WAL can omit recent writes.
 
 The source-tree refactor intentionally keeps database names, JSON keys and QML resource URLs unchanged. Future schema changes must introduce migrations instead of replacing a user's database with a new seed. Undo histories are in memory and do not survive a restart.
+
+The capture and verification profile identities also retain their original names. These are private storage/settings namespaces, not product branding. Sample credits, UI labels and verification-window titles use Selah.

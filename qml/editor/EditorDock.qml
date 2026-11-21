@@ -45,7 +45,7 @@ StudioPanel {
         Rectangle {
             width: 1
             height: 20
-            color: "#383838"
+            color: LibraryStyle.tone("#383838")
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -79,7 +79,7 @@ StudioPanel {
         Rectangle {
             width: 1
             height: 20
-            color: "#383838"
+            color: LibraryStyle.tone("#383838")
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -106,7 +106,7 @@ StudioPanel {
         Rectangle {
             width: 1
             height: 20
-            color: "#383838"
+            color: LibraryStyle.tone("#383838")
             anchors.verticalCenter: parent.verticalCenter
         }
 

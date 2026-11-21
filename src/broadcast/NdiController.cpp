@@ -168,7 +168,7 @@ bool NdiController::start(
     safeName.replace(QRegularExpression("[\\\\/:*?\"<>|]"), " ");
     safeName = safeName.left(160);
     if (safeName.isEmpty()) {
-        safeName = "Church Deck Broadcast";
+        safeName = "Selah Broadcast";
     }
     while (safeName.toUtf8().size() > 180) {
         safeName.chop(1);

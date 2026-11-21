@@ -130,7 +130,9 @@ int ProgramStore::selfTest() {
         return 17;
     }
     QFile bad(dir.filePath("invalid.churchprogram"));
-    bad.open(QIODevice::WriteOnly);
+    if (!bad.open(QIODevice::WriteOnly)) {
+        return 18;
+    }
     bad.write("{\"format\":\"churchdeck-program-1\",\"program\":{}}");
     bad.close();
     if (!check(
@@ -160,6 +162,86 @@ int ProgramStore::selfTest() {
                 && store.selectedSlides()[0].toMap()["elements"].toList().size() == 2,
             "Explicit editor update")) {
         return 22;
+    }
+    {
+        QTemporaryDir reorderDirectory;
+        OutputManager live;
+        ProgramStore reorder(&live, nullptr, reorderDirectory.path());
+        reorder.createProgram("Reorder fixture", "");
+        reorder.addPresentation(editor.slides(), "First");
+        reorder.addPresentation(editor.slides(), "Middle");
+        reorder.addPresentation(editor.slides(), "Last");
+        reorder.setSelected(1);
+        const auto selection = reorder.selectedItem()["id"];
+        const auto original = reorder.items();
+        reorder.present(0);
+        const auto snapshot = live.snapshotId(), title = live.liveTitle();
+        if (!check(reorder.moveItemTo(0, 2) && reorder.items()[2].toMap()["title"] == "First"
+                    && reorder.selectedItem()["id"] == selection && reorder.selected() == 0,
+                "Drag move preserves selected identity")) {
+            return 40;
+        }
+        if (!check(!reorder.moveItemTo(-1, 0) && !reorder.moveItemTo(0, 3)
+                    && !reorder.moveItemTo(0, 0),
+                "Reject invalid and unchanged drops")) {
+            return 41;
+        }
+        reorder.undo();
+        if (!check(reorder.items() == original && reorder.selectedItem()["id"] == selection
+                    && reorder.selected() == 1,
+                "One undo restores the entire drop")) {
+            return 42;
+        }
+        reorder.redo();
+        if (!check(reorder.items()[2].toMap()["title"] == "First"
+                    && reorder.selectedItem()["id"] == selection && live.snapshotId() == snapshot
+                    && live.liveTitle() == title,
+                "Redo preserves selection and the live snapshot")) {
+            return 43;
+        }
+    }
+    {
+        QTemporaryDir destinations;
+        OutputManager live;
+        ProgramStore target(&live, nullptr, destinations.path());
+        if (!target.createProgram("Midweek", "2026-11-25")) {
+            return 44;
+        }
+        const auto otherId = target.id();
+        if (!target.createProgram("Current Sunday", "2026-11-22")
+            || !target.addPresentation(editor.slides(), "Current slides") || !target.present()) {
+            return 45;
+        }
+        target.setItemDetails("Unsaved current title", "Keep this draft");
+        const auto current = target.m_program;
+        const auto selection = target.m_selected;
+        const auto history = target.m_undo;
+        const auto snapshot = live.snapshotId();
+        if (!check(target.addPresentation(editor.slides(), "Other slides", otherId)
+                    && target.addSong(song, 3, {}, otherId)
+                    && !target.addPresentation(editor.slides(), "Invalid", "missing-program")
+                    && target.addPresentation(editor.slides(), "After rollback", otherId)
+                    && target.m_program == current && target.m_selected == selection
+                    && target.m_undo == history && target.dirty() && live.snapshotId() == snapshot,
+                "Destination adds preserve the open dirty program, history, selection and live "
+                "output")) {
+            return 46;
+        }
+        ProgramStore reader(nullptr, nullptr, destinations.path());
+        if (!check(reader.id() == target.id() && reader.openProgram(otherId)
+                    && reader.items().size() == 3 && reader.items()[1].toMap()["kind"] == "song",
+                "Destination adds persist without changing the last-opened program")) {
+            return 47;
+        }
+        if (!check(target.addPresentation(editor.slides(), "Current add", target.id())
+                    && target.items().size() == current["items"].toList().size() + 1,
+                "Explicit current destination uses normal undoable editing")) {
+            return 48;
+        }
+        target.undo();
+        if (!check(target.m_program == current, "Current destination add remains undoable")) {
+            return 49;
+        }
     }
     qInfo() << "Program checks passed: mixed snapshots, named arrangements, styles, notes, "
                "save/reopen/import, undo/redo, missing media, editor updates, and live isolation "

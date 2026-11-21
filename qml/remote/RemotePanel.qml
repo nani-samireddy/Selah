@@ -18,9 +18,9 @@ Popup {
     focus: true
 
     background: Rectangle {
-        color: "#191919"
+        color: LibraryStyle.tone("#191919")
         radius: 12
-        border.color: "#3B3B3B"
+        border.color: LibraryStyle.tone("#3B3B3B")
     }
 
     onOpened: service.refreshInterfaces()
@@ -32,7 +32,7 @@ Popup {
         RowLayout {
             Text {
                 text: "Remote control"
-                color: "#EEEEEE"
+                color: LibraryStyle.tone("#EEEEEE")
                 font.pixelSize: 22
                 Layout.fillWidth: true
             }
@@ -47,7 +47,7 @@ Popup {
 
         Text {
             text: panel.service.status
-            color: panel.service.running ? "#ACCFB5" : "#999999"
+            color: panel.service.running ? "#ACCFB5" : LibraryStyle.tone("#999999")
             font.pixelSize: 12
             Layout.fillWidth: true
             wrapMode: Text.Wrap
@@ -69,7 +69,7 @@ Popup {
             Text {
                 visible: panel.service.running
                 text: panel.service.address
-                color: "#BBBBBB"
+                color: LibraryStyle.tone("#BBBBBB")
                 font.pixelSize: 13
                 Layout.fillWidth: true
             }
@@ -92,7 +92,7 @@ Popup {
 
         Text {
             text: "Use a trusted local Wi-Fi network. HTTP pairing stays on your network. Allow local network access if your system asks."
-            color: "#909090"
+            color: LibraryStyle.tone("#909090")
             font.pixelSize: 12
             wrapMode: Text.Wrap
             Layout.fillWidth: true
@@ -164,21 +164,21 @@ Popup {
 
                         Text {
                             text: panel.speaker ? "Speaker pairing code" : "Controller pairing code"
-                            color: "#A0A0A0"
+                            color: LibraryStyle.tone("#A0A0A0")
                             font.pixelSize: 12
                         }
 
                         Text {
                             text: panel.speaker ? panel.service.speakerCode :
                                                   panel.service.controllerCode
-                            color: "#EEEEEE"
+                            color: LibraryStyle.tone("#EEEEEE")
                             font.pixelSize: 32
                             font.letterSpacing: 5
                         }
 
                         Text {
                             text: "Scan the QR code, or open this address and enter the code:"
-                            color: "#999999"
+                            color: LibraryStyle.tone("#999999")
                             font.pixelSize: 12
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
@@ -188,7 +188,7 @@ Popup {
                             text: panel.service.address
                             readOnly: true
                             selectByMouse: true
-                            color: "#CCCCCC"
+                            color: LibraryStyle.tone("#CCCCCC")
                             font.pixelSize: 13
                             wrapMode: TextEdit.WrapAnywhere
                             Layout.fillWidth: true
@@ -200,7 +200,7 @@ Popup {
                     text: panel.speaker
                           ? "Speakers can see live and next text, translations, notes, messages and countdown. They cannot change slides." :
                             "Controllers can move through the live snapshot and blackout the audience. Previews are still images; video and audio stay on the computer."
-                    color: "#999999"
+                    color: LibraryStyle.tone("#999999")
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
@@ -209,19 +209,19 @@ Popup {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 1
-                    color: "#333333"
+                    color: LibraryStyle.tone("#333333")
                 }
 
                 Text {
                     text: "Paired devices · " + panel.service.clients.length + " / 24"
-                    color: "#DDDDDD"
+                    color: LibraryStyle.tone("#DDDDDD")
                     font.pixelSize: 14
                 }
 
                 Text {
                     text: "No devices paired yet"
                     visible: panel.service.clients.length === 0
-                    color: "#777777"
+                    color: LibraryStyle.tone("#777777")
                     font.pixelSize: 12
                 }
 
@@ -238,14 +238,14 @@ Popup {
                         Text {
                             text: clientRow.modelData.name
                             textFormat: Text.PlainText
-                            color: "#DDDDDD"
+                            color: LibraryStyle.tone("#DDDDDD")
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
 
                         Text {
                             text: clientRow.modelData.role
-                            color: "#888888"
+                            color: LibraryStyle.tone("#888888")
                             font.pixelSize: 12
                         }
 

@@ -4,18 +4,47 @@ import QtQuick.Controls
 Button {
     id: control
 
+    property string labelFontFamily: LibraryStyle.fontFamily
+    property int labelFontSize: 13
+    property bool selected: false
     property bool accented: false
     property bool quiet: false
     property string hint: ""
     property string iconName: ""
+    property bool feedbackEnabled: true
+    readonly property bool active: checked || selected
+    readonly property color fillColor: {
+        if (!enabled)
+            return quiet ? "transparent" : LibraryStyle.tone("#232323");
+        if (accented) {
+            if (down)
+                return LibraryStyle.tone("#BDBDBD");
+            return hovered ? LibraryStyle.tone("#FFFFFF") : LibraryStyle.tone("#E5E5E5");
+        }
+        if (active)
+            return LibraryStyle.tone("#3A3A3A");
+        if (down)
+            return LibraryStyle.tone("#383838");
+        if (hovered)
+            return LibraryStyle.tone("#333333");
+        return quiet ? "transparent" : LibraryStyle.tone("#292929");
+    }
+    readonly property color labelColor: {
+        if (!enabled)
+            return LibraryStyle.tone("#606060");
+        if (accented)
+            return LibraryStyle.tone("#171717");
+        return active ? LibraryStyle.tone("#F1F1F1") : LibraryStyle.tone("#CBCBCB");
+    }
 
+    scale: down && enabled && !InteractionFeedback.reducedMotion ? 0.96 : 1
     padding: 0
     topInset: 0
     bottomInset: 0
     leftInset: 0
     rightInset: 0
-    implicitHeight: 34
-    implicitWidth: Math.max(34, label.implicitWidth + (iconName.length ? 23 : 0) + 22)
+    implicitHeight: LibraryStyle.controlHeight
+    implicitWidth: Math.max(28, label.implicitWidth + (iconName.length ? 23 : 0) + 16)
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     ToolTip.visible: hovered && hint.length > 0
@@ -23,6 +52,13 @@ Button {
     ToolTip.delay: 500
     Accessible.name: hint.length ? hint : text
 
+    Behavior on scale {
+        NumberAnimation {
+            duration: InteractionFeedback.reducedMotion ? 0 : 220
+            easing.type: Easing.OutBack
+            easing.overshoot: 0.6
+        }
+    }
     contentItem: Item {
         Row {
             anchors.centerIn: parent
@@ -33,21 +69,22 @@ Button {
                 width: 14
                 height: 14
                 name: control.iconName
-                tone: control.accented ? "#171717" : control.enabled ? "#B8B8B8" : "#606060"
+                tone: control.accented ? LibraryStyle.tone("#171717") : control.enabled
+                                         ? LibraryStyle.tone("#B8B8B8") : LibraryStyle.tone(
+                                               "#606060")
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
                 id: label
 
+                renderType: Text.QtRendering
                 text: control.text
                 visible: text.length > 0
-                color: !control.enabled ? "#606060" : control.accented ? "#171717" :
-                                                                         control.checked
-                                                                         ? "#F1F1F1" : "#CBCBCB"
-                font.family: "Arial"
-                font.pixelSize: 12
-                font.weight: control.accented ? Font.DemiBold : Font.Normal
+                color: control.labelColor
+                font.family: control.labelFontFamily
+                font.pixelSize: control.labelFontSize
+                font.weight: control.accented ? Font.Medium : Font.Normal
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 anchors.verticalCenter: parent.verticalCenter
@@ -55,28 +92,26 @@ Button {
         }
     }
     background: Rectangle {
-        radius: 6
-        color: !control.enabled ? (control.quiet ? "transparent" : "#232323") : control.accented ? (control.down
-                                                                                                    ? "#BDBDBD" :
-                                                                                                      control.hovered
-                                                                                                      ? "#FFFFFF" :
-                                                                                                        "#E5E5E5") :
-                                                                                                   control.checked
-                                                                                                   ? "#3A3A3A" :
-                                                                                                     control.down
-                                                                                                     ? "#383838" :
-                                                                                                       control.hovered
-                                                                                                       ? "#333333" :
-                                                                                                         control.quiet
-                                                                                                         ? "transparent" :
-                                                                                                           "#292929"
+        radius: LibraryStyle.controlRadius
+        color: control.fillColor
         border.width: control.visualFocus ? 1 : control.quiet || control.accented ? 0 : 1
-        border.color: control.visualFocus ? "#AAAAAA" : "#414141"
+        border.color: control.visualFocus ? LibraryStyle.tone("#AAAAAA") : LibraryStyle.tone(
+                                                "#414141")
 
         Behavior on color {
             ColorAnimation {
-                duration: 110
+                duration: InteractionFeedback.duration
             }
         }
+    }
+
+    Connections {
+        function onClicked() {
+            if (control.feedbackEnabled)
+                InteractionFeedback.play(control.checkable || control.selected ? "select" :
+                                                                                 "click");
+        }
+
+        target: control
     }
 }

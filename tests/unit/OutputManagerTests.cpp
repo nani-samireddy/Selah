@@ -11,14 +11,25 @@ int OutputManager::selfTest() {
                                   QVariantList { QVariantMap { { "kind", "text" },
                                       { "text", "Live text" }, { "fontSize", 90 } } } } },
         QVariantMap { { "name", "Next" }, { "elements", QVariantList {} } } };
+    int snapshotChanges = 0;
+    QObject::connect(
+        &outputs, &OutputManager::snapshotChanged, &outputs, [&] { ++snapshotChanges; });
     outputs.takeLive(slides, 0);
     slides[0] = QVariantMap { { "name", "Edited draft" } };
     if (outputs.liveTitle() != "First" || outputs.liveText() != "Live text"
         || outputs.nextTitle() != "Next" || outputs.liveNotes() != "Private notes") {
         return 1;
     }
+    const auto order = outputs.liveOrder();
+    if (order.size() != 2 || order[0].toMap()["title"] != "First"
+        || order[0].toMap().contains("notes") || order[0].toMap().contains("elements")) {
+        return 8;
+    }
     outputs.advance(1);
     outputs.advance(1);
+    if (snapshotChanges != 1 || outputs.liveOrder() != order) {
+        return 9;
+    }
     if (outputs.liveIndex() != 1) {
         return 2;
     }

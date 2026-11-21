@@ -1,6 +1,8 @@
 # The shared runtime is independent of the application entry point and test cases.
 qt_add_library(church-deck-core STATIC
     app/ApplicationSetup.cpp app/ApplicationSetup.h
+    fonts/FontLibrary.cpp fonts/FontLibrary.h fonts/FontDownloads.cpp
+    presentations/PresentationLibrary.cpp presentations/PresentationLibrary.h
     document/EditorDocument.cpp document/EditorDocument.h
     document/DocumentElements.cpp document/DocumentElements.h
     document/DocumentPersistence.cpp document/DocumentMedia.cpp
@@ -26,10 +28,12 @@ qt_add_library(church-deck-core STATIC
     broadcast/NdiWorker.cpp broadcast/NdiWorker.h
 )
 target_include_directories(church-deck-core PUBLIC
-    app document content media programs outputs broadcast templates remote
+    presentations
+    app document content media programs outputs broadcast templates remote fonts
     "${PROJECT_SOURCE_DIR}/third_party/qrcodegen"
 )
 target_link_libraries(church-deck-core PUBLIC
+    church-deck-formatting
     Qt6::Quick Qt6::QuickControls2 Qt6::Multimedia Qt6::Concurrent Qt6::Sql Qt6::Network
     PRIVATE Qt6::GuiPrivate
 )

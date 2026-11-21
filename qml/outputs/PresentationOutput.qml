@@ -11,7 +11,7 @@ Window {
     transientParent: null
     width: 960
     height: 540
-    title: role === "stage" ? "Church Deck — Stage output" : "Church Deck — Audience output"
+    title: role === "stage" ? "Selah — Stage output" : "Selah — Audience output"
     color: "#000000"
 
     onClosing: controller.stop(role)

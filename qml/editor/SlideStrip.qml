@@ -8,8 +8,12 @@ Item {
 
     required property var host
     required property Item canvas
+    readonly property real previewWidth: 126
+    readonly property real previewPadding: 4
+    readonly property real previewHeight: (previewWidth - 2 * previewPadding) * 9 / 16 + 2
+                                          * previewPadding
 
-    height: 118
+    height: 32 + previewHeight + 22
 
     RowLayout {
         height: 20
@@ -63,21 +67,21 @@ Item {
                     required property var modelData
                     required property int index
 
-                    width: 126
-                    height: 84
+                    width: slideStrip.previewWidth
+                    height: slideStrip.previewHeight + 22
 
                     Rectangle {
-                        width: 126
-                        height: 65
+                        width: thumbnail.width
+                        height: slideStrip.previewHeight
                         radius: 4
                         color: "transparent"
                         border.color: slideStrip.host.doc.currentSlide === thumbnail.index
-                                      ? "#DDDDDD" : "#373737"
+                                      ? LibraryStyle.tone("#DDDDDD") : LibraryStyle.tone("#373737")
                         border.width: slideStrip.host.doc.currentSlide === thumbnail.index ? 2 : 1
 
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: 4
+                            anchors.margins: slideStrip.previewPadding
                             color: thumbnail.modelData.background
                             clip: true
 
@@ -89,18 +93,20 @@ Item {
                                                                                                        === 0 ? 0.85 :
                                                                                                                0.5) : thumbnail.modelData.ambientOpacity
                                 videoEnabled: false
-                                scale: Math.min(parent.width / 1920, parent.height / 1080)
+                                scale: parent.width / 1920
                                 transformOrigin: Item.TopLeft
                             }
                         }
                     }
 
                     Text {
-                        y: 70
+                        y: slideStrip.previewHeight + 5
+                        width: thumbnail.width
+                        elide: Text.ElideRight
                         text: String(thumbnail.index + 1).padStart(2, "0") + "  "
                               + thumbnail.modelData.name
-                        color: slideStrip.host.doc.currentSlide === thumbnail.index ? "#D6D6D6" :
-                                                                                      "#777777"
+                        color: slideStrip.host.doc.currentSlide === thumbnail.index
+                               ? LibraryStyle.tone("#D6D6D6") : LibraryStyle.tone("#777777")
                         font.pixelSize: 10
                     }
 

@@ -1,5 +1,6 @@
 #include "ContentLibrary.h"
 #include "ScriptureImporter.h"
+#include <algorithm>
 #include <QDebug>
 #include <QDir>
 #include <QEventLoop>
@@ -86,19 +87,69 @@ QVariantList ContentLibrary::songs() const {
     return searchSongs("");
 }
 
-QVariantList ContentLibrary::searchSongs(const QString &query) const {
+QStringList ContentLibrary::parseSongTags(const QVariant &value) const {
+    // Commas separate tags; spaces stay inside multi-word labels. Accept JSON arrays too.
+    const auto values = value.metaType().id() == QMetaType::QStringList
+            || value.metaType().id() == QMetaType::QVariantList
+        ? value.toStringList()
+        : value.toString().split(QRegularExpression("[,;\\n]"));
+    QStringList result;
+    QSet<QString> seen;
+    for (const auto &raw : values) {
+        const auto tag = normalized(raw.simplified());
+        const auto key = tag.toCaseFolded();
+        if (!tag.isEmpty() && !seen.contains(key)) {
+            result.append(tag);
+            seen.insert(key);
+        }
+    }
+    return result;
+}
+
+QStringList ContentLibrary::songTags() const {
+    QStringList result;
+    QSet<QString> seen;
+    QSqlQuery statement(m_db);
+    if (m_db.isOpen() && statement.exec("SELECT data FROM songs ORDER BY title COLLATE NOCASE")) {
+        while (statement.next()) {
+            const auto data
+                = QJsonDocument::fromJson(statement.value(0).toByteArray()).object().toVariantMap();
+            for (const auto &tag : parseSongTags(data.value("tags"))) {
+                if (!seen.contains(tag.toCaseFolded())) {
+                    result.append(tag);
+                    seen.insert(tag.toCaseFolded());
+                }
+            }
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const QString &a, const QString &b) {
+        return QString::localeAwareCompare(a.toCaseFolded(), b.toCaseFolded()) < 0;
+    });
+    return result;
+}
+
+QVariantList ContentLibrary::searchSongs(const QString &query, const QString &tag) const {
     QVariantList result;
     if (!m_db.isOpen()) {
         return result;
     }
     QSqlQuery statement(m_db);
     statement.prepare(
-        "SELECT data FROM songs WHERE instr(search,?)>0 ORDER BY title COLLATE NOCASE LIMIT 500");
+        "SELECT data FROM songs WHERE instr(search,?)>0 ORDER BY title COLLATE NOCASE");
     statement.addBindValue(normalized(query).toCaseFolded());
     if (statement.exec()) {
         while (statement.next()) {
-            result.append(
-                QJsonDocument::fromJson(statement.value(0).toByteArray()).object().toVariantMap());
+            const auto data
+                = QJsonDocument::fromJson(statement.value(0).toByteArray()).object().toVariantMap();
+            if (!tag.isEmpty()
+                && !parseSongTags(data.value("tags"))
+                    .contains(normalized(tag.trimmed()), Qt::CaseInsensitive)) {
+                continue;
+            }
+            result.append(data);
+            if (result.size() >= 500) {
+                break;
+            }
         }
     }
     return result;
@@ -112,6 +163,30 @@ QVariantMap ContentLibrary::song(const QString &id) const {
         return QJsonDocument::fromJson(statement.value(0).toByteArray()).object().toVariantMap();
     }
     return {};
+}
+
+QString ContentLibrary::createQuickSong(
+    const QString &title, const QString &lyrics, const QVariant &tags, const QString &language) {
+    auto text = lyrics;
+    text.replace("\r\n", "\n");
+    text.replace('\r', '\n');
+    const QRegularExpression gap("\\n\\s*\\n", QRegularExpression::UseUnicodePropertiesOption);
+    QVariantList sections, order;
+    for (const auto &part : text.trimmed().split(gap, Qt::SkipEmptyParts)) {
+        const auto content = part.trimmed();
+        if (content.isEmpty()) {
+            continue;
+        }
+        const auto index = QString::number(sections.size() + 1);
+        const auto key = "s" + index;
+        sections.append(QVariantMap { { "key", key }, { "label", "Section " + index },
+            { "primary", content }, { "secondary", "" } });
+        order.append(key);
+    }
+    return saveSong({ { "title", title },
+        { "primaryLanguage", language.trimmed().isEmpty() ? "English" : language.trimmed() },
+        { "secondaryLanguage", "" }, { "tags", tags }, { "sections", sections },
+        { "arrangement", order } });
 }
 
 QString ContentLibrary::saveSong(const QVariantMap &input) {
@@ -130,6 +205,7 @@ QString ContentLibrary::saveSong(const QVariantMap &input) {
         setStatus("Enter a title and between 1 and 100 song sections");
         return {};
     }
+    data["tags"] = parseSongTags(data.value("tags")).join(", ");
     QSet<QString> keys;
     QString searchable = title + " " + data["tags"].toString() + " " + data["credits"].toString();
     for (const auto &value : sections) {
@@ -226,7 +302,7 @@ bool ContentLibrary::importSong(const QUrl &url) {
     }
     auto root = QJsonDocument::fromJson(f.readAll()).object();
     if (root["format"] != "churchdeck-song-1") {
-        setStatus("Invalid Church Deck song format");
+        setStatus("Invalid Selah song format");
         return false;
     }
     auto data = root["song"].toObject().toVariantMap();

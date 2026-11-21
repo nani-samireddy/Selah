@@ -1,15 +1,27 @@
 #include "ModelChecks.h"
 #include "ContentLibrary.h"
 #include "EditorDocument.h"
+#include "FontLibrary.h"
 #include "MediaLibrary.h"
 #include "NdiWorker.h"
 #include "OutputManager.h"
+#include "PresentationLibrary.h"
 #include "ProgramStore.h"
 #include "RemoteController.h"
 #include "SlideFactory.h"
 #include "TemplateStore.h"
+#include "TextFormatting.h"
 
 int runModelChecks() {
+    if (auto result = PresentationLibrary::selfTest()) {
+        return 240 + result;
+    }
+    if (auto result = TextFormatting::selfTest()) {
+        return 220 + result;
+    }
+    if (auto result = FontLibrary::selfTest()) {
+        return 200 + result;
+    }
     if (auto result = RemoteController::selfTest()) {
         return 160 + result;
     }

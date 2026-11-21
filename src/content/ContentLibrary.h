@@ -8,6 +8,7 @@
 class ContentLibrary final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantList songs READ songs NOTIFY changed)
+    Q_PROPERTY(QStringList songTags READ songTags NOTIFY changed)
     Q_PROPERTY(QVariantList translations READ translations NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
@@ -16,14 +17,19 @@ public:
     ~ContentLibrary() override;
     QVariantList songs() const;
     QVariantList translations() const;
+    QStringList songTags() const;
+    Q_INVOKABLE QStringList parseSongTags(const QVariant &value) const;
 
     QString status() const { return m_status; }
 
     bool busy() const { return m_busy; }
 
-    Q_INVOKABLE QVariantList searchSongs(const QString &query) const;
+    Q_INVOKABLE QVariantList searchSongs(
+        const QString &query, const QString &tag = QString()) const;
     Q_INVOKABLE QVariantMap song(const QString &id) const;
     Q_INVOKABLE QString saveSong(const QVariantMap &song);
+    Q_INVOKABLE QString createQuickSong(const QString &title, const QString &lyrics,
+        const QVariant &tags, const QString &language = QStringLiteral("English"));
     Q_INVOKABLE bool importSong(const QUrl &url);
     Q_INVOKABLE bool exportSong(const QString &id, const QUrl &url);
     Q_INVOKABLE QVariantList books(const QString &translation) const;

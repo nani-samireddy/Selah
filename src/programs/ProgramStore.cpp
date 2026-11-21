@@ -9,7 +9,10 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QScopeGuard>
 #include <QSet>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QUuid>
 
 namespace {
@@ -75,8 +78,10 @@ void ProgramStore::updateDetails(const QString &name, const QString &date) {
     commit();
 }
 
-bool ProgramStore::append(QVariantMap item, const QVariantList &slides, const QString &error) {
-    if (id().isEmpty()) {
+bool ProgramStore::append(
+    QVariantMap item, const QVariantList &slides, const QString &error, const QString &programId) {
+    const bool elsewhere = !programId.isEmpty() && programId != id();
+    if (!elsewhere && id().isEmpty()) {
         statusMessage("Create or open a program first");
         return false;
     }
@@ -89,11 +94,43 @@ bool ProgramStore::append(QVariantMap item, const QVariantList &slides, const QS
         statusMessage("No valid slides to add");
         return false;
     }
-    if (items().size() >= 200 || flatten().size() + valid.size() > 2000) {
+    // Target another saved program without changing the editor, selection, history or last-opened
+    // preference.
+    auto candidate = m_program;
+    bool transactionOpen = false;
+    auto rollback = qScopeGuard([&] {
+        if (transactionOpen) {
+            m_db.rollback();
+        }
+    });
+    if (elsewhere) {
+        if (!m_db.transaction()) {
+            statusMessage("Could not open the destination program for editing");
+            return false;
+        }
+        transactionOpen = true;
+        QSqlQuery query(m_db);
+        query.prepare("SELECT data FROM programs WHERE id=?");
+        query.addBindValue(programId);
+        if (!query.exec() || !query.next()) {
+            statusMessage("Destination program not found");
+            return false;
+        }
+        candidate = QJsonDocument::fromJson(query.value(0).toByteArray()).object().toVariantMap();
+        if (candidate["id"] != programId || !validate(candidate, false)) {
+            statusMessage("Destination program is invalid; nothing added");
+            return false;
+        }
+    }
+    auto list = candidate["items"].toList();
+    int slideCount = 0;
+    for (const auto &value : list) {
+        slideCount += value.toMap()["slides"].toList().size();
+    }
+    if (list.size() >= 200 || slideCount + valid.size() > 2000) {
         statusMessage("A program can contain 200 items and 2,000 slides");
         return false;
     }
-    checkpoint();
     item["id"] = uid();
     for (int i = 0; i < valid.size(); i++) {
         auto page = valid[i].toMap();
@@ -105,24 +142,40 @@ bool ProgramStore::append(QVariantMap item, const QVariantList &slides, const QS
     item["slides"] = ProgramSlides::cloneWithFreshIds(valid);
     item["notes"] = "";
     item["template"] = "original";
-    auto list = items();
     list << item;
-    m_program["items"] = list;
-    m_selected = list.size() - 1;
-    commit();
+    candidate["items"] = list;
+    if (elsewhere) {
+        QSqlQuery query(m_db);
+        query.prepare("UPDATE programs SET data=?,updated=unixepoch() WHERE id=?");
+        query.addBindValue(QString::fromUtf8(
+            QJsonDocument::fromVariant(candidate).toJson(QJsonDocument::Compact)));
+        query.addBindValue(programId);
+        if (!query.exec() || query.numRowsAffected() != 1 || !m_db.commit()) {
+            statusMessage("Could not save the destination program; nothing added");
+            return false;
+        }
+        transactionOpen = false;
+        statusMessage("Added to " + candidate["title"].toString());
+    } else {
+        checkpoint();
+        m_program = candidate;
+        m_selected = list.size() - 1;
+        commit();
+    }
     return true;
 }
 
-bool ProgramStore::addSong(const QVariantMap &song, int maxLines, const QVariantMap &definition) {
+bool ProgramStore::addSong(const QVariantMap &song, int maxLines, const QVariantMap &definition,
+    const QString &programId) {
     QString error;
     const auto slides = SlideFactory::songSlides(song, maxLines, &error, definition);
     return append({ { "kind", "song" }, { "title", song["title"] }, { "song", song },
                       { "maxLines", maxLines }, { "layoutTemplate", definition } },
-        slides, error);
+        slides, error, programId);
 }
 
-bool ProgramStore::addScripture(
-    const QVariantList &verses, int maxLines, const QVariantMap &definition) {
+bool ProgramStore::addScripture(const QVariantList &verses, int maxLines,
+    const QVariantMap &definition, const QString &programId) {
     QString error;
     const auto slides = SlideFactory::scriptureSlides(verses, maxLines, &error, definition);
     QString title = "Bible passage";
@@ -135,32 +188,33 @@ bool ProgramStore::addScripture(
     }
     return append({ { "kind", "scripture" }, { "title", title }, { "maxLines", maxLines },
                       { "verses", verses }, { "layoutTemplate", definition } },
-        slides, error);
+        slides, error, programId);
 }
 
-bool ProgramStore::addPresentation(const QVariantList &slides, const QString &title) {
+bool ProgramStore::addPresentation(
+    const QVariantList &slides, const QString &title, const QString &programId) {
     return append(
         { { "kind", "presentation" },
             { "title", title.trimmed().isEmpty() ? "Custom presentation" : title.left(200) } },
-        slides);
+        slides, {}, programId);
 }
 
 bool ProgramStore::importPresentation(const QUrl &url) {
     QFile f(url.toLocalFile());
     if (!url.isLocalFile() || !f.open(QIODevice::ReadOnly) || f.size() > 50 * 1024 * 1024) {
-        statusMessage("Choose a local Church Deck project under 50 MB");
+        statusMessage("Choose a local Selah project under 50 MB");
         return false;
     }
     const auto root = QJsonDocument::fromJson(f.readAll()).object();
     if (root["format"].toInt() != 1) {
-        statusMessage("Invalid Church Deck project");
+        statusMessage("Invalid Selah project");
         return false;
     }
     return addPresentation(
         root["slides"].toArray().toVariantList(), QFileInfo(f).completeBaseName());
 }
 
-bool ProgramStore::addMedia(const QVariantMap &asset) {
+bool ProgramStore::addMedia(const QVariantMap &asset, const QString &programId) {
     const QUrl source(asset["source"].toString());
     const auto kind = asset["kind"].toString();
     if (!source.isLocalFile() || !QFileInfo::exists(source.toLocalFile())
@@ -176,7 +230,8 @@ bool ProgramStore::addMedia(const QVariantMap &asset) {
     return append({ { "kind", "media" }, { "title", asset["name"] } },
         QVariantList { QVariantMap { { "name", asset["name"] }, { "background", "#000000" },
             { "ambientOpacity", 0.0 }, { "notes", "" },
-            { "elements", QVariantList { element } } } });
+            { "elements", QVariantList { element } } } },
+        {}, programId);
 }
 
 void ProgramStore::replaceItem(const QVariantMap &item) {
@@ -187,16 +242,21 @@ void ProgramStore::replaceItem(const QVariantMap &item) {
 }
 
 void ProgramStore::moveItem(int delta) {
-    const int target = m_selected + delta;
+    moveItemTo(m_selected, m_selected + delta);
+}
+
+bool ProgramStore::moveItemTo(int from, int to) {
     auto list = items();
-    if (m_selected < 0 || target < 0 || target >= list.size()) {
-        return;
+    if (from < 0 || to < 0 || from >= list.size() || to >= list.size() || from == to) {
+        return false;
     }
+    const auto selection = selectedItem().value("id").toString();
     checkpoint();
-    list.move(m_selected, target);
-    m_selected = target;
+    list.move(from, to);
     m_program["items"] = list;
+    restoreSelection(selection);
     commit();
+    return true;
 }
 
 void ProgramStore::removeSelected() {
@@ -358,13 +418,25 @@ bool ProgramStore::present(int localSlide) {
     return true;
 }
 
+void ProgramStore::restoreSelection(const QString &itemId) {
+    const auto list = items();
+    for (int index = 0; index < list.size(); ++index) {
+        if (list[index].toMap().value("id").toString() == itemId) {
+            m_selected = index;
+            return;
+        }
+    }
+    m_selected = qBound(-1, m_selected, int(list.size()) - 1);
+}
+
 void ProgramStore::undo() {
     if (m_undo.isEmpty()) {
         return;
     }
+    const auto selection = selectedItem().value("id").toString();
     m_redo << m_program;
     m_program = m_undo.takeLast();
-    m_selected = qBound(-1, m_selected, int(items().size()) - 1);
+    restoreSelection(selection);
     commit();
 }
 
@@ -372,9 +444,10 @@ void ProgramStore::redo() {
     if (m_redo.isEmpty()) {
         return;
     }
+    const auto selection = selectedItem().value("id").toString();
     m_undo << m_program;
     m_program = m_redo.takeLast();
-    m_selected = qBound(-1, m_selected, int(items().size()) - 1);
+    restoreSelection(selection);
     commit();
 }
 

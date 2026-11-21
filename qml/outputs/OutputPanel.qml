@@ -21,9 +21,9 @@ Popup {
     focus: true
 
     background: Rectangle {
-        color: "#191919"
+        color: LibraryStyle.tone("#191919")
         radius: 12
-        border.color: "#3C3C3C"
+        border.color: LibraryStyle.tone("#3C3C3C")
     }
 
     ColumnLayout {
@@ -36,7 +36,7 @@ Popup {
             Text {
                 text: "Outputs & stage"
                 font.pixelSize: 20
-                color: "#EEEEEE"
+                color: LibraryStyle.tone("#EEEEEE")
                 Layout.fillWidth: true
             }
 
@@ -75,13 +75,13 @@ Popup {
                             text: panel.controller.liveTitle.length ? "LIVE  /  "
                                                                       + panel.controller.liveTitle :
                                                                       "No live content"
-                            color: "#DDDDDD"
+                            color: LibraryStyle.tone("#DDDDDD")
                             font.pixelSize: 13
                         }
 
                         Text {
                             text: "Draft changes stay off the outputs until you take them live."
-                            color: "#8C8C8C"
+                            color: LibraryStyle.tone("#8C8C8C")
                             font.pixelSize: 11
                         }
                     }
@@ -145,7 +145,7 @@ Popup {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 1
-                    color: "#363636"
+                    color: LibraryStyle.tone("#363636")
                 }
 
                 RowLayout {
@@ -175,14 +175,14 @@ Popup {
 
                             Text {
                                 text: card.modelData === "audience" ? "Audience" : "Stage / speaker"
-                                color: "#DDDDDD"
+                                color: LibraryStyle.tone("#DDDDDD")
                                 font.pixelSize: 15
                             }
 
                             Text {
                                 text: card.modelData === "audience" ? "Presentation + media" :
                                                                       "Current, next, notes, timers"
-                                color: "#888888"
+                                color: LibraryStyle.tone("#888888")
                                 font.pixelSize: 11
                             }
 
@@ -205,9 +205,12 @@ Popup {
                                 }
 
                                 background: Rectangle {
-                                    color: "#272727"
+                                    color: LibraryStyle.tone("#272727")
                                     radius: 5
-                                    border.color: displayChoice.visualFocus ? "#888888" : "#414141"
+                                    border.color: displayChoice.visualFocus ? LibraryStyle.tone(
+                                                                                  "#888888") :
+                                                                              LibraryStyle.tone(
+                                                                                  "#414141")
                                 }
                                 indicator: StudioIcon {
                                     name: "chevron-down"
@@ -217,7 +220,7 @@ Popup {
                                 contentItem: Text {
                                     text: displayChoice.displayText
                                     elide: Text.ElideMiddle
-                                    color: "#CCCCCC"
+                                    color: LibraryStyle.tone("#CCCCCC")
                                     font.pixelSize: 11
                                     verticalAlignment: Text.AlignVCenter
                                     leftPadding: 9
@@ -232,7 +235,7 @@ Popup {
                                       && panel.controller.displays[displayChoice.currentIndex]
                                       ?.operator ? "Operator display · use windowed preview" :
                                                    "External display"
-                                color: "#888888"
+                                color: LibraryStyle.tone("#888888")
                                 font.pixelSize: 10
                                 Layout.fillWidth: true
                             }
@@ -279,7 +282,7 @@ Popup {
 
                             Text {
                                 text: card.enabledOutput ? "Output active" : "Output stopped"
-                                color: "#A0A0A0"
+                                color: LibraryStyle.tone("#A0A0A0")
                                 font.pixelSize: 10
                             }
                         }
@@ -289,12 +292,12 @@ Popup {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 1
-                    color: "#363636"
+                    color: LibraryStyle.tone("#363636")
                 }
 
                 Text {
                     text: "STAGE MESSAGE"
-                    color: "#939393"
+                    color: LibraryStyle.tone("#939393")
                     font.pixelSize: 10
                     font.letterSpacing: 1
                 }
@@ -308,15 +311,15 @@ Popup {
                         Layout.fillWidth: true
                         placeholderText: "Message visible only to the speaker…"
                         text: panel.controller.stageMessage
-                        color: "#DDDDDD"
+                        color: LibraryStyle.tone("#DDDDDD")
                         font.pixelSize: 12
                         selectByMouse: true
                         padding: 10
 
                         background: Rectangle {
-                            color: "#252525"
+                            color: LibraryStyle.tone("#252525")
                             radius: 5
-                            border.color: "#3B3B3B"
+                            border.color: LibraryStyle.tone("#3B3B3B")
                         }
                     }
 
@@ -341,7 +344,7 @@ Popup {
 
                     Text {
                         text: "Countdown"
-                        color: "#A0A0A0"
+                        color: LibraryStyle.tone("#A0A0A0")
                         font.pixelSize: 12
                     }
 
@@ -357,7 +360,7 @@ Popup {
 
                     Text {
                         text: "minutes"
-                        color: "#888888"
+                        color: LibraryStyle.tone("#888888")
                         font.pixelSize: 11
                     }
 
@@ -379,14 +382,14 @@ Popup {
 
                     Text {
                         text: panel.controller.countdown
-                        color: "#DDDDDD"
+                        color: LibraryStyle.tone("#DDDDDD")
                         font.pixelSize: 23
                     }
                 }
 
                 Text {
                     text: panel.controller.status
-                    color: "#B9B9B9"
+                    color: LibraryStyle.tone("#B9B9B9")
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
@@ -395,7 +398,7 @@ Popup {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 1
-                    color: "#363636"
+                    color: LibraryStyle.tone("#363636")
                 }
 
                 RowLayout {
@@ -403,7 +406,7 @@ Popup {
 
                     Text {
                         text: "NDI network output"
-                        color: "#DDDDDD"
+                        color: LibraryStyle.tone("#DDDDDD")
                         font.pixelSize: 13
                         Layout.fillWidth: true
                     }

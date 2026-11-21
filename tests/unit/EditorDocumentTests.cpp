@@ -179,6 +179,31 @@ int EditorDocument::selfTest() {
             "Generated slide persistence and source attribution")) {
         return 1;
     }
+    EditorDocument layers(nullptr, false);
+    layers.setSelected(1);
+    const auto selectedId = layers.selectedElement()["uid"];
+    const auto originalLayers = layers.slides();
+    const auto firstId = layers.elements().first().toMap()["uid"];
+    if (!check(layers.moveElementTo(0, layers.elements().size() - 1)
+                && layers.elements().last().toMap()["uid"] == firstId
+                && layers.selectedElement()["uid"] == selectedId,
+            "Layer reorder preserves selected identity")) {
+        return 1;
+    }
+    const auto reorderedLayers = layers.slides();
+    layers.undo();
+    if (!check(layers.slides() == originalLayers, "Layer reorder is one undoable move")) {
+        return 1;
+    }
+    layers.redo();
+    if (!check(layers.slides() == reorderedLayers, "Layer reorder redo")) {
+        return 1;
+    }
+    if (!check(!layers.moveElementTo(-1, 0) && !layers.moveElementTo(0, 0)
+                && !layers.moveElementTo(0, 1000) && layers.slides() == reorderedLayers,
+            "Invalid layer drops are ignored")) {
+        return 1;
+    }
     qInfo() << "Document checks passed: edits, bounds, undo/redo, Unicode, duplicate/delete, "
                "notes, slides, save/load, invalid input.";
     return 0;
