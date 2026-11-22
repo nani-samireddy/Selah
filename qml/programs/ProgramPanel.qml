@@ -26,6 +26,7 @@ Popup {
         let f = operatorWindow.activeFocusItem;
         return !!f && (f.cursorPosition !== undefined || f.currentIndex !== undefined);
     }
+    readonly property bool dialogOpen: newDialog.opened || importFile.visible || exportFile.visible
 
     signal presentRequested
     signal songsRequested
@@ -34,6 +35,22 @@ Popup {
     signal templatesRequested
     signal outputsRequested
     signal editRequested(var slides, string itemId)
+
+    function showNewProgramDialog() {
+        flushItem();
+        newDialog.open();
+    }
+
+    function showImportDialog() {
+        flushItem();
+        importFile.open();
+    }
+
+    function showExportDialog() {
+        flushItem();
+        if (store.id.length > 0)
+            exportFile.open();
+    }
 
     function choosePresentationFile() {
         presentationFile.open();
@@ -157,30 +174,6 @@ Popup {
 
         onActivated: panel.controller.advance(panel.controller.liveCount - 1
                                               - panel.controller.liveIndex)
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Save]
-        enabled: panel.opened && panel.keyboardAllowed && !newDialog.opened
-
-        onActivated: {
-            panel.flushItem();
-            panel.store.save();
-        }
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Undo]
-        enabled: panel.opened && panel.keyboardAllowed && !panel.textEntry && !newDialog.opened
-
-        onActivated: panel.store.undo()
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Redo]
-        enabled: panel.opened && panel.keyboardAllowed && !panel.textEntry && !newDialog.opened
-
-        onActivated: panel.store.redo()
     }
 
     Timer {
@@ -326,7 +319,7 @@ Popup {
                 text: "New program"
                 iconName: "plus"
 
-                onClicked: newDialog.open()
+                onClicked: panel.showNewProgramDialog()
             }
 
             Item {
@@ -336,17 +329,14 @@ Popup {
             StudioButton {
                 text: "Import"
 
-                onClicked: importFile.open()
+                onClicked: panel.showImportDialog()
             }
 
             StudioButton {
                 text: "Export"
                 enabled: panel.store.id.length > 0
 
-                onClicked: {
-                    panel.flushItem();
-                    exportFile.open();
-                }
+                onClicked: panel.showExportDialog()
             }
 
             StudioButton {

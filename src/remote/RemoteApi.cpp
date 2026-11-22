@@ -115,6 +115,7 @@ QVariantMap RemoteController::state(const Session &session) const {
         { "notes", m_outputs->liveNotes() }, { "message", m_outputs->stageMessage() },
         { "countdown", m_outputs->countdown() }, { "blackout", m_outputs->audienceBlack() },
         { "textCleared", m_outputs->textCleared() },
+        { "defaultImageShowing", m_outputs->defaultImageShowing() },
         { "audienceEnabled", m_outputs->audienceEnabled() },
         { "hostTime", QDateTime::currentMSecsSinceEpoch() } };
 }

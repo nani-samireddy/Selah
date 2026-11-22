@@ -1,6 +1,8 @@
 #include "OutputManager.h"
+#include "DefaultImage.h"
 #include <QCryptographicHash>
 #include <QDebug>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QSettings>
 #include <QUuid>
@@ -10,6 +12,12 @@ OutputManager::OutputManager(QObject *parent)
     QSettings settings;
     m_audienceDisplay = settings.value("outputs/audience").toString();
     m_stageDisplay = settings.value("outputs/stage").toString();
+    m_defaultImageSource = settings.value("outputs/defaultImage").toString();
+    m_defaultImageName = settings.value("outputs/defaultImageName").toString();
+    m_defaultImageFit = settings.value("outputs/defaultImageFit", "contain").toString();
+    if (m_defaultImageFit != "contain" && m_defaultImageFit != "cover") {
+        m_defaultImageFit = "contain";
+    }
     connect(qGuiApp, &QGuiApplication::screenAdded, this, [this](QScreen *) { refreshDisplays(); });
     connect(qGuiApp, &QGuiApplication::screenRemoved, this, &OutputManager::screenRemoved,
         Qt::DirectConnection);
@@ -274,6 +282,7 @@ void OutputManager::takeLive(const QVariantList &slides, int index, const QStrin
     m_liveSource = source;
     m_liveSlides = slides;
     m_index = index;
+    m_defaultImageLive.clear();
     m_playing = true;
     emit snapshotChanged();
     emit liveChanged();
@@ -286,7 +295,84 @@ void OutputManager::advance(int delta) {
         return;
     }
     m_index = next;
+    m_defaultImageLive.clear();
     emit liveChanged();
+    emit stateChanged();
+}
+
+bool OutputManager::defaultImageAvailable() const {
+    return QFileInfo(QUrl(m_defaultImageSource).toLocalFile()).isFile();
+}
+
+bool OutputManager::setDefaultImage(const QUrl &source) {
+    QString error;
+    const auto imported = DefaultImage::prepare(source, &error);
+    if (imported.isEmpty()) {
+        m_status = error;
+        emit stateChanged();
+        return false;
+    }
+    m_defaultImageSource = imported;
+    m_defaultImageName = QFileInfo(source.toLocalFile()).fileName();
+    QSettings settings;
+    settings.setValue("outputs/defaultImage", imported);
+    settings.setValue("outputs/defaultImageName", m_defaultImageName);
+    m_status = "Default image saved · choose Show default image to display it";
+    emit stateChanged();
+    return true;
+}
+
+void OutputManager::setDefaultImageFit(const QString &fit) {
+    if (fit != "contain" && fit != "cover") {
+        return;
+    }
+    m_defaultImageFit = fit;
+    QSettings().setValue("outputs/defaultImageFit", fit);
+    emit stateChanged();
+}
+
+void OutputManager::removeDefaultImage() {
+    m_defaultImageSource.clear();
+    m_defaultImageName.clear();
+    QSettings settings;
+    settings.remove("outputs/defaultImage");
+    settings.remove("outputs/defaultImageName");
+    m_status = "Default image removed";
+    emit stateChanged();
+}
+
+bool OutputManager::showDefaultImage(bool showing) {
+    if (showing && !defaultImageAvailable()) {
+        m_status = "Choose a default image first; the saved image may be missing";
+        emit stateChanged();
+        return false;
+    }
+    // Keep the service snapshot, notes, index and transport state intact behind standby.
+    m_defaultImageLive = showing
+        ? QVariantList { DefaultImage::layer(m_defaultImageSource, m_defaultImageFit) }
+        : QVariantList();
+    m_status = showing ? (m_audienceBlack ? "Default image selected · audience is blacked out"
+                                          : "Default image is showing")
+                       : "Presentation restored";
+    emit liveChanged();
+    emit stateChanged();
+    return true;
+}
+
+QVariantList OutputManager::audienceElements() const {
+    return defaultImageShowing() ? m_defaultImageLive : liveElements();
+}
+
+QString OutputManager::audienceBackground() const {
+    return defaultImageShowing() ? "#000000" : liveBackground();
+}
+
+double OutputManager::audienceAmbientOpacity() const {
+    return defaultImageShowing() ? 0 : liveAmbientOpacity();
+}
+
+QString OutputManager::audienceTitle() const {
+    return defaultImageShowing() ? "Default image" : liveTitle();
 }
 
 QVariantMap OutputManager::liveSlide(int offset) const {
@@ -319,13 +405,28 @@ QString OutputManager::liveBackground() const {
 }
 
 QString OutputManager::primaryText(const QVariantMap &slide) {
+    QString scripture, secondary;
+    bool hasScripture = false;
     for (const auto &value : slide["elements"].toList()) {
         const auto element = value.toMap();
+        if (!element.value("visible", true).toBool()) {
+            continue;
+        }
         const auto binding = element["binding"].toString();
-        if (element.value("visible", true).toBool()
-            && (binding == "Primary lyrics" || binding == "Scripture text")) {
+        if (binding == "Primary lyrics") {
             return element["text"].toString();
         }
+        if (binding == "Scripture text" && !hasScripture) {
+            scripture = element["text"].toString();
+            hasScripture = true;
+        }
+        if (binding == "Secondary scripture text" && secondary.isEmpty()) {
+            secondary = element["text"].toString();
+        }
+    }
+    // Speaker displays and remote text views must retain both Bible translations too.
+    if (hasScripture) {
+        return scripture + (secondary.isEmpty() ? QString() : "\n\n" + secondary);
     }
     double largest = 0;
     QString result;

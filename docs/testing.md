@@ -55,3 +55,38 @@ build/Selah.app/Contents/MacOS/Selah --fresh --template-presets-smoke "$PWD/capt
 
 This uses an isolated verification profile and a temporary template catalog. It writes individual
 PNGs and a labeled contact sheet. It does not take slides live or alter the normal editor/programs.
+
+Present-specific native checks (isolated profile, windowed preview and NDI diagnostic capture):
+
+```sh
+build/Selah.app/Contents/MacOS/Selah --fresh --present-smoke "$PWD/captures/present-workspace"
+```
+
+This captures empty, compact dark, standby and wide light states, verifies the default image on
+both the audience and NDI rendering paths, checks blackout priority, and resumes the same program
+snapshot/slide. It uses a diagnostic NDI sink and does not send video over the network.
+
+Bible XML import checks include Beblia/Zefania parsing, partial/NT-only numbering, omitted verses,
+Unicode search, metadata preservation, duplicate rejection and atomic rollback. To check the actual
+Telugu BSI repository file in a disposable catalog:
+
+```sh
+build/tests/church-deck-tests --bible-xml-file /path/to/TeluguBible.xml
+```
+
+For the complete native picker → download → index → select translation workflow (network required):
+
+```sh
+build/Selah.app/Contents/MacOS/Selah --fresh --bible-import-smoke "$PWD/captures/bible-import"
+```
+
+That run uses an ephemeral scripture database and a verification profile, captures the repository
+picker and imported chapter, and checks that the editor/live snapshot remain unchanged.
+
+Dual Bible regression coverage lives in `tests/unit/DualScriptureTests.cpp`:
+canonical reference matching, missing/same-translation rejection, incompatible
+layouts, lossless Indic pagination, attribution and program save/reopen isolation.
+`--fresh --dual-scripture-smoke captures/dual-scripture` exercises the native QML
+translation picker, verse selection, paired preview, and offline guide dialog in
+a separate verification profile; it captures screenshots without changing saved
+operator programs.

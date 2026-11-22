@@ -1,9 +1,13 @@
 #include "DiagnosticRunner.h"
+#include "BibleImportChecks.h"
 #include "ContentLibrary.h"
+#include "DualScriptureChecks.h"
 #include "EditorDocument.h"
 #include "MediaLibrary.h"
+#include "NativeMenuChecks.h"
 #include "NdiController.h"
 #include "OutputManager.h"
+#include "PresentChecks.h"
 #include "ProgramChecks.h"
 #include "ProgramStore.h"
 #include "PrototypeChecks.h"
@@ -36,7 +40,39 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
             window->setHeight(760);
         }
     }
+#ifdef Q_OS_MACOS
+    const int menuIndex = app.arguments().indexOf("--menu-smoke");
+    if (menuIndex >= 0) {
+        if (menuIndex + 1 >= app.arguments().size()) {
+            return 250;
+        }
+        runNativeMenuChecks(engine, app.arguments()[menuIndex + 1]);
+    }
+#endif
+    const int dualIndex = app.arguments().indexOf("--dual-scripture-smoke");
+    if (dualIndex >= 0) {
+        if (dualIndex + 1 >= app.arguments().size()) {
+            return 240;
+        }
+        runDualScriptureUiChecks(content, programs, engine, app.arguments()[dualIndex + 1]);
+    }
     int workspaceIndex = app.arguments().indexOf("--workspace-smoke");
+    const int bibleImportIndex = app.arguments().indexOf("--bible-import-smoke");
+    if (bibleImportIndex >= 0) {
+        if (bibleImportIndex + 1 >= app.arguments().size()) {
+            return 230;
+        }
+        runBibleImportChecks(
+            content, document, outputs, engine, app.arguments()[bibleImportIndex + 1]);
+    }
+    const int presentIndex = app.arguments().indexOf("--present-smoke");
+    if (presentIndex >= 0) {
+        if (presentIndex + 1 >= app.arguments().size()) {
+            return 220;
+        }
+        runPresentChecks(
+            outputs, programs, document, ndi, engine, app.arguments()[presentIndex + 1]);
+    }
     const bool workspaceDemo = app.arguments().contains("--workspace-demo");
     if (workspaceDemo) {
         workspaceIndex = app.arguments().indexOf("--workspace-demo");

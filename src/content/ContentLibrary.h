@@ -12,11 +12,24 @@ class ContentLibrary final : public QObject {
     Q_PROPERTY(QVariantList translations READ translations NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
+    Q_PROPERTY(QVariantList repositoryBibles READ repositoryBibles CONSTANT)
+    Q_PROPERTY(QString bibleImportPhase READ bibleImportPhase NOTIFY bibleImportProgressChanged)
+    Q_PROPERTY(
+        qint64 bibleDownloadedBytes READ bibleDownloadedBytes NOTIFY bibleImportProgressChanged)
+    Q_PROPERTY(qint64 bibleDownloadTotal READ bibleDownloadTotal NOTIFY bibleImportProgressChanged)
 public:
     explicit ContentLibrary(QObject *parent = nullptr, const QString &directory = QString());
     ~ContentLibrary() override;
     QVariantList songs() const;
     QVariantList translations() const;
+    QVariantList repositoryBibles() const;
+
+    QString bibleImportPhase() const { return m_bibleImportPhase; }
+
+    qint64 bibleDownloadedBytes() const { return m_bibleDownloadedBytes; }
+
+    qint64 bibleDownloadTotal() const { return m_bibleDownloadTotal; }
+
     QStringList songTags() const;
     Q_INVOKABLE QStringList parseSongTags(const QVariant &value) const;
 
@@ -36,13 +49,19 @@ public:
     Q_INVOKABLE QVariantList chapters(const QString &translation, const QString &book) const;
     Q_INVOKABLE QVariantList passage(
         const QString &translation, const QString &book, int chapter, int first, int last) const;
+    Q_INVOKABLE QVariantMap pairScripture(
+        const QVariantList &verses, const QString &secondaryTranslation) const;
     Q_INVOKABLE QVariantList searchVerses(const QString &translation, const QString &query) const;
     Q_INVOKABLE void importBible(const QUrl &url);
     static int selfTest();
 signals:
     void changed();
+    void bibleImported(const QString &translationId);
+    void bibleImportProgressChanged();
 
 private:
+    void finishBibleImport(const QUrl &source, const QByteArray &data = QByteArray());
+
     void setStatus(const QString &value) {
         m_status = value;
         emit changed();
@@ -51,4 +70,6 @@ private:
     QSqlDatabase m_db;
     QString m_path, m_status = "Library ready";
     bool m_busy = false;
+    QString m_bibleImportPhase;
+    qint64 m_bibleDownloadedBytes = 0, m_bibleDownloadTotal = -1;
 };

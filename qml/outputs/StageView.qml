@@ -26,7 +26,10 @@ Item {
     Text {
         x: 70
         y: 45
-        text: "STAGE  /  " + (stage.controller.liveTitle || "Ready")
+        text: "STAGE  /  " + (stage.controller.defaultImageShowing ? "DEFAULT IMAGE  ·  " : "") + (
+                  stage.controller.liveTitle || "Ready")
+        width: 1400
+        elide: Text.ElideRight
         color: "#929BAA"
         font.pixelSize: 26
         font.letterSpacing: 2

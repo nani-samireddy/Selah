@@ -24,3 +24,7 @@ Run `python3 scripts/format.py --check` and `cmake --build build --target church
 The `TextInspector` and stable `RichTextEditor` share the `ChurchDeck.Formatting` module. `SongSectionsEditor` keeps keyed editable section cards alive while the song model changes. `SongOrderEditor` edits named sequence entries independently of the lyric content. `ScriptureNumberGrid` is shared by chapter and verse navigation. Appearance preferences and neutral colors live in `LibraryStyle`.
 
 Layers are listed front to back. Dragging a row previews an insertion line, auto-scrolls the list, and commits a single document move on release. Escape and outside drops cancel. The compact header contains forward/backward, duplicate, delete, and add icons. `LayerOrderDrag` owns only the transient gesture; `EditorDocument.moveElementTo` owns persistent order and preserves selection by UID.
+
+`menus/ApplicationMenuBar.qml` owns desktop application menus and their shared
+shortcuts. Route commands through the Main window's workflow functions rather
+than duplicating persistence or presentation behavior inside menu handlers.

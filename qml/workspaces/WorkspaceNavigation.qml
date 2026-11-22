@@ -155,6 +155,18 @@ Rectangle {
             }
         }
 
+        LibraryButton {
+            objectName: "userGuideButton"
+            iconName: "book-open"
+            implicitWidth: LibraryStyle.controlHeight
+            implicitHeight: LibraryStyle.controlHeight
+            quiet: true
+            hint: "Getting started and user guides"
+            Accessible.name: "Open user guide"
+
+            onClicked: navigation.host.showUserGuide()
+        }
+
         FeedbackButton {
         }
 

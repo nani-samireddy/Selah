@@ -2,6 +2,7 @@
 
 Start with the [project README](../README.md) for setup and the feature overview.
 
+- [User guides and getting started](user-guide/README.md)
 - [Architecture and state ownership](architecture.md)
 - [Coding standards and formatting](coding-standards.md)
 - [Testing and diagnostics](testing.md)

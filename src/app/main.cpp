@@ -18,6 +18,7 @@
 #include <QQuickStyle>
 #include <QtQml/QQmlExtensionPlugin>
 Q_IMPORT_QML_PLUGIN(ChurchDeckFormattingPlugin)
+#include <QTemporaryDir>
 #include <QWindow>
 #ifdef Q_OS_MACOS
 #include "WindowChrome.h"
@@ -45,7 +46,10 @@ int main(int argc, char *argv[]) {
     FontLibrary fonts;
     EditorDocument document(nullptr, !app.arguments().contains("--fresh"));
     MediaLibrary library;
-    ContentLibrary content;
+    // The end-to-end importer check must start with an empty, disposable scripture catalog.
+    QTemporaryDir bibleImportDirectory;
+    ContentLibrary content(nullptr,
+        app.arguments().contains("--bible-import-smoke") ? bibleImportDirectory.path() : QString());
     TemplateStore templates;
     if (const auto error = TemplatePresets::install(templates, &library); !error.isEmpty()) {
         qWarning().noquote() << error;

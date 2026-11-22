@@ -40,3 +40,53 @@ build/Selah.app/Contents/MacOS/Selah --fresh --compact --workspace-smoke "$PWD/c
 `--workspace-demo <folder>` runs the same checks and stays open for native keyboard/mouse verification. These commands use a dedicated UX verification data profile and original lyrics. Existing feature diagnostics continue to start in Design so their canvas setup remains meaningful.
 
 Physical operator rehearsal and keyboard/IME validation on Windows remain required before release.
+
+## Present workspace and default image
+
+Present keeps the live service list on the left, an audience preview, scrollable speaker notes
+and stage timer in the center, and Up Next and a default-image card on the right. The bottom transport
+keeps Previous/Next, media pause, Clear text, Blackout and output settings in fixed positions.
+The audience preview reflects cleared text, blackout and standby; Up Next continues to show the
+next prepared program slide. Compact and wide layouts use the same controls in both appearances.
+
+Choose a church logo or welcome image in **Present → Default image → Choose image**. Selah copies
+the file into the profile's `default-images` directory and saves the preference, so deleting the
+original download does not break it. Fit preserves the whole image with black letterboxing; Fill
+crops to fill the 16:9 canvas. Choosing/replacing an image or changing its fit only prepares a
+preference. It does not change live output. Images must decode successfully and be under 50 MB
+and 50 megapixels.
+
+**Show default image** temporarily replaces audience/NDI content. It also works before a program
+is live. **Resume presentation** returns to the same slide, retaining the program snapshot,
+selection, speaker notes, countdown, media play/pause setting and independent blackout/text-clear
+states. A still default image is not an overlay on top of playing media; video layers reload when
+the presentation is restored. Taking a slide live or navigating to a valid slide exits standby.
+Blackout always takes priority. Display routing remains explicit; showing an image does not start
+an output window or NDI sender.
+
+Stage continues to show the current program text/notes, with a default-image indicator. Remote
+clients receive a standby status indicator; their slide navigation resumes the presentation.
+The default image is never shown automatically at app launch or at the end of a program. Its
+active state is temporary and only its selected file/name/fit are saved. Removing/changing the
+preference while an image is live leaves that live image intact until hidden or replaced.
+
+## Application menus
+
+On macOS, File, Edit, View, Presentation and Help appear in the system menu bar
+after Selah. Other desktop platforms show the menu bar inside the window.
+File actions reuse the existing program/presentation dialogs. Save targets the
+active Programs or Design workspace; it is disabled in other workspaces or while
+a settings/dialog flow is open. Edit routes clipboard and history actions to a
+focused text field, then to the active program or design document. View switches
+workspaces and appearance; Presentation opens output, remote and NDI controls and
+operates the current live snapshot. Help opens the same offline guide as the
+book toolbar button (F1).
+
+Menu actions own the shared keyboard shortcuts so the toolbar and workspace
+panels do not register competing Save/Undo/Redo shortcuts. Native menu verification
+on macOS uses `--fresh --menu-smoke captures/native-menu` in a diagnostics build;
+it checks menu definitions and workspace/help actions in a separate verification
+profile. AppKit system-bar assertions additionally run when macOS grants the test
+window foreground activation; otherwise verify placement in the running app.
+
+File → Import program and Export program use the same `.churchprogram` dialogs as the Programs toolbar. Pending item edits are flushed before either dialog opens; export requires an open program.

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Dialogs
 
 Popup {
     id: panel
@@ -21,16 +20,32 @@ Popup {
     property var chapter: chapterList[chapterIndex] || ({})
     property int highlightedVerse: -1
     property var chapterVerses: library.passage(version.id || "", book.code || "", chapter.chapter
-                                                || 1, chapter.first || 1, chapter.last || 1)
+                                                || 1, chapter.first ?? 1, chapter.last ?? 1)
     property var verses: []
     property var selected: []
     property string message: ""
+    readonly property var secondaryVersions: [
+        {
+            id: "",
+            title: "None · single Bible"
+        }
+    ].concat(versions.filter(record => record.id !== version.id))
+    readonly property string secondaryId: (secondaryVersions[secondaryPicker.currentIndex]
+                                           || {}).id || ""
+    readonly property var pairedSelection: library.pairScripture(selected.length ? selected.map(i
+                                                                                                => verses[i]) :
+                                                                                   verses, secondaryId)
+    readonly property string pairingError: pairedSelection.error || ""
     property bool searchMode: search.text.trim().length > 0
 
     signal contentAdded(bool toProgram)
 
     function addToTarget(programId = "") {
-        const rows = selected.length ? selected.map(i => verses[i]) : verses;
+        if (pairingError) {
+            message = pairingError;
+            return;
+        }
+        const rows = pairedSelection.verses || [];
         const target = programTarget || document;
         const ok = programTarget ? target.addScripture(rows, lines.value, templateChoice.definition,
                                                        programId) : target.addScriptureSlides(rows,
@@ -138,6 +153,16 @@ Popup {
     onOpened: refresh()
 
     Connections {
+        function onBibleImported(translationId) {
+            for (let i = 0; i < panel.versions.length; ++i)
+                if (panel.versions[i].id === translationId)
+                    versionPicker.currentIndex = i;
+            bookPicker.currentIndex = 0;
+            panel.chapterIndex = 0;
+            search.text = "";
+            Qt.callLater(panel.refresh);
+        }
+
         function onChanged() {
             if (panel.opened)
                 panel.schedule();
@@ -154,13 +179,11 @@ Popup {
         onTriggered: panel.refresh()
     }
 
-    FileDialog {
+    BibleImportDialog {
         id: importDialog
 
-        title: "Import Bible translation"
-        nameFilters: ["Selah Bible packages (*.json)"]
-
-        onAccepted: panel.library.importBible(selectedFile)
+        parent: Overlay.overlay
+        library: panel.library
     }
 
     ColumnLayout {
@@ -192,7 +215,8 @@ Popup {
             }
 
             LibraryButton {
-                text: panel.library.busy ? "Importing…" : "Import translation"
+                text: panel.library.busy ? (panel.library.bibleImportPhase === "downloading"
+                                            ? "Downloading…" : "Importing…") : "Import translation"
                 enabled: !panel.library.busy
 
                 onClicked: importDialog.open()
@@ -205,6 +229,11 @@ Popup {
 
                 onClicked: panel.close()
             }
+        }
+
+        BibleImportProgress {
+            library: panel.library
+            Layout.fillWidth: true
         }
 
         RowLayout {
@@ -231,10 +260,30 @@ Popup {
                     Accessible.name: "Bible translation"
 
                     onActivated: {
+                        secondaryPicker.currentIndex = 0;
                         bookPicker.currentIndex = 0;
                         panel.chapterIndex = 0;
                         search.clear();
                         panel.refresh();
+                    }
+                }
+
+                LibraryCaption {
+                    text: "Second Bible (optional)"
+                }
+
+                LibraryCombo {
+                    id: secondaryPicker
+
+                    objectName: "bibleSecondaryPicker"
+                    Layout.fillWidth: true
+                    model: panel.secondaryVersions
+                    textRole: "title"
+                    Accessible.name: "Second Bible translation"
+
+                    onActivated: {
+                        panel.message = "";
+                        templateChoice.selectedId = "";
                     }
                 }
 
@@ -368,6 +417,14 @@ Popup {
 
                         required property var modelData
                         required property int index
+                        readonly property var secondaryMatches: panel.secondaryId
+                                                                ? panel.library.passage(
+                                                                      panel.secondaryId,
+                                                                      modelData.book,
+                                                                      modelData.chapter,
+                                                                      modelData.verse,
+                                                                      modelData.verse) : []
+                        readonly property var secondaryVerse: secondaryMatches[0] || ({})
                         property bool chosen: panel.selected.indexOf(index) >= 0
                         property bool located: !panel.searchMode && panel.highlightedVerse
                                                === modelData.verse
@@ -418,6 +475,31 @@ Popup {
                                 font.pixelSize: 19
                                 wrapMode: Text.Wrap
                             }
+
+                            Text {
+                                visible: !!panel.secondaryId
+                                width: parent.width
+                                text: (verseItem.secondaryVerse.reference || "Verse unavailable")
+                                      + " · " + (verseItem.secondaryVerse.abbreviation
+                                                 || "Second Bible")
+                                color: LibraryStyle.muted
+                                font.family: LibraryStyle.fontFamily
+                                font.pixelSize: 11
+                            }
+
+                            Text {
+                                visible: !!panel.secondaryId
+                                width: parent.width
+                                text: verseItem.secondaryVerse.text
+                                      || "This reference is missing in the second Bible."
+                                color: LibraryStyle.text
+                                font.family: /[\u0C00-\u0C7F]/.test(text) ? "Noto Sans Telugu" :
+                                                                            /[\u0900-\u097F]/.test(
+                                                                                text) ? "Noto Sans Devanagari" :
+                                                                                        LibraryStyle.fontFamily
+                                font.pixelSize: 19
+                                wrapMode: Text.Wrap
+                            }
                         }
 
                         onClicked: panel.choose(index)
@@ -448,6 +530,7 @@ Popup {
 
                 library: panel.templates
                 kind: "scripture"
+                dualScripture: !!panel.secondaryId
                 Layout.fillWidth: true
             }
         }
@@ -483,7 +566,9 @@ Popup {
 
                 Text {
                     font.family: LibraryStyle.fontFamily
-                    text: panel.message || panel.library.status
+                    text: panel.message || panel.pairingError || panel.library.status
+                    Layout.maximumWidth: 620
+                    wrapMode: Text.Wrap
                     font.pixelSize: 11
                     color: LibraryStyle.tone("#AAAAAA")
                 }
@@ -516,7 +601,7 @@ Popup {
                 objectName: "bibleProgramDestination"
                 visible: !!panel.programTarget
                 store: panel.programTarget
-                ready: panel.verses.length > 0
+                ready: panel.verses.length > 0 && !panel.pairingError
 
                 onAddRequested: programId => panel.addToTarget(programId)
             }
@@ -527,7 +612,7 @@ Popup {
                                               "Add passage"
                 iconName: "plus"
                 accented: true
-                enabled: panel.verses.length > 0
+                enabled: panel.verses.length > 0 && !panel.pairingError
 
                 onClicked: panel.addToTarget()
             }

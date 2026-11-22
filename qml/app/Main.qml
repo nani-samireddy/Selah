@@ -21,6 +21,7 @@ ApplicationWindow {
     readonly property bool settingsOpen: savePresentationDialog.opened || fontPickerOpen
                                          || outputPanel.opened || ndiPanel.opened
                                          || remotePanel.opened || saveTemplateDialog.opened
+                                         || userGuide.opened || programPanel.dialogOpen
     property string programEditingItem: ""
     required property var outputs
     required property var presentations
@@ -42,12 +43,13 @@ ApplicationWindow {
     property real panY: 0
     property string toast: ""
     property bool libraryImportOnly: false
-    readonly property bool editorShortcutsAllowed: activeWorkspace === "design" && !fontPickerOpen
-                                                   && !programPanel.opened && !templatePanel.opened
-                                                   && !saveTemplateDialog.opened &&
-                                                   !songPanel.opened && !biblePanel.opened &&
-                                                   !libraryPanel.opened && !outputPanel.opened &&
-                                                   !ndiPanel.opened && !remotePanel.opened
+    readonly property bool editorShortcutsAllowed: activeWorkspace === "design" &&
+                                                   !userGuide.opened && !fontPickerOpen &&
+                                                   !programPanel.opened && !templatePanel.opened &&
+                                                   !saveTemplateDialog.opened && !songPanel.opened
+                                                   && !biblePanel.opened && !libraryPanel.opened &&
+                                                   !outputPanel.opened && !ndiPanel.opened &&
+                                                   !remotePanel.opened
 
     function formatText(patch) {
         if (app.activeTextEditor)
@@ -259,6 +261,46 @@ ApplicationWindow {
         textColor.open();
     }
 
+    function newProgram() {
+        switchWorkspace("programs");
+        Qt.callLater(() => programPanel.showNewProgramDialog());
+    }
+
+    function importProgram() {
+        switchWorkspace("programs");
+        Qt.callLater(() => programPanel.showImportDialog());
+    }
+
+    function exportProgram() {
+        if (!programs.id)
+            return;
+        switchWorkspace("programs");
+        Qt.callLater(() => programPanel.showExportDialog());
+    }
+
+    function newPresentation() {
+        savePresentationDialog.createBlank = true;
+        savePresentationDialog.open();
+    }
+
+    function saveActiveWorkspace() {
+        if (activeWorkspace === "programs") {
+            programPanel.flushItem();
+            programs.save();
+        } else if (activeWorkspace === "design") {
+            if (activeTextEditor)
+                activeTextEditor.finish();
+            if (templateMode)
+                saveCurrentTemplate();
+            else
+                saveCustomPresentation();
+        }
+    }
+
+    function showUserGuide() {
+        userGuide.open();
+    }
+
     function openPresentation() {
         openDialog.open();
     }
@@ -297,6 +339,9 @@ ApplicationWindow {
     palette.buttonText: LibraryStyle.tone("#DDDDDD")
     font.family: LibraryStyle.fontFamily
 
+    menuBar: ApplicationMenuBar {
+        host: app
+    }
     header: WorkspaceNavigation {
         host: app
     }
@@ -330,8 +375,12 @@ ApplicationWindow {
             }
 
             Text {
-                text: app.outputs.liveIndex >= 0 ? "LIVE  /  " + app.outputs.liveTitle + "  ·  "
-                                                   + app.outputs.status : "Outputs stopped"
+                text: app.outputs.defaultImageShowing ? "DEFAULT IMAGE  ·  " + app.outputs.status :
+                                                        app.outputs.liveIndex >= 0 ? "LIVE  /  "
+                                                                                     + app.outputs.liveTitle
+                                                                                     + "  ·  "
+                                                                                     + app.outputs.status :
+                                                                                     "Outputs stopped"
                 color: LibraryStyle.tone("#929292")
                 font.pixelSize: 10
             }
@@ -353,6 +402,10 @@ ApplicationWindow {
         app.outputs.stop("stage");
         app.ndi.stop();
         app.remote.stop();
+    }
+
+    UserGuideDialog {
+        id: userGuide
     }
 
     Settings {
@@ -386,68 +439,6 @@ ApplicationWindow {
         }
 
         target: app.doc
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Undo]
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: app.doc.undo()
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Redo]
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: app.doc.redo()
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Save]
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: {
-            if (app.templateMode)
-                app.saveCurrentTemplate();
-            else {
-                app.saveCustomPresentation();
-            }
-        }
-    }
-
-    Shortcut {
-        sequences: [StandardKey.Open]
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: openDialog.open()
-    }
-
-    Shortcut {
-        sequence: "Ctrl+Shift+S"
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: exportDialog.open()
-    }
-
-    Shortcut {
-        sequence: "Meta+Shift+S"
-        enabled: Qt.platform.os === "osx" && app.editorShortcutsAllowed
-
-        onActivated: exportDialog.open()
-    }
-
-    Shortcut {
-        sequence: "Ctrl+D"
-        enabled: app.editorShortcutsAllowed
-
-        onActivated: app.doc.duplicateSelected()
-    }
-
-    Shortcut {
-        sequence: "Meta+D"
-        enabled: Qt.platform.os === "osx" && app.editorShortcutsAllowed
-
-        onActivated: app.doc.duplicateSelected()
     }
 
     FileDialog {

@@ -41,6 +41,13 @@ TemplateStore::TemplateStore(QObject *parent, const QString &directory)
             }
         }
     }
+    if (layout("starter-dual-scripture").isEmpty()) {
+        auto definition = TemplateDefinition::dualScripture();
+        definition["id"] = "starter-dual-scripture";
+        if (persist(definition).isEmpty()) {
+            return;
+        }
+    }
     m_status = "Templates ready";
 }
 
@@ -132,11 +139,16 @@ QVariantMap TemplateStore::preview(const QString &id) const {
     if (definition["kind"] == "presentation") {
         slides = { definition["slide"] };
     } else if (definition["kind"] == "scripture") {
+        QVariantMap sample { { "text", "Sample scripture text in the second Bible." },
+            { "reference", "Sample 1:1" }, { "abbreviation", "Second" } };
+        const bool dual
+            = TemplateDefinition::hasVisibleBinding(definition, "Secondary scripture text");
         slides = TemplateComposer::scriptureSlides(
             { QVariantMap { { "text",
                                 "Sample scripture text flows inside the text box you designed. "
                                 "Longer passages continue on the following slides." },
-                { "reference", "Sample 1:1" }, { "abbreviation", "Preview" } } },
+                { "reference", "Sample 1:1" }, { "abbreviation", "Preview" },
+                { "secondary", dual ? sample : QVariantMap() } } },
             4, definition, &error);
     } else {
         QVariantMap section { { "key", "v1" }, { "label", "Verse 1" },

@@ -12,8 +12,22 @@
 #include "TemplatePresets.h"
 #include "TemplateStore.h"
 #include "TextFormatting.h"
+#include <QDebug>
+int runDefaultImageChecks();
+int runDualScriptureChecks();
+int runBibleXmlChecks(const QString &realFile = QString());
 
 int runModelChecks() {
+    if (auto result = runDualScriptureChecks()) {
+        qCritical() << "Dual scripture check failed:" << result;
+        return 330 + result;
+    }
+    if (auto result = runBibleXmlChecks()) {
+        return 300 + result;
+    }
+    if (auto result = runDefaultImageChecks()) {
+        return 280 + result;
+    }
     if (auto result = TemplatePresets::selfTest()) {
         return 260 + result;
     }

@@ -5,7 +5,8 @@
 #include <QVariantMap>
 
 // A plain-text source plus sanitized Qt rich text keeps formatting portable across outputs.
-class TextFormatting final : public QObject {
+// Qt registration may instantiate a derived constructor wrapper (including on MSVC).
+class TextFormatting : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON

@@ -4,7 +4,7 @@ Templates connect the canvas editor to song and Bible content. A template is a n
 
 ## Create and edit
 
-1. Open **Libraries → Templates**. Three starter layouts (Lyrics, Bilingual lyrics and Scripture) and the Meadow/Garden reference packs are included.
+1. Open **Libraries → Templates**. Four starter layouts (Lyrics, Bilingual lyrics, Scripture and Dual Bible) and the Meadow/Garden reference packs are included.
 2. Choose a layout and **Edit layout**, or choose **New template → Create & edit**. Opening a layout replaces the editor draft as one undoable operation and enters Template mode.
 3. Resize/move/style text boxes on the canvas. In **Properties → Content binding**, assign each dynamic text box a source. Unbound (`None`) layers remain static.
 4. Choose **Save template** in the canvas toolbar (or Cmd/Ctrl+S in Template mode). **Save new** creates an independent layout. **Update template** creates a new revision of the opened layout.
@@ -85,3 +85,17 @@ so packaged apps and offline launches retain backgrounds without source-reposito
 Presentation layouts are excluded from song/Bible layout selectors and cannot be applied to those
 service items. New/Edit/Import/Export use the same `.churchtemplate` format with
 `kind: "presentation"` for this additional type.
+
+## Dual Bible scripture
+
+The bundled **Dual Bible** layout is a scripture template with independent
+`Scripture text` and `Secondary scripture text` bindings. Optional metadata uses
+`Scripture reference` / `Secondary scripture reference`, `Version` /
+`Secondary version`, and `Credits` / `Secondary credits`. Edit each box in Design
+to change typography and geometry. A dual passage rejects templates without a
+visible secondary text binding rather than dropping the second translation.
+
+Pagination measures both boxes independently and keeps verse pairs together.
+When a shorter translation finishes first, its final chunk remains visible while
+the other translation continues. Full source text and both copyright/license
+records remain in the saved program snapshot.

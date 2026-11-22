@@ -13,7 +13,7 @@ int TemplatePresets::selfTest() {
     TemplateStore store(nullptr, directory.path());
     PresentationLibrary presentations(nullptr, directory.path());
     QString error = install(store, nullptr, directory.path());
-    if (!error.isEmpty() || store.layouts().size() != 29
+    if (!error.isEmpty() || store.layouts().size() != 30
         || !presentations.presentations().isEmpty()) {
         qCritical() << "Template preset installation failed:" << error;
         return 1;
@@ -53,7 +53,7 @@ int TemplatePresets::selfTest() {
     }
     // Startup restores bundled files but preserves saved designs and their revisions.
     if (!QFile::remove(mediaPath) || !install(store, nullptr, directory.path()).isEmpty()
-        || !QFile::exists(mediaPath) || store.layouts().size() != 29
+        || !QFile::exists(mediaPath) || store.layouts().size() != 30
         || store.layout("preset-meadow-welcome")["name"] != "My welcome"
         || store.layout("preset-meadow-welcome")["revision"].toInt() != 2) {
         return 6;

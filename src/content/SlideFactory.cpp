@@ -1,5 +1,6 @@
 #include "SlideFactory.h"
 #include "TemplateComposer.h"
+#include "TemplateDefinition.h"
 #include <QDebug>
 #include <QFontDatabase>
 #include <QFontMetricsF>
@@ -173,6 +174,12 @@ QVariantList SlideFactory::scriptureSlides(
     const QVariantList &verses, int maxLines, QString *error, const QVariantMap &definition) {
     if (!definition.isEmpty()) {
         return TemplateComposer::scriptureSlides(verses, maxLines, definition, error);
+    }
+    for (const auto &value : verses) {
+        if (!value.toMap()["secondary"].toMap().isEmpty()) {
+            return TemplateComposer::scriptureSlides(
+                verses, maxLines, TemplateDefinition::dualScripture(), error);
+        }
     }
     QVariantList result;
     maxLines = qBound(1, maxLines, 6);

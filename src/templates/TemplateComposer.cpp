@@ -1,6 +1,7 @@
 #include "TemplateComposer.h"
 #include "TemplateDefinition.h"
 #include "TemplateTextLayout.h"
+#include <algorithm>
 #include <QMap>
 #include <QSet>
 #include <QUuid>
@@ -25,7 +26,7 @@ QVariantMap populate(const QVariantMap &definition, const QVariantMap &context, 
             box.remove("richText");
             box.remove("textRuns");
             const bool body = binding == "Primary lyrics" || binding == "Translated lyrics"
-                || binding == "Scripture text";
+                || binding == "Scripture text" || binding == "Secondary scripture text";
             // Metadata may scale down; body fonts and pagination always follow the design.
             if (!body && box.value("visible", true).toBool()) {
                 while (!TemplateTextLayout::fits(text, box) && box["fontSize"].toInt() > 8) {
@@ -202,6 +203,12 @@ QVariantList TemplateComposer::scriptureSlides(
         *error = "Choose between 1 and 200 verses";
         return {};
     }
+    const bool dual = std::any_of(verses.cbegin(), verses.cend(),
+        [](const QVariant &value) { return !value.toMap()["secondary"].toMap().isEmpty(); });
+    if (dual && !TemplateDefinition::hasVisibleBinding(definition, "Secondary scripture text")) {
+        *error = "Choose a dual Bible template with a visible Secondary scripture text box";
+        return {};
+    }
     maximumLines = qBound(1, maximumLines, 6);
     QVariantList result;
     for (const auto &value : verses) {
@@ -211,7 +218,21 @@ QVariantList TemplateComposer::scriptureSlides(
             *error = "Choose a verse with up to 30,000 characters";
             return {};
         }
-        QStringList chunks;
+        const auto secondary = verse["secondary"].toMap();
+        QString secondRemaining = secondary["text"].toString();
+        if (dual && (secondRemaining.trimmed().isEmpty() || secondRemaining.size() > 30000)) {
+            *error = "Every selected verse needs text from the second Bible";
+            return {};
+        }
+        if (dual && verse.contains("book")
+            && (secondary["book"] != verse["book"] || secondary["chapter"] != verse["chapter"]
+                || secondary["verse"] != verse["verse"]
+                || secondary["translation"] == verse["translation"])) {
+            *error
+                = "Both Bibles must use the same book, chapter and verse in different translations";
+            return {};
+        }
+        QStringList chunks, secondChunks;
         while (!remaining.isEmpty()) {
             const auto prefix = TemplateTextLayout::takePrefix(
                 remaining, "Scripture text", definition, maximumLines);
@@ -226,13 +247,32 @@ QVariantList TemplateComposer::scriptureSlides(
                 return {};
             }
         }
-        for (int i = 0; i < chunks.size(); ++i) {
+        while (dual && !secondRemaining.isEmpty()) {
+            const auto prefix = TemplateTextLayout::takePrefix(
+                secondRemaining, "Secondary scripture text", definition, maximumLines);
+            if (prefix.isEmpty()) {
+                *error = "Enlarge the Secondary scripture text box or reduce its font size";
+                return {};
+            }
+            secondChunks << prefix;
+            if (secondChunks.size() + result.size() > 500) {
+                *error = "This passage would exceed 500 slides";
+                return {};
+            }
+        }
+        const int count = qMax(chunks.size(), secondChunks.size());
+        for (int i = 0; i < count; ++i) {
             const auto reference = verse["reference"].toString();
             const auto name = reference
-                + (chunks.size() > 1
-                        ? " · " + QString::number(i + 1) + "/" + QString::number(chunks.size())
-                        : "");
-            const QVariantMap context { { "Title", reference }, { "Scripture text", chunks[i] },
+                + (count > 1 ? " · " + QString::number(i + 1) + "/" + QString::number(count) : "");
+            // Keep the shorter translation visible while the longer one continues.
+            const QVariantMap context { { "Title", reference },
+                { "Scripture text", chunks[qMin(i, int(chunks.size()) - 1)] },
+                { "Secondary scripture text",
+                    dual ? secondChunks[qMin(i, int(secondChunks.size()) - 1)] : QString() },
+                { "Secondary scripture reference", secondary["reference"] },
+                { "Secondary version", secondary["abbreviation"] },
+                { "Secondary credits", secondary["copyright"] },
                 { "Scripture reference", reference }, { "Version", verse["abbreviation"] },
                 { "Credits", verse["copyright"] } };
             auto page = populate(definition, context, name, error);
@@ -244,6 +284,9 @@ QVariantList TemplateComposer::scriptureSlides(
             page["sourceReference"] = reference;
             page["sourceCopyright"] = verse["copyright"];
             page["sourceLicense"] = verse["license"];
+            if (dual) {
+                page["sourceSecondary"] = secondary;
+            }
             if (!appendPage(result, page, error)) {
                 return {};
             }

@@ -1,0 +1,19 @@
+FROM ubuntu:24.04
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake ninja-build python3 python3-venv git ca-certificates patchelf \
+    libgl1-mesa-dev libxkbcommon-dev libegl1-mesa-dev libfontconfig1 \
+    libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+    libxcb-render-util0 libxcb-xinerama0 libxcb-randr0 libasound2t64 libpulse0 \
+    libva2 libva-drm2 && rm -rf /var/lib/apt/lists/*
+# Use the official SDK; Ubuntu's Qt 6.10 lacks the text formatting APIs Selah uses.
+RUN python3 -m venv /opt/aqt && /opt/aqt/bin/pip install --no-cache-dir aqtinstall==3.3.0 && \
+    if [ "$TARGETARCH" = arm64 ]; then qt_host=linux_arm64; qt_arch=linux_gcc_arm64; qt_dir=gcc_arm64; \
+    else qt_host=linux; qt_arch=linux_gcc_64; qt_dir=gcc_64; fi && \
+    /opt/aqt/bin/aqt install-qt "$qt_host" desktop 6.12.1 "$qt_arch" -O /opt/Qt \
+        -m qtmultimedia qtshadertools qtquicktimeline qtquick3d && \
+    ln -s "/opt/Qt/6.12.1/$qt_dir" /opt/Qt/current
+ENV CMAKE_PREFIX_PATH=/opt/Qt/current QT_ROOT_DIR=/opt/Qt/current
+ENV PATH=/opt/Qt/current/bin:$PATH
+WORKDIR /src

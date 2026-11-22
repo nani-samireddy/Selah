@@ -18,7 +18,8 @@ QVariantMap textBox(
 
 QStringList TemplateDefinition::bindings() {
     return { "None", "Title", "Section name", "Primary lyrics", "Translated lyrics",
-        "Scripture text", "Scripture reference", "Credits", "Version" };
+        "Scripture text", "Scripture reference", "Credits", "Version", "Secondary scripture text",
+        "Secondary scripture reference", "Secondary version", "Secondary credits" };
 }
 
 QVariantMap TemplateDefinition::starter(const QString &kind) {
@@ -105,7 +106,8 @@ bool TemplateDefinition::validate(const QVariantMap &definition, QString *error)
             return fail("Choose a font for every bound text box");
         }
         const bool scriptureBinding = binding == "Scripture text"
-            || binding == "Scripture reference" || binding == "Version";
+            || binding == "Scripture reference" || binding == "Version"
+            || binding.startsWith("Secondary ");
         const bool songBinding = binding == "Primary lyrics" || binding == "Translated lyrics"
             || binding == "Section name";
         if ((kind == "scripture" && songBinding) || (kind != "scripture" && scriptureBinding)) {
@@ -167,4 +169,37 @@ QStringList TemplateDefinition::missingMedia(const QVariantMap &definition) {
         }
     }
     return missing.values();
+}
+
+bool TemplateDefinition::hasVisibleBinding(const QVariantMap &definition, const QString &binding) {
+    for (const auto &value : definition["slide"].toMap()["elements"].toList()) {
+        const auto box = value.toMap();
+        if (box["binding"] == binding && box.value("visible", true).toBool()
+            && box.value("opacity", 1).toDouble() > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QVariantMap TemplateDefinition::dualScripture() {
+    auto definition = starter("scripture");
+    definition["name"] = "Dual Bible";
+    QVariantList elements;
+    auto primary = textBox("First Bible", "Scripture text", 160, 330, 64, "Scripture text");
+    auto secondary
+        = textBox("Second Bible", "రెండవ బైబిలు వచనం", 620, 330, 64, "Secondary scripture text");
+    secondary["fontFamily"] = "Noto Sans Telugu";
+    elements << textBox("Reference", "Reference", 65, 55, 28, "Scripture reference")
+             << textBox("Version", "Version", 120, 35, 22, "Version") << primary
+             << textBox(
+                    "Second reference", "Reference", 520, 55, 28, "Secondary scripture reference")
+             << textBox("Second version", "Version", 575, 35, 22, "Secondary version") << secondary
+             << textBox("Credits", "", 990, 30, 14, "Credits")
+             << textBox("Second credits", "", 1030, 30, 14, "Secondary credits");
+    auto slide = definition["slide"].toMap();
+    slide["elements"] = elements;
+    slide["ambientOpacity"] = 0.0;
+    definition["slide"] = slide;
+    return definition;
 }
