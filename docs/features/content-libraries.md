@@ -149,3 +149,13 @@ server supplies a total. Unknown-size transfers use an indeterminate bar. After 
 indicator switches to “Importing and indexing…” until the transaction finishes. The indicator is
 shown in both the import dialog and Bible workspace, so closing the dialog does not hide progress.
 Progress updates use a dedicated signal and do not refresh passage queries on every network chunk.
+
+### Two Bibles at one reference
+
+Choose **Second Bible (optional)** to pair a second imported translation with the
+current selection. Matching uses canonical book codes, chapter and verse numbers,
+not translated display names or result positions. Missing references block adding
+that selection with an explanation. Automatic layout uses the Dual Bible starter;
+custom layouts must contain a visible Secondary scripture text binding. Saved
+program items preserve both source translations for offline presentation and
+later template changes. See the [operator guide](../user-guide/bible.md).

@@ -10,3 +10,6 @@
 Shell helpers target Unix-like development environments. Windows builds can use the CMake presets and executable diagnostic flags directly. FFmpeg is needed only by fixture-generation helpers. See [testing](../docs/testing.md).
 
 `run.sh` uses `build.py` to serialize configure/build operations for a checkout. Agent and Terminal builds should use that wrapper rather than running concurrent Ninja processes in the same build directory. The default is four compiler jobs; set `CHURCHDECK_BUILD_JOBS` to override it. For build-only verification, use `python3 scripts/build.py`, or add `--target church-deck_qmllint`. Locks are released automatically when the helper exits.
+
+- `package-desktop.py`: native Windows/Linux Release packaging with Qt deployment, isolated startup checks, Linux dependency auditing, notices, manifests, and checksums. See [production builds](../docs/production-builds.md).
+- `build-bible-catalog.py`: regenerate the bundled GitHub Bible catalog from the repository tree, including entries beyond GitHub's directory-listing limit.

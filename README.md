@@ -6,7 +6,7 @@ Prepare multilingual songs, Bible passages, media and custom slides, arrange the
 
 ## Build and run
 
-Requirements: CMake 3.24+, a C++20 compiler, Ninja (for the presets), and Qt 6.9+ with Quick, Quick Controls, Multimedia, Concurrent, Sql, Network and Gui private development headers. This Mac has been verified with Qt 6.12. Qt's private graphics API is used only by the NDI capture prototype and requires validation when upgrading Qt.
+Requirements: CMake 3.24+, a C++20 compiler, Ninja (for the presets), and Qt 6.11+ with Quick, Quick Controls, Multimedia, Concurrent, Sql, Network and Gui private development headers. This Mac has been verified with Qt 6.12. Qt's private graphics API is used only by the NDI capture prototype and requires validation when upgrading Qt.
 
 On macOS with Homebrew Qt installed:
 
@@ -102,3 +102,5 @@ Portable exports that bundle media, cloud sync, physical hot-plug/three-display 
 The pinned Nayuki QR encoder retains its MIT notice under `third_party/qrcodegen`. Lucide icons retain their notice under `assets/LUCIDE-LICENSE`. Bundled Inter and Noto Telugu/Devanagari fonts retain their OFL notices under `assets/fonts/`. Bible sources, licenses and hashes are under `assets/scriptures/`; WEB is public domain, while the bundled Telugu/Hindi IRV translations are CC BY-SA 4.0 with Bridge Connectivity Solutions attribution.
 
 No application license has been selected. Qt, third-party dependencies, fonts and content each retain their own distribution requirements.
+
+User help: [Getting started and operator guides](docs/user-guide/README.md), also available offline from the book icon in the toolbar.

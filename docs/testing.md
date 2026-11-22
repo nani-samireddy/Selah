@@ -82,3 +82,11 @@ build/Selah.app/Contents/MacOS/Selah --fresh --bible-import-smoke "$PWD/captures
 
 That run uses an ephemeral scripture database and a verification profile, captures the repository
 picker and imported chapter, and checks that the editor/live snapshot remain unchanged.
+
+Dual Bible regression coverage lives in `tests/unit/DualScriptureTests.cpp`:
+canonical reference matching, missing/same-translation rejection, incompatible
+layouts, lossless Indic pagination, attribution and program save/reopen isolation.
+`--fresh --dual-scripture-smoke captures/dual-scripture` exercises the native QML
+translation picker, verse selection, paired preview, and offline guide dialog in
+a separate verification profile; it captures screenshots without changing saved
+operator programs.

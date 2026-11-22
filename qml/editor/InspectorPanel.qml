@@ -434,7 +434,9 @@ StudioPanel {
                         Layout.fillWidth: true
                         model: ["None", "Title", "Section name", "Credits", "Version",
                             "Primary lyrics", "Translated lyrics", "Scripture text",
-                            "Scripture reference"]
+                            "Scripture reference", "Secondary scripture text",
+                            "Secondary scripture reference", "Secondary version",
+                            "Secondary credits"]
                         currentIndex: Math.max(0, model.indexOf(inspector.host.selectedValue(
                                                                     "binding", "None")))
 

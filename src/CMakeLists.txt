@@ -6,7 +6,7 @@ qt_add_library(church-deck-core STATIC
     document/EditorDocument.cpp document/EditorDocument.h
     document/DocumentElements.cpp document/DocumentElements.h
     document/DocumentPersistence.cpp document/DocumentMedia.cpp
-    content/ContentLibrary.cpp content/ContentLibrary.h
+    content/ContentLibrary.cpp content/ContentLibrary.h content/ScripturePairing.cpp
     content/ScriptureImporter.cpp content/ScriptureImporter.h
     content/BibleXmlReader.cpp content/BibleXmlReader.h
     content/BibleRepository.cpp content/BibleRepository.h

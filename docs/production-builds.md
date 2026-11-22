@@ -23,3 +23,38 @@ The current Homebrew FFmpeg installation targets macOS 27, so packages made on t
 Network NDI sending is compiled only when the official NDI SDK headers are available at configuration time. Check `ndiSenderCompiled` in the manifest. Packaging cannot add sender support to a build compiled without the SDK. No NDI license agreement is accepted or SDK downloaded by this helper.
 
 Saved data and preferences retain the existing storage namespace across development and release builds. Windows packaging requires a Windows Qt toolchain and is not produced by the macOS helper.
+
+## Windows and Linux packages
+
+Use Qt 6.11 or newer; the native desktop workflow uses Qt 6.12.1 with Multimedia,
+ShaderTools, QuickTimeline and Quick3D. Windows uses the MSVC 2022 x64 toolchain;
+run the helper from its developer shell. Linux needs Ninja, patchelf, XCB/XKB,
+OpenGL/EGL, fontconfig, PulseAudio/ALSA, and VA-API runtime libraries.
+
+```sh
+python scripts/package-desktop.py --jobs 2
+```
+
+The helper configures the Release preset, deploys Qt/QML dependencies with Qt's
+native deployment API, includes notices, and produces a ZIP on Windows or tar.gz
+on Linux under `dist/<platform>-<architecture>/`. Extract the entire package and
+launch `Selah.cmd` on Windows or `./Selah` on Linux. Keep its library and plugin
+folders together. Windows packages include the app-local MSVC runtime.
+
+`.github/workflows/build-desktop.yml` builds Windows x64 and Linux x64 on native
+GitHub runners. Pushes to `build/**` trigger it; the workflow also supports manual
+runs when available on the repository's default branch. Artifacts are retained for
+14 days. This workflow does not create a public release, merge a branch, or sign
+Windows executables. Its pinned aqt source revision supports the split Windows Qt
+repository introduced with Qt 6.11; the older PyPI aqt release cannot install that SDK.
+
+Each package includes a manifest and SHA-256 sidecar. The helper verifies headless
+startup with development plugin paths removed. Linux also audits ELF dependencies
+and rejects missing libraries or Qt libraries resolved outside the bundle. The
+manifest records its distro/glibc floor: a package built on Ubuntu 24.04 targets
+Ubuntu 24.04 or compatible newer distributions, not every Linux installation.
+Headless startup is not a physical display, hardware decoding, or NDI receiver test.
+
+`packaging/Dockerfile.linux` describes a native Linux SDK container for x64/ARM64
+builders. It requires sufficient local disk space and a running Docker daemon;
+Windows executables still require a Windows runner.

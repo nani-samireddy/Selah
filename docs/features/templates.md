@@ -85,3 +85,17 @@ so packaged apps and offline launches retain backgrounds without source-reposito
 Presentation layouts are excluded from song/Bible layout selectors and cannot be applied to those
 service items. New/Edit/Import/Export use the same `.churchtemplate` format with
 `kind: "presentation"` for this additional type.
+
+## Dual Bible scripture
+
+The bundled **Dual Bible** layout is a scripture template with independent
+`Scripture text` and `Secondary scripture text` bindings. Optional metadata uses
+`Scripture reference` / `Secondary scripture reference`, `Version` /
+`Secondary version`, and `Credits` / `Secondary credits`. Edit each box in Design
+to change typography and geometry. A dual passage rejects templates without a
+visible secondary text binding rather than dropping the second translation.
+
+Pagination measures both boxes independently and keeps verse pairs together.
+When a shorter translation finishes first, its final chunk remains visible while
+the other translation continues. Full source text and both copyright/license
+records remain in the saved program snapshot.

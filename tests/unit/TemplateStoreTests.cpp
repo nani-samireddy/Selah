@@ -69,7 +69,7 @@ int TemplateStore::selfTest() {
     };
     QTemporaryDir directory;
     TemplateStore library(nullptr, directory.path());
-    if (!check(library.layouts().size() == 3, "Three starter layouts")) {
+    if (!check(library.layouts().size() == 4, "Four starter layouts")) {
         return 1;
     }
     auto definition = library.layout("starter-bilingual");
@@ -176,14 +176,14 @@ int TemplateStore::selfTest() {
     library.saveTemplate("Updated layout", "bilingual", definition["slide"].toMap(), id);
     {
         TemplateStore reopened(nullptr, directory.path());
-        if (!check(reopened.layout(id)["revision"] == 2 && reopened.layouts().size() == 4,
+        if (!check(reopened.layout(id)["revision"] == 2 && reopened.layouts().size() == 5,
                 "Revision and persistence")) {
             return 10;
         }
     }
     const auto file = QUrl::fromLocalFile(directory.filePath("test.churchtemplate"));
     if (!check(library.exportTemplate(id, file) && library.importTemplate(file)
-                && library.layouts().size() == 5,
+                && library.layouts().size() == 6,
             "Independent import/export")) {
         return 11;
     }

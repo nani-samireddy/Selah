@@ -41,6 +41,10 @@ void ApplicationSetup::configure(QGuiApplication &app) {
         app.setApplicationName("Church Deck Present Verification");
         QStandardPaths::setTestModeEnabled(true);
     }
+    if (app.arguments().contains("--dual-scripture-smoke")) {
+        app.setApplicationName("Church Deck Dual Scripture Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
     if (app.arguments().contains("--bible-import-smoke")) {
         app.setApplicationName("Church Deck Bible Import Verification");
         QStandardPaths::setTestModeEnabled(true);

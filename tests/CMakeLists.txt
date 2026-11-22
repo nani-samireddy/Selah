@@ -1,7 +1,7 @@
 # Unit bodies are shared by the standalone runner and the optional --self-test command.
 add_library(church-deck-test-cases STATIC
     unit/ModelChecks.cpp unit/ModelChecks.h
-    unit/ContentLibraryTests.cpp
+    unit/ContentLibraryTests.cpp unit/DualScriptureTests.cpp
     unit/BibleXmlTests.cpp
     unit/EditorDocumentTests.cpp
     unit/MediaLibraryTests.cpp
@@ -52,6 +52,7 @@ if(CHURCHDECK_ENABLE_DIAGNOSTICS)
         smoke/TemplatePresetChecks.cpp smoke/TemplatePresetChecks.h
         smoke/PresentChecks.cpp smoke/PresentChecks.h
         smoke/BibleImportChecks.cpp smoke/BibleImportChecks.h
+        smoke/DualScriptureChecks.cpp smoke/DualScriptureChecks.h
         smoke/PrototypeChecks.cpp smoke/PrototypeChecks.h
         smoke/RemoteChecks.cpp smoke/RemoteChecks.h
         smoke/WorkspaceChecks.cpp smoke/WorkspaceChecks.h

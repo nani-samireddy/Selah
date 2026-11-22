@@ -185,6 +185,10 @@ bool ProgramStore::addScripture(const QVariantList &verses, int maxLines,
             title += " – " + verses.last().toMap()["reference"].toString();
         }
         title += " · " + verses.first().toMap()["abbreviation"].toString();
+        const auto secondary = verses.first().toMap()["secondary"].toMap();
+        if (!secondary.isEmpty()) {
+            title += " + " + secondary["abbreviation"].toString();
+        }
     }
     return append({ { "kind", "scripture" }, { "title", title }, { "maxLines", maxLines },
                       { "verses", verses }, { "layoutTemplate", definition } },

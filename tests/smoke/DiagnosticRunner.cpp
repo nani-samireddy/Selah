@@ -1,6 +1,7 @@
 #include "DiagnosticRunner.h"
 #include "BibleImportChecks.h"
 #include "ContentLibrary.h"
+#include "DualScriptureChecks.h"
 #include "EditorDocument.h"
 #include "MediaLibrary.h"
 #include "NdiController.h"
@@ -37,6 +38,13 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
             window->setWidth(1120);
             window->setHeight(760);
         }
+    }
+    const int dualIndex = app.arguments().indexOf("--dual-scripture-smoke");
+    if (dualIndex >= 0) {
+        if (dualIndex + 1 >= app.arguments().size()) {
+            return 240;
+        }
+        runDualScriptureUiChecks(content, programs, engine, app.arguments()[dualIndex + 1]);
     }
     int workspaceIndex = app.arguments().indexOf("--workspace-smoke");
     const int bibleImportIndex = app.arguments().indexOf("--bible-import-smoke");

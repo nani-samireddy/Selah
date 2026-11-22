@@ -14,3 +14,5 @@ transaction commits, so the UI can select the new edition without guessing its i
 Refresh the repository metadata using `python3 scripts/build-bible-catalog.py`; it uses the Git-tree
 API because GitHub's directory contents endpoint truncates this repository at 1,000 entries. The
 catalog records its source commit. Verse text is fetched only when an operator requests an import.
+
+`ScripturePairing.cpp` joins selected verses to a second translation by canonical coordinates and returns a complete pair list or a missing-reference error.
