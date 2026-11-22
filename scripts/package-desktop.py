@@ -115,7 +115,8 @@ def smoke(stage, output):
                     process.kill()
                     process.wait()
     text = log_path.read_text(errors="replace")
-    for marker in ("QQmlApplicationEngine failed", "Cannot load library", "could not load the Qt platform plugin"):
+    for marker in ("QQmlApplicationEngine failed", "Cannot load library",
+                   "could not load the Qt platform plugin", "QSQLITE driver not loaded"):
         if marker.lower() in text.lower():
             raise RuntimeError("Packaged startup failed: " + marker)
     return {"startupPassed": True, "startupMode": "headless-software", "isolatedProfile": True}

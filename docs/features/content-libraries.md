@@ -159,3 +159,5 @@ that selection with an explanation. Automatic layout uses the Dual Bible starter
 custom layouts must contain a visible Secondary scripture text binding. Saved
 program items preserve both source translations for offline presentation and
 later template changes. See the [operator guide](../user-guide/bible.md).
+
+Speaker display and remote text summaries include both texts for dual Bible slides.

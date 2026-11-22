@@ -405,13 +405,28 @@ QString OutputManager::liveBackground() const {
 }
 
 QString OutputManager::primaryText(const QVariantMap &slide) {
+    QString scripture, secondary;
+    bool hasScripture = false;
     for (const auto &value : slide["elements"].toList()) {
         const auto element = value.toMap();
+        if (!element.value("visible", true).toBool()) {
+            continue;
+        }
         const auto binding = element["binding"].toString();
-        if (element.value("visible", true).toBool()
-            && (binding == "Primary lyrics" || binding == "Scripture text")) {
+        if (binding == "Primary lyrics") {
             return element["text"].toString();
         }
+        if (binding == "Scripture text" && !hasScripture) {
+            scripture = element["text"].toString();
+            hasScripture = true;
+        }
+        if (binding == "Secondary scripture text" && secondary.isEmpty()) {
+            secondary = element["text"].toString();
+        }
+    }
+    // Speaker displays and remote text views must retain both Bible translations too.
+    if (hasScripture) {
+        return scripture + (secondary.isEmpty() ? QString() : "\n\n" + secondary);
     }
     double largest = 0;
     QString result;

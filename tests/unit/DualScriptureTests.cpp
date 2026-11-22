@@ -96,6 +96,12 @@ int runDualScriptureChecks() {
     }
 
     OutputManager outputs;
+    outputs.takeLive(pages, 0, "dual-bible-test");
+    if (!outputs.liveText().contains(boundText(pages.first().toMap(), "Scripture text"))
+        || !outputs.liveText().contains(
+            boundText(pages.first().toMap(), "Secondary scripture text"))) {
+        return 14;
+    }
     ProgramStore programs(&outputs, nullptr, directory.path());
     if (!programs.createProgram("Dual Bible", "2026-11-22") || !programs.addScripture(verses, 4)
         || !programs.save()) {
