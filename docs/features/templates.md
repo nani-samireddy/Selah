@@ -4,7 +4,7 @@ Templates connect the canvas editor to song and Bible content. A template is a n
 
 ## Create and edit
 
-1. Open **Libraries → Templates**. Three starter layouts (Lyrics, Bilingual lyrics and Scripture) and the Meadow/Garden reference packs are included.
+1. Open **Libraries → Templates**. Four starter layouts (Lyrics, Bilingual lyrics, Scripture and Dual Bible) and the Meadow/Garden reference packs are included.
 2. Choose a layout and **Edit layout**, or choose **New template → Create & edit**. Opening a layout replaces the editor draft as one undoable operation and enters Template mode.
 3. Resize/move/style text boxes on the canvas. In **Properties → Content binding**, assign each dynamic text box a source. Unbound (`None`) layers remain static.
 4. Choose **Save template** in the canvas toolbar (or Cmd/Ctrl+S in Template mode). **Save new** creates an independent layout. **Update template** creates a new revision of the opened layout.

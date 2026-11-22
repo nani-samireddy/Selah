@@ -50,8 +50,10 @@ void runDualScriptureUiChecks(ContentLibrary &content, ProgramStore &programs,
             second->setProperty("currentIndex", index);
             QMetaObject::invokeMethod(second, "activated", Q_ARG(int, index));
             QTimer::singleShot(500, &engine, [&, window, panel, help, folder] {
-                const auto selection
-                    = panel->property("pairedSelection").value<QJSValue>().toVariant().toMap();
+                const auto rawSelection = panel->property("pairedSelection");
+                const auto selection = rawSelection.metaType() == QMetaType::fromType<QJSValue>()
+                    ? rawSelection.value<QJSValue>().toVariant().toMap()
+                    : rawSelection.toMap();
                 const auto verses = selection["verses"].toList();
                 if (!selection["error"].toString().isEmpty() || verses.size() != 1
                     || verses.first().toMap()["verse"].toInt() != 16

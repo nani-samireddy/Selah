@@ -176,7 +176,7 @@ QVariantList SlideFactory::scriptureSlides(
         return TemplateComposer::scriptureSlides(verses, maxLines, definition, error);
     }
     for (const auto &value : verses) {
-        if (value.toMap().contains("secondary")) {
+        if (!value.toMap()["secondary"].toMap().isEmpty()) {
             return TemplateComposer::scriptureSlides(
                 verses, maxLines, TemplateDefinition::dualScripture(), error);
         }

@@ -58,7 +58,7 @@ jobs:
           setup-python: false
           cache: true
       - name: Build and package Release
-        run: python scripts/package-desktop.py --jobs 2
+        run: python scripts/package-desktop.py --jobs 4
       - name: Upload package and validation
         uses: actions/upload-artifact@v4
         with:

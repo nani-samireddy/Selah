@@ -93,7 +93,10 @@ if(CHURCHDECK_DEPLOY_RUNTIME AND NOT APPLE)
     if(UNIX)
         set_target_properties(church-deck PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     endif()
-    qt_generate_deploy_qml_app_script(TARGET church-deck OUTPUT_SCRIPT deploy_runtime NO_TRANSLATIONS)
+    # Selah uses SQLite only. Other SQL drivers require unrelated external database clients.
+    # Include the offscreen platform explicitly for the isolated package startup check.
+    qt_generate_deploy_qml_app_script(TARGET church-deck OUTPUT_SCRIPT deploy_runtime
+        NO_TRANSLATIONS EXCLUDE_PLUGIN_TYPES sqldrivers INCLUDE_PLUGINS qsqlite qoffscreen)
     install(SCRIPT ${deploy_runtime})
     if(NDI_INCLUDE_DIR)
         set(release_ndi true)
