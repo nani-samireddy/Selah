@@ -84,6 +84,11 @@ def environment(stage):
     env = os.environ.copy()
     for key in ("QT_PLUGIN_PATH", "QML_IMPORT_PATH", "QML2_IMPORT_PATH", "QT_QML_IMPORT_PATH"):
         env.pop(key, None)
+    if platform.system() == "Windows" and env.get("QT_ROOT_DIR"):
+        # Windows DLL lookup consults PATH; the SDK must not mask missing app-local DLLs.
+        sdk = Path(env["QT_ROOT_DIR"]).resolve()
+        env["PATH"] = os.pathsep.join(entry for entry in env.get("PATH", "").split(os.pathsep)
+                                     if entry and not Path(entry).resolve().is_relative_to(sdk))
     if platform.system() == "Linux":
         env["LD_LIBRARY_PATH"] = str(stage / "lib")
     env["QT_QPA_PLATFORM"] = "offscreen"
