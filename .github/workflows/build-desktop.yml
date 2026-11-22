@@ -38,9 +38,10 @@ jobs:
           sudo apt-get install -y ninja-build patchelf libgl1-mesa-dev libxkbcommon-dev libegl1-mesa-dev libfontconfig1 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-randr0 libasound2t64 libpulse0
       - uses: jurplel/install-qt-action@v4
         with:
-          version: '6.10.2'
+          version: '6.12.1'
           arch: ${{ matrix.qt_arch }}
-          modules: 'qtmultimedia qtshadertools qtsvg qtquicktimeline'
+          modules: 'qtmultimedia qtshadertools qtquicktimeline qtquick3d'
+          setup-python: false
           cache: true
       - name: Build and package Release
         run: python scripts/package-desktop.py --jobs 2

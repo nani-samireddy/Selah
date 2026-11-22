@@ -9,7 +9,7 @@ if(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
 endif()
 
-find_package(Qt6 6.9 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent Sql Network GuiPrivate)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent Sql Network GuiPrivate)
 qt_standard_project_setup(REQUIRES 6.9)
 include(CTest)
 option(CHURCHDECK_ENABLE_DIAGNOSTICS "Build developer capture and verification commands" ON)
