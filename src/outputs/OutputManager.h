@@ -5,6 +5,7 @@
 #include <QScreen>
 #include <QSet>
 #include <QTimer>
+#include <QUrl>
 #include <QVariantList>
 #include <QWindow>
 
@@ -32,6 +33,7 @@ class OutputManager final : public QObject {
     Q_PROPERTY(QString liveSource READ liveSource NOTIFY liveChanged)
     Q_PROPERTY(QString liveProgramItemId READ liveProgramItemId NOTIFY liveChanged)
     Q_PROPERTY(QString liveTitle READ liveTitle NOTIFY liveChanged)
+    Q_PROPERTY(QString liveProgramTitle READ liveProgramTitle NOTIFY snapshotChanged)
     Q_PROPERTY(QString nextTitle READ nextTitle NOTIFY liveChanged)
     Q_PROPERTY(QString liveNotes READ liveNotes NOTIFY liveChanged)
     Q_PROPERTY(QString liveText READ liveText NOTIFY liveChanged)
@@ -41,6 +43,17 @@ class OutputManager final : public QObject {
     Q_PROPERTY(int liveCount READ liveCount NOTIFY liveChanged)
     Q_PROPERTY(QString stageMessage READ stageMessage WRITE setStageMessage NOTIFY stateChanged)
     Q_PROPERTY(QString countdown READ countdown NOTIFY stateChanged)
+    Q_PROPERTY(QUrl defaultImageSource READ defaultImageSource NOTIFY stateChanged)
+    Q_PROPERTY(QString defaultImageName READ defaultImageName NOTIFY stateChanged)
+    Q_PROPERTY(
+        QString defaultImageFit READ defaultImageFit WRITE setDefaultImageFit NOTIFY stateChanged)
+    Q_PROPERTY(bool defaultImageAvailable READ defaultImageAvailable NOTIFY stateChanged)
+    Q_PROPERTY(bool defaultImageShowing READ defaultImageShowing NOTIFY stateChanged)
+    Q_PROPERTY(bool hasAudienceContent READ hasAudienceContent NOTIFY liveChanged)
+    Q_PROPERTY(QVariantList audienceElements READ audienceElements NOTIFY liveChanged)
+    Q_PROPERTY(QString audienceBackground READ audienceBackground NOTIFY liveChanged)
+    Q_PROPERTY(double audienceAmbientOpacity READ audienceAmbientOpacity NOTIFY liveChanged)
+    Q_PROPERTY(QString audienceTitle READ audienceTitle NOTIFY liveChanged)
 public:
     explicit OutputManager(QObject *parent = nullptr);
     QVariantList displays() const;
@@ -88,6 +101,11 @@ public:
     QString liveProgramItemId() const { return liveSlide()["programItemId"].toString(); }
 
     QString liveTitle() const;
+
+    QString liveProgramTitle() const {
+        return m_liveSlides.value(0).toMap().value("programTitle", "Live presentation").toString();
+    }
+
     QString nextTitle() const;
     QString liveNotes() const;
     QString liveText() const;
@@ -122,6 +140,27 @@ public:
     }
 
     QString countdown() const;
+
+    QUrl defaultImageSource() const { return QUrl(m_defaultImageSource); }
+
+    QString defaultImageName() const { return m_defaultImageName; }
+
+    QString defaultImageFit() const { return m_defaultImageFit; }
+
+    bool defaultImageAvailable() const;
+
+    bool defaultImageShowing() const { return !m_defaultImageLive.isEmpty(); }
+
+    bool hasAudienceContent() const { return defaultImageShowing() || liveCount() > 0; }
+
+    QVariantList audienceElements() const;
+    QString audienceBackground() const;
+    double audienceAmbientOpacity() const;
+    QString audienceTitle() const;
+    void setDefaultImageFit(const QString &fit);
+    Q_INVOKABLE bool setDefaultImage(const QUrl &source);
+    Q_INVOKABLE void removeDefaultImage();
+    Q_INVOKABLE bool showDefaultImage(bool showing);
     Q_INVOKABLE void bindWindows(QWindow *audience, QWindow *stage, QWindow *editor);
     Q_INVOKABLE bool route(const QString &role, const QString &displayId);
     Q_INVOKABLE void preview(const QString &role);
@@ -157,5 +196,7 @@ private:
     QVariantList m_liveSlides;
     int m_index = -1, m_remaining = 0;
     QString m_stageMessage, m_liveSource, m_snapshotId;
+    QString m_defaultImageSource, m_defaultImageName, m_defaultImageFit = "contain";
+    QVariantList m_defaultImageLive;
     QTimer m_timer;
 };

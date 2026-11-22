@@ -2,9 +2,11 @@
 add_library(church-deck-test-cases STATIC
     unit/ModelChecks.cpp unit/ModelChecks.h
     unit/ContentLibraryTests.cpp
+    unit/BibleXmlTests.cpp
     unit/EditorDocumentTests.cpp
     unit/MediaLibraryTests.cpp
     unit/OutputManagerTests.cpp
+    unit/DefaultImageTests.cpp
     unit/NdiWorkerTests.cpp
     unit/SlideFactoryTests.cpp
     unit/ProgramStoreTests.cpp
@@ -26,6 +28,7 @@ if(BUILD_TESTING)
         BASE "${PROJECT_SOURCE_DIR}"
         FILES
             "${PROJECT_SOURCE_DIR}/assets/scriptures/content-seed.sqlite"
+            "${PROJECT_SOURCE_DIR}/assets/scriptures/bible-repository.json"
             "${PROJECT_SOURCE_DIR}/assets/fonts/Inter.ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansTelugu.ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/NotoSansDevanagari.ttf"
@@ -47,6 +50,8 @@ if(CHURCHDECK_ENABLE_DIAGNOSTICS)
         smoke/ProgramChecks.cpp smoke/ProgramChecks.h
         smoke/TemplateChecks.cpp smoke/TemplateChecks.h
         smoke/TemplatePresetChecks.cpp smoke/TemplatePresetChecks.h
+        smoke/PresentChecks.cpp smoke/PresentChecks.h
+        smoke/BibleImportChecks.cpp smoke/BibleImportChecks.h
         smoke/PrototypeChecks.cpp smoke/PrototypeChecks.h
         smoke/RemoteChecks.cpp smoke/RemoteChecks.h
         smoke/WorkspaceChecks.cpp smoke/WorkspaceChecks.h

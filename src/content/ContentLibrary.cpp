@@ -1,4 +1,5 @@
 #include "ContentLibrary.h"
+#include "BibleRepository.h"
 #include "ScriptureImporter.h"
 #include <algorithm>
 #include <QDebug>
@@ -446,15 +447,68 @@ void ContentLibrary::importBible(const QUrl &url) {
         return;
     }
     m_busy = true;
+    m_bibleDownloadedBytes = 0;
+    m_bibleDownloadTotal = -1;
+    m_bibleImportPhase = url.isLocalFile() ? "indexing" : "downloading";
+    emit bibleImportProgressChanged();
     setStatus("Importing and indexing translation…");
+    if (!url.isLocalFile()) {
+        setStatus("Downloading translation from Holy Bible XML…");
+        BibleRepository::download(
+            url, this,
+            [this](const QByteArray &data, const QUrl &source, const QString &error) {
+                if (!error.isEmpty()) {
+                    m_busy = false;
+                    m_bibleImportPhase.clear();
+                    emit bibleImportProgressChanged();
+                    setStatus(error);
+                    return;
+                }
+                finishBibleImport(source, data);
+            },
+            [this](qint64 received, qint64 total) {
+                m_bibleDownloadedBytes = received;
+                m_bibleDownloadTotal = total;
+                emit bibleImportProgressChanged();
+            });
+        return;
+    }
+    finishBibleImport(url);
+}
+
+QVariantList ContentLibrary::repositoryBibles() const {
+    return BibleRepository::catalog();
+}
+
+void ContentLibrary::finishBibleImport(const QUrl &url, const QByteArray &data) {
+    m_bibleImportPhase = "indexing";
+    emit bibleImportProgressChanged();
+    setStatus("Importing and indexing translation…");
+    QSet<QString> existing;
+    for (const auto &value : translations()) {
+        existing.insert(value.toMap()["id"].toString());
+    }
     auto watcher = new QFutureWatcher<QString>(this);
-    connect(watcher, &QFutureWatcher<QString>::finished, this, [this, watcher] {
+    connect(watcher, &QFutureWatcher<QString>::finished, this, [this, watcher, existing] {
         auto error = watcher->result();
         watcher->deleteLater();
         m_busy = false;
+        m_bibleImportPhase.clear();
+        emit bibleImportProgressChanged();
         setStatus(error.isEmpty() ? "Translation imported" : error);
+        if (error.isEmpty()) {
+            for (const auto &value : translations()) {
+                const auto id = value.toMap()["id"].toString();
+                if (!existing.contains(id)) {
+                    emit bibleImported(id);
+                    break;
+                }
+            }
+        }
     });
     const auto path = m_path;
-    watcher->setFuture(
-        QtConcurrent::run([path, url] { return ScriptureImporter::importFile(path, url); }));
+    watcher->setFuture(QtConcurrent::run([path, url, data] {
+        return url.isLocalFile() ? ScriptureImporter::importFile(path, url)
+                                 : ScriptureImporter::importData(path, data, url);
+    }));
 }

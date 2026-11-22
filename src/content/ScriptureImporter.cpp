@@ -1,5 +1,8 @@
 #include "ScriptureImporter.h"
+#include "BibleXmlReader.h"
+#include <QBuffer>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -11,12 +14,26 @@
 #include <QSqlQuery>
 #include <QUuid>
 
-QString ScriptureImporter::importFile(const QString &path, const QUrl &url) {
-    QFile file(url.toLocalFile());
-    if (!url.isLocalFile() || !file.open(QIODevice::ReadOnly) || file.size() > 100 * 1024 * 1024) {
-        return "Choose a local Bible JSON file under 100 MB";
+namespace {
+QString importDevice(const QString &path, QIODevice &input, const QUrl &source) {
+    QString parseError;
+    auto prefix = input.peek(256).trimmed();
+    if (prefix.startsWith("\xEF\xBB\xBF")) {
+        prefix.remove(0, 3);
     }
-    const auto root = QJsonDocument::fromJson(file.readAll()).object();
+    QJsonObject root;
+    if (source.path().endsWith(".xml", Qt::CaseInsensitive) || prefix.trimmed().startsWith('<')) {
+        root = BibleXmlReader::read(input, source, &parseError);
+    } else {
+        QJsonParseError jsonError;
+        root = QJsonDocument::fromJson(input.readAll(), &jsonError).object();
+        if (jsonError.error != QJsonParseError::NoError) {
+            parseError = "Invalid Bible JSON: " + jsonError.errorString();
+        }
+    }
+    if (!parseError.isEmpty()) {
+        return parseError;
+    }
     const auto metadata = root["translation"].toObject().toVariantMap();
     const auto rows = root["verses"].toArray();
     const QString id = metadata["id"].toString();
@@ -40,8 +57,9 @@ QString ScriptureImporter::importFile(const QString &path, const QUrl &url) {
         db.setConnectOptions("QSQLITE_BUSY_TIMEOUT=5000");
         if (!db.open()) {
             error = db.lastError().text();
+        } else if (!db.transaction()) {
+            error = "Could not begin Bible import: " + db.lastError().text();
         } else {
-            db.transaction();
             QSqlQuery statement(db);
             statement.prepare("INSERT INTO translations VALUES(?,?,?,?,?,?,?)");
             for (const auto &field :
@@ -120,6 +138,7 @@ QString ScriptureImporter::importFile(const QString &path, const QUrl &url) {
             if (error.isEmpty()) {
                 if (!db.commit()) {
                     error = db.lastError().text();
+                    db.rollback();
                 }
             } else {
                 db.rollback();
@@ -129,4 +148,26 @@ QString ScriptureImporter::importFile(const QString &path, const QUrl &url) {
     }
     QSqlDatabase::removeDatabase(connection);
     return error;
+}
+
+}
+
+QString ScriptureImporter::importFile(const QString &path, const QUrl &source) {
+    QFile file(source.toLocalFile());
+    if (!source.isLocalFile() || !file.open(QIODevice::ReadOnly)
+        || file.size() > 100 * 1024 * 1024) {
+        return "Choose a local Bible JSON or XML file under 100 MB";
+    }
+    return importDevice(path, file, source);
+}
+
+QString ScriptureImporter::importData(
+    const QString &path, const QByteArray &data, const QUrl &source) {
+    if (data.isEmpty() || data.size() > 100 * 1024 * 1024) {
+        return "Invalid Bible download size";
+    }
+    QBuffer buffer;
+    buffer.setData(data);
+    buffer.open(QIODevice::ReadOnly);
+    return importDevice(path, buffer, source);
 }

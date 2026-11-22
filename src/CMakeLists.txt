@@ -8,6 +8,8 @@ qt_add_library(church-deck-core STATIC
     document/DocumentPersistence.cpp document/DocumentMedia.cpp
     content/ContentLibrary.cpp content/ContentLibrary.h
     content/ScriptureImporter.cpp content/ScriptureImporter.h
+    content/BibleXmlReader.cpp content/BibleXmlReader.h
+    content/BibleRepository.cpp content/BibleRepository.h
     content/SlideFactory.cpp content/SlideFactory.h
     templates/TemplateStore.cpp templates/TemplateStore.h
     templates/TemplateDefinition.cpp templates/TemplateDefinition.h
@@ -25,6 +27,7 @@ qt_add_library(church-deck-core STATIC
     remote/RemotePreview.cpp remote/RemotePreview.h
     ../third_party/qrcodegen/qrcodegen.cpp
     outputs/OutputManager.cpp outputs/OutputManager.h
+    outputs/DefaultImage.cpp outputs/DefaultImage.h
     broadcast/NdiController.cpp broadcast/NdiController.h
     broadcast/NdiWorker.cpp broadcast/NdiWorker.h
 )

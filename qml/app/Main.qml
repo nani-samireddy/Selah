@@ -330,8 +330,12 @@ ApplicationWindow {
             }
 
             Text {
-                text: app.outputs.liveIndex >= 0 ? "LIVE  /  " + app.outputs.liveTitle + "  ·  "
-                                                   + app.outputs.status : "Outputs stopped"
+                text: app.outputs.defaultImageShowing ? "DEFAULT IMAGE  ·  " + app.outputs.status :
+                                                        app.outputs.liveIndex >= 0 ? "LIVE  /  "
+                                                                                     + app.outputs.liveTitle
+                                                                                     + "  ·  "
+                                                                                     + app.outputs.status :
+                                                                                     "Outputs stopped"
                 color: LibraryStyle.tone("#929292")
                 font.pixelSize: 10
             }

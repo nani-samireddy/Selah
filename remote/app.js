@@ -55,7 +55,7 @@ function render(state) {
   $('controllerView').hidden = !controller; $('speakerView').hidden = controller;
   $('role').textContent = controller ? 'REMOTE CONTROLLER' : 'SPEAKER VIEW · READ ONLY';
   $('position').textContent = state.count ? `Slide ${state.index + 1} of ${state.count}` : 'Nothing live';
-  $('outputStatus').textContent = [state.audienceEnabled ? 'Audience output on' : 'Audience output stopped', state.blackout ? 'BLACKOUT' : '', state.textCleared ? 'Text cleared' : ''].filter(Boolean).join(' · ');
+  $('outputStatus').textContent = [state.audienceEnabled ? 'Audience output on' : 'Audience output stopped', state.blackout ? 'BLACKOUT' : '', state.defaultImageShowing ? 'Default image showing' : '', state.textCleared ? 'Text cleared' : ''].filter(Boolean).join(' · ');
   $('currentTitle').textContent = state.title; $('nextTitle').textContent = state.nextTitle || 'End of presentation';
   $('blackout').textContent = state.blackout ? 'Restore audience' : 'Blackout';
   $('blackout').classList.toggle('active', state.blackout);

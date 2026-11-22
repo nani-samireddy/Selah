@@ -26,9 +26,9 @@ Window {
 
         SlideRenderer {
             visible: output.role === "audience"
-            elements: output.controller.liveElements
-            backgroundColor: output.controller.liveBackground
-            ambientOpacity: output.controller.liveAmbientOpacity
+            elements: output.controller.audienceElements
+            backgroundColor: output.controller.audienceBackground
+            ambientOpacity: output.controller.audienceAmbientOpacity
             playing: output.visible && output.controller.playing && output.role === "audience"
             audible: output.visible && output.controller.audioEnabled && output.role === "audience"
             showErrors: false

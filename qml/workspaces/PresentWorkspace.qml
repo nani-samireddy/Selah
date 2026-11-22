@@ -21,6 +21,8 @@ Item {
         forceActiveFocus();
     }
 
+    objectName: "presentWorkspace"
+
     Shortcut {
         sequence: "Right"
         enabled: present.canNavigate
@@ -57,343 +59,147 @@ Item {
                                       - present.controller.liveIndex)
     }
 
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 24
-        spacing: 22
+        anchors.margins: 20
+        spacing: 16
 
-        Rectangle {
-            Layout.preferredWidth: present.width > 1300 ? 280 : 245
-            Layout.fillHeight: true
-            color: LibraryStyle.tone("#191919")
-            radius: 10
-            border.color: LibraryStyle.tone("#323232")
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
 
             ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 14
+                spacing: 4
+                Layout.fillWidth: true
 
                 Text {
-                    text: "Live service"
-                    color: LibraryStyle.tone("#EEEEEE")
-                    font.pixelSize: 18
+                    text: "Present"
+                    font.family: LibraryStyle.fontFamily
+                    font.pixelSize: 22
+                    font.weight: Font.Medium
+                    color: LibraryStyle.text
                 }
 
                 Text {
-                    text: "Selecting a slide here changes the live output."
-                    color: LibraryStyle.tone("#939393")
+                    text: present.controller.liveCount ? present.controller.liveProgramTitle
+                                                         + " · " + present.controller.liveCount
+                                                         + " slides" :
+                                                         "Choose a program or show your default image."
                     font.pixelSize: 11
-                    wrapMode: Text.Wrap
+                    color: LibraryStyle.muted
+                    elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
+            }
 
-                ListView {
-                    id: liveOrder
+            Text {
+                text: present.controller.audienceEnabled ? "● Audience on" : "○ Audience off"
+                color: present.controller.audienceEnabled ? (LibraryStyle.dark ? "#A8CFB6" :
+                                                                                 "#306044") :
+                                                            LibraryStyle.muted
+                font.pixelSize: 11
+            }
 
-                    objectName: "liveServiceOrder"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    spacing: 5
-                    model: present.controller.liveOrder
-                    currentIndex: present.controller.liveIndex
+            StudioButton {
+                text: "Audience preview"
+                iconName: "monitor-play"
+                enabled: present.controller.hasAudienceContent
 
-                    ScrollBar.vertical: ScrollBar {
-                    }
-                    delegate: ItemDelegate {
-                        id: liveRow
-
-                        required property var modelData
-                        required property int index
-
-                        width: ListView.view.width - 8
-                        height: 64
-                        Accessible.name: "Present slide " + (index + 1) + ": " + modelData.title
-
-                        background: Rectangle {
-                            radius: 6
-                            color: liveRow.index === present.controller.liveIndex ? "#2C3C32" :
-                                                                                    liveRow.hovered
-                                                                                    ? LibraryStyle.tone(
-                                                                                          "#292929") :
-                                                                                      LibraryStyle.tone(
-                                                                                          "#202020")
-                            border.color: liveRow.index === present.controller.liveIndex
-                                          ? "#658772" : LibraryStyle.tone("#303030")
-                        }
-                        contentItem: Column {
-                            spacing: 6
-
-                            Text {
-                                width: parent.width
-                                text: String(liveRow.index + 1).padStart(2, "0") + "  "
-                                      + liveRow.modelData.title
-                                color: LibraryStyle.tone("#E0E0E0")
-                                font.pixelSize: 12
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: liveRow.modelData.itemTitle || "Presentation"
-                                color: "#969F98"
-                                font.pixelSize: 10
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        onClicked: present.navigate(index - present.controller.liveIndex)
-                    }
-
-                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-                }
-
-                StudioButton {
-                    text: "Prepare a program"
-                    Layout.fillWidth: true
-
-                    onClicked: present.host.showPrograms()
-                }
+                onClicked: present.controller.preview("audience")
             }
         }
 
-        ColumnLayout {
+        RowLayout {
+            id: body
+
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 18
+            Layout.minimumHeight: 0
+            Layout.preferredHeight: 0
+            spacing: 16
 
-            RowLayout {
+            PresentSlideList {
+                controller: present.controller
+                Layout.preferredWidth: present.width > 1250 ? 232 : 205
+                Layout.fillHeight: true
+
+                onChosen: index => present.navigate(index - present.controller.liveIndex)
+                onPrepareRequested: present.host.showPrograms()
+            }
+
+            ColumnLayout {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+                spacing: 16
 
-                Column {
-                    spacing: 5
-
-                    Text {
-                        text: "Present"
-                        color: LibraryStyle.tone("#EEEEEE")
-                        font.pixelSize: 24
-                    }
-
-                    Text {
-                        text: present.controller.liveCount ? "Slide " + (
-                                                                 present.controller.liveIndex + 1)
-                                                             + " of "
-                                                             + present.controller.liveCount
-                                                             + " · Audience " + (
-                                                                 present.controller.audienceEnabled
-                                                                 ? "on" : "stopped") + " · Stage "
-                                                             + (present.controller.stageEnabled
-                                                                ? "on" : "stopped") :
-                                                             "Prepare a program, then choose Present from here."
-                        color: LibraryStyle.tone("#999999")
-                        font.pixelSize: 12
-                    }
-                }
-
-                Item {
+                LiveSlideCard {
+                    controller: present.controller
+                    previewHeightLimit: Math.max(150, body.height - 190)
                     Layout.fillWidth: true
                 }
 
-                StudioButton {
-                    text: "Audience preview"
-                    enabled: present.controller.liveCount > 0
-
-                    onClicked: present.controller.preview("audience")
+                Item {
+                    Layout.fillHeight: true
                 }
 
-                StudioButton {
-                    text: "Stage preview"
-                    enabled: present.controller.liveCount > 0
+                PresentNotes {
+                    controller: present.controller
+                    Layout.fillWidth: true
 
-                    onClicked: present.controller.preview("stage")
+                    onControlsRequested: present.host.showOutputs()
                 }
             }
 
             ScrollView {
-                id: previewScroll
+                id: sideScroll
 
-                Layout.fillWidth: true
+                Layout.preferredWidth: present.width > 1250 ? 270 : 235
                 Layout.fillHeight: true
+                Layout.minimumHeight: 0
                 contentWidth: availableWidth
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                 ColumnLayout {
-                    width: previewScroll.availableWidth
-                    spacing: 20
+                    width: sideScroll.availableWidth
+                    spacing: 12
 
-                    RowLayout {
+                    LiveSlideCard {
+                        controller: present.controller
+                        next: true
+                        previewHeightLimit: present.width > 1250 ? 10000 : 118
                         Layout.fillWidth: true
-                        spacing: 18
-
-                        LiveSlideCard {
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 3
-                            controller: present.controller
-                        }
-
-                        LiveSlideCard {
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 2
-                            controller: present.controller
-                            next: true
-                        }
                     }
 
-                    Rectangle {
+                    PresentImagePanel {
+                        controller: present.controller
                         Layout.fillWidth: true
-                        implicitHeight: stageContent.implicitHeight + 32
-                        color: LibraryStyle.tone("#191919")
-                        radius: 8
-                        border.color: LibraryStyle.tone("#333333")
-
-                        RowLayout {
-                            id: stageContent
-
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: 16
-                            spacing: 24
-
-                            ColumnLayout {
-                                Layout.alignment: Qt.AlignTop
-                                Layout.fillWidth: true
-                                spacing: 8
-
-                                Text {
-                                    text: "SPEAKER NOTES"
-                                    color: LibraryStyle.tone("#969696")
-                                    font.pixelSize: 10
-                                    font.letterSpacing: 1
-                                }
-
-                                Text {
-                                    text: present.controller.liveNotes || "No notes for this slide"
-                                    textFormat: Text.PlainText
-                                    color: LibraryStyle.tone("#CDCDCD")
-                                    font.pixelSize: 13
-                                    wrapMode: Text.Wrap
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    visible: present.controller.stageMessage.length > 0
-                                    text: "Stage message: " + present.controller.stageMessage
-                                    textFormat: Text.PlainText
-                                    color: "#D4B993"
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-
-                            Column {
-                                Layout.alignment: Qt.AlignTop
-                                spacing: 8
-
-                                Text {
-                                    text: "COUNTDOWN"
-                                    color: LibraryStyle.tone("#969696")
-                                    font.pixelSize: 10
-                                    font.letterSpacing: 1
-                                }
-
-                                Text {
-                                    text: present.controller.countdown
-                                    color: LibraryStyle.tone("#EEEEEE")
-                                    font.pixelSize: 32
-                                }
-
-                                StudioButton {
-                                    text: "Stage controls"
-
-                                    onClicked: present.host.showOutputs()
-                                }
-                            }
-                        }
-                    }
-
-                    Text {
-                        text: "Still previews · Video and audio play on the presentation outputs"
-                        color: LibraryStyle.tone("#818181")
-                        font.pixelSize: 11
                     }
                 }
             }
+        }
 
-            Text {
-                visible: present.controller.audienceBlack || present.controller.textCleared
-                text: present.controller.audienceBlack
-                      ? "Audience is blacked out. Restore it when you are ready." :
-                        "Audience text is cleared. Background media continues."
-                color: "#E1B78B"
-                font.pixelSize: 12
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-            }
+        Text {
+            Layout.fillWidth: true
+            visible: present.controller.audienceBlack || present.controller.textCleared
+                     || present.controller.defaultImageShowing
+            text: present.controller.audienceBlack
+                  ? "Audience is blacked out. Restore it when you’re ready." :
+                    present.controller.defaultImageShowing
+                    ? "Default image is showing · Resume returns to the same program slide." :
+                      "Audience text is cleared. Background media continues."
+            color: LibraryStyle.dark ? "#D4B993" : "#7D572A"
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
+        }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
+        PresentTransport {
+            controller: present.controller
+            Layout.fillWidth: true
 
-                StudioButton {
-                    text: "Previous"
-                    implicitHeight: 44
-                    enabled: present.controller.liveIndex > 0
-
-                    onClicked: present.navigate(-1)
-                }
-
-                StudioButton {
-                    text: "Next slide"
-                    accented: true
-                    implicitHeight: 44
-                    Layout.preferredWidth: 160
-                    enabled: present.controller.liveIndex >= 0 && present.controller.liveIndex
-                             < present.controller.liveCount - 1
-
-                    onClicked: present.navigate(1)
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StudioButton {
-                    text: present.controller.playing ? "Pause media" : "Play media"
-                    enabled: present.controller.liveCount > 0
-
-                    onClicked: present.controller.playing = !present.controller.playing
-                }
-
-                StudioButton {
-                    text: present.controller.textCleared ? "Restore text" : "Clear text"
-                    checked: present.controller.textCleared
-                    enabled: present.controller.liveCount > 0
-
-                    onClicked: present.controller.clearText(!present.controller.textCleared)
-                }
-
-                StudioButton {
-                    text: present.controller.audienceBlack ? "Restore audience" : "Blackout"
-                    checked: present.controller.audienceBlack
-                    implicitHeight: 44
-                    enabled: present.controller.liveCount > 0
-
-                    onClicked: present.controller.blackout("audience",
-                                                           !present.controller.audienceBlack)
-                }
-            }
-
-            Text {
-                text: "← Previous    → / Space Next    Home / End First / last"
-                color: LibraryStyle.tone("#838383")
-                font.pixelSize: 11
-            }
+            onNavigate: delta => present.navigate(delta)
+            onOutputsRequested: present.host.showOutputs()
         }
     }
 }

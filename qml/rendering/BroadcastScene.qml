@@ -19,9 +19,9 @@ Item {
     SlideRenderer {
         id: broadcastRenderer
 
-        elements: scene.controller.liveElements
-        backgroundColor: scene.controller.liveBackground
-        ambientOpacity: scene.controller.liveAmbientOpacity
+        elements: scene.controller.audienceElements
+        backgroundColor: scene.controller.audienceBackground
+        ambientOpacity: scene.controller.audienceAmbientOpacity
         transparentBackground: scene.overlayOnly
         // Only the canvas fill is removed; every authored layer keeps its own alpha.
         textOnly: false

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Dialogs
 
 Popup {
     id: panel
@@ -21,7 +20,7 @@ Popup {
     property var chapter: chapterList[chapterIndex] || ({})
     property int highlightedVerse: -1
     property var chapterVerses: library.passage(version.id || "", book.code || "", chapter.chapter
-                                                || 1, chapter.first || 1, chapter.last || 1)
+                                                || 1, chapter.first ?? 1, chapter.last ?? 1)
     property var verses: []
     property var selected: []
     property string message: ""
@@ -138,6 +137,16 @@ Popup {
     onOpened: refresh()
 
     Connections {
+        function onBibleImported(translationId) {
+            for (let i = 0; i < panel.versions.length; ++i)
+                if (panel.versions[i].id === translationId)
+                    versionPicker.currentIndex = i;
+            bookPicker.currentIndex = 0;
+            panel.chapterIndex = 0;
+            search.text = "";
+            Qt.callLater(panel.refresh);
+        }
+
         function onChanged() {
             if (panel.opened)
                 panel.schedule();
@@ -154,13 +163,11 @@ Popup {
         onTriggered: panel.refresh()
     }
 
-    FileDialog {
+    BibleImportDialog {
         id: importDialog
 
-        title: "Import Bible translation"
-        nameFilters: ["Selah Bible packages (*.json)"]
-
-        onAccepted: panel.library.importBible(selectedFile)
+        parent: Overlay.overlay
+        library: panel.library
     }
 
     ColumnLayout {
@@ -192,7 +199,8 @@ Popup {
             }
 
             LibraryButton {
-                text: panel.library.busy ? "Importing…" : "Import translation"
+                text: panel.library.busy ? (panel.library.bibleImportPhase === "downloading"
+                                            ? "Downloading…" : "Importing…") : "Import translation"
                 enabled: !panel.library.busy
 
                 onClicked: importDialog.open()
@@ -205,6 +213,11 @@ Popup {
 
                 onClicked: panel.close()
             }
+        }
+
+        BibleImportProgress {
+            library: panel.library
+            Layout.fillWidth: true
         }
 
         RowLayout {

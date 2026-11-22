@@ -9,6 +9,7 @@ find_package(Qt6 6.9 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurr
 qt_standard_project_setup(REQUIRES 6.9)
 include(CTest)
 option(CHURCHDECK_ENABLE_DIAGNOSTICS "Build developer capture and verification commands" ON)
+option(CHURCHDECK_DEPLOY_RUNTIME "Install Qt/QML runtime dependencies for distributable packages" OFF)
 
 qt_add_library(church-deck-formatting STATIC)
 qt_add_qml_module(church-deck-formatting
@@ -82,6 +83,22 @@ if(CHURCHDECK_ENABLE_DIAGNOSTICS)
     target_link_libraries(church-deck PRIVATE church-deck-diagnostics)
 endif()
 install(TARGETS church-deck BUNDLE DESTINATION . RUNTIME DESTINATION bin)
+
+if(CHURCHDECK_DEPLOY_RUNTIME AND NOT APPLE)
+    include(GNUInstallDirs)
+    if(UNIX)
+        set_target_properties(church-deck PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+    endif()
+    qt_generate_deploy_qml_app_script(TARGET church-deck OUTPUT_SCRIPT deploy_runtime NO_TRANSLATIONS)
+    install(SCRIPT ${deploy_runtime})
+    if(NDI_INCLUDE_DIR)
+        set(release_ndi true)
+    else()
+        set(release_ndi false)
+    endif()
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/release-config.json" CONTENT
+        "{\"version\":\"${PROJECT_VERSION}\",\"qtVersion\":\"${Qt6_VERSION}\",\"processor\":\"${CMAKE_SYSTEM_PROCESSOR}\",\"ndiSenderCompiled\":${release_ndi}}\n")
+endif()
 
 find_package(Python3 QUIET COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)

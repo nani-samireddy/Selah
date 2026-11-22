@@ -60,21 +60,30 @@ ScrollView {
                         scale: liveFrame.width / 1920
                         transformOrigin: Item.TopLeft
                         elements: liveCard.index === 0
-                                  ? liveControls.programView.controller.liveElements :
+                                  ? liveControls.programView.controller.audienceElements :
                                     liveControls.programView.controller.nextElements
                         backgroundColor: liveCard.index === 0
-                                         ? liveControls.programView.controller.liveBackground :
+                                         ? liveControls.programView.controller.audienceBackground :
                                            liveControls.programView.controller.nextBackground
                         ambientOpacity: liveCard.index === 0
-                                        ? liveControls.programView.controller.liveAmbientOpacity :
+                                        ? liveControls.programView.controller.audienceAmbientOpacity :
                                           liveControls.programView.controller.nextAmbientOpacity
                         videoEnabled: false
+                        clearText: liveCard.index === 0
+                                   && liveControls.programView.controller.textCleared
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "#000000"
+                        visible: liveCard.index === 0
+                                 && liveControls.programView.controller.audienceBlack
                     }
                 }
 
                 Text {
                     Layout.fillWidth: true
-                    text: (liveCard.index === 0 ? liveControls.programView.controller.liveTitle :
+                    text: (liveCard.index === 0 ? liveControls.programView.controller.audienceTitle :
                                                   liveControls.programView.controller.nextTitle)
                           || "No slide"
                     font.pixelSize: 11
@@ -143,9 +152,22 @@ ScrollView {
         }
 
         StudioButton {
+            text: liveControls.programView.controller.defaultImageShowing ? "Resume presentation" :
+                                                                            "Show default image"
+            iconName: "image"
+            visible: liveControls.programView.controller.defaultImageAvailable
+                     || liveControls.programView.controller.defaultImageShowing
+            checked: liveControls.programView.controller.defaultImageShowing
+            Layout.fillWidth: true
+
+            onClicked: liveControls.programView.controller.showDefaultImage(
+                           !liveControls.programView.controller.defaultImageShowing)
+        }
+
+        StudioButton {
             text: "Audience preview"
             Layout.fillWidth: true
-            enabled: liveControls.programView.controller.liveCount > 0
+            enabled: liveControls.programView.controller.hasAudienceContent
 
             onClicked: liveControls.programView.controller.preview("audience")
         }

@@ -37,6 +37,14 @@ void ApplicationSetup::configure(QGuiApplication &app) {
     if (app.arguments().contains("--template-presets-smoke")) {
         app.setApplicationName("Church Deck Template Presets Verification");
     }
+    if (app.arguments().contains("--present-smoke")) {
+        app.setApplicationName("Church Deck Present Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--bible-import-smoke")) {
+        app.setApplicationName("Church Deck Bible Import Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
 }
 
 void ApplicationSetup::registerBundledFonts() {

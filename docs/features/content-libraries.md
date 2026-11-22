@@ -117,3 +117,35 @@ Adding to another program keeps the library open and leaves the current program'
 Quick Song opens a modal with only Name, Lyrics, and Tags. A blank line (including whitespace-only lines) starts a new section; single line breaks remain inside the section. Consecutive gaps do not create empty sections. Sections are named Section 1, Section 2, and so on, with a default song order that includes each section once. Windows, Unix, and legacy Mac line endings are accepted.
 
 Saving creates a normal library song and opens it in the full song editor for later refinement. Tags entered without pressing + are included on Save. Quick Song uses the most recently chosen primary language and starts as a single-language song. Cancel leaves the existing song and library unchanged. It does not add anything to a program or alter live output.
+
+### Import XML Bibles from the repository
+
+Open **Libraries → Bible → Import translation** to browse the catalog from
+[nani-samireddy/Holy-Bible-XML-Format](https://github.com/nani-samireddy/Holy-Bible-XML-Format).
+Search by language or version, select a file, and choose **Download & import**. The catalog currently
+lists 1,048 XML files. A GitHub `blob/master` link or corresponding raw XML link from that repository
+can also be pasted directly. **Import local file** accepts existing Selah JSON packages and XML.
+After a successful import the dialog closes and the Bible library selects the imported translation.
+
+The parser accepts the repository's `<bible><testament><book><chapter><verse>` schema and Zefania
+`XMLBIBLE/BIBLEBOOK/CHAPTER/VERS` files. Standard book numbers 1–66 map to canonical book codes;
+partial editions and New-Testament-only files retain their original book numbers. Empty verses
+used for omissions are left as numbering gaps. Nonempty verse text and inline text remain Unicode.
+Book names supplied in Zefania files are retained; otherwise the existing canonical names are used.
+Unsupported book numbers, invalid numbering, duplicate rows and malformed XML fail without a partial
+translation being left behind.
+
+Download happens asynchronously, followed by a worker-thread SQLite transaction and search indexing.
+Imports are limited to 100 MB. Existing translation IDs are never overwritten. Stable XML identities
+come from the source filename, so a second import of the same file is reported as a duplicate.
+Successful imports work offline and do not change prepared programs, editor slides, or live output.
+
+Source titles, rights/info/license text and original-source links are retained when supplied. Missing
+copyright or license information is recorded as unspecified; importing does not declare an edition
+public domain. The application bundles only the repository catalog metadata, not its Bible texts.
+
+Repository imports show download progress with transferred/total MB and a percentage when the
+server supplies a total. Unknown-size transfers use an indeterminate bar. After download, the
+indicator switches to “Importing and indexing…” until the transaction finishes. The indicator is
+shown in both the import dialog and Bible workspace, so closing the dialog does not hide progress.
+Progress updates use a dedicated signal and do not refresh passage queries on every network chunk.
