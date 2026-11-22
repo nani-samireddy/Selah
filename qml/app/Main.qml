@@ -594,6 +594,11 @@ ApplicationWindow {
         library: app.templates
 
         onEditRequested: definition => app.editTemplate(definition)
+        onUseRequested: definition => app.editCustomPresentation({
+                                                                     id: "",
+                                                                     title: definition.name,
+                                                                     slides: [definition.slide]
+                                                                 })
     }
 
     SaveTemplateDialog {

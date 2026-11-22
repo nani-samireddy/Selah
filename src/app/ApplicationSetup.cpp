@@ -18,6 +18,7 @@ void ApplicationSetup::configure(QGuiApplication &app) {
     }
     if (app.arguments().contains("--remote-demo") || app.arguments().contains("--template-smoke")
         || app.arguments().contains("--program-smoke")
+        || app.arguments().contains("--template-presets-smoke")
         || app.arguments().contains("--content-smoke") || app.arguments().contains("--media-smoke")
         || app.arguments().contains("--routing-smoke") || app.arguments().contains("--ndi-smoke")
         || app.arguments().contains("--physical-smoke")
@@ -33,9 +34,17 @@ void ApplicationSetup::configure(QGuiApplication &app) {
     if (app.arguments().contains("--self-test")) {
         app.setApplicationName("Church Deck Unit Verification");
     }
+    if (app.arguments().contains("--template-presets-smoke")) {
+        app.setApplicationName("Church Deck Template Presets Verification");
+    }
 }
 
 void ApplicationSetup::registerBundledFonts() {
+    for (const auto &font :
+        { "cardo/Cardo-Regular.ttf", "cardo/Cardo-Bold.ttf", "prompt/Prompt-Bold.ttf",
+            "public-sans/PublicSans[wght].ttf", "freckle-face/FreckleFace-Regular.ttf" }) {
+        QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/" + QString(font));
+    }
     QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/Inter.ttf");
     QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/NotoSansTelugu.ttf");
     QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/NotoSansDevanagari.ttf");

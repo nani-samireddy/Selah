@@ -8,6 +8,7 @@
 #include "PresentationLibrary.h"
 #include "ProgramStore.h"
 #include "RemoteController.h"
+#include "TemplatePresets.h"
 #include "TemplateStore.h"
 #include "TextFormatting.h"
 #include <QFont>
@@ -46,6 +47,9 @@ int main(int argc, char *argv[]) {
     MediaLibrary library;
     ContentLibrary content;
     TemplateStore templates;
+    if (const auto error = TemplatePresets::install(templates, &library); !error.isEmpty()) {
+        qWarning().noquote() << error;
+    }
     PresentationLibrary presentations;
     OutputManager outputs;
     ProgramStore programs(&outputs);

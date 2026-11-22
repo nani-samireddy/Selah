@@ -10,3 +10,8 @@ SlideFactory delegates to the composer only when a reusable definition is explic
 Do not replace shaping with character-count estimates. Fallback font metrics, actual box geometry and each binding's multiple visible boxes all matter. Body fonts remain fixed; metadata can shrink when necessary. Invalid or impossible layouts fail before replacing active slides.
 
 See [the feature guide](../../docs/features/templates.md), [architecture](../../docs/architecture.md) and `TemplateStoreTests` / `TemplateChecks` under tests.
+
+`TemplatePresets` installs the resource-backed Meadow/Garden layouts using stable preset IDs and
+content-hashed local media. It preserves saved edits and does not own editor/program state. Pack
+manifests and source/font provenance live in `assets/template-packs`. Presentation-kind templates
+have static editable text and are deliberately excluded from automatic lyrics/scripture generation.

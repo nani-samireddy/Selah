@@ -22,13 +22,19 @@ Popup {
                                                                     === "scripture" || filter
                                                                     === "bilingual" && record.kind
                                                                     === "bilingual" || filter
-                                                                    === "song" && record.kind
-                                                                    !== "scripture")
+                                                                    === "song" && (record.kind
+                                                                                   === "song"
+                                                                                   || record.kind
+                                                                                   === "bilingual")
+                                                                    || filter === "presentation"
+                                                                    && record.kind
+                                                                    === "presentation")
     readonly property var definition: library.layouts.find(record => record.id === selectedId) || (
                                           {})
     readonly property var previewSlide: result.slides[previewIndex] || ({})
 
     signal editRequested(var definition)
+    signal useRequested(var definition)
 
     function refreshPreview() {
         if (!opened)
@@ -120,6 +126,10 @@ Popup {
 
                 model: [
                     {
+                        name: "Presentation",
+                        kind: "presentation"
+                    },
+                    {
                         name: "Lyrics",
                         kind: "song"
                     },
@@ -200,7 +210,7 @@ Popup {
                     font.family: LibraryStyle.fontFamily
                     text: panel.programTarget
                           ? "Preview this service item before applying a new layout." :
-                            "Design once. Reuse for lyrics, translations, and scripture."
+                            "Reusable layouts for worship, messages, lyrics, and scripture."
                     color: LibraryStyle.tone("#929292")
                     font.pixelSize: 12
                 }
@@ -238,6 +248,10 @@ Popup {
                 {
                     text: "All",
                     value: "all"
+                },
+                {
+                    text: "Presentation",
+                    value: "presentation"
                 },
                 {
                     text: "Lyrics",
@@ -342,6 +356,18 @@ Popup {
                     }
 
                     LibraryButton {
+                        text: "Use template"
+                        visible: !panel.programTarget && panel.definition.kind === "presentation"
+                        enabled: !!panel.selectedId
+                        accented: true
+
+                        onClicked: {
+                            panel.useRequested(panel.definition);
+                            panel.close();
+                        }
+                    }
+
+                    LibraryButton {
                         text: "Edit layout"
                         enabled: !!panel.selectedId
 
@@ -392,7 +418,9 @@ Popup {
                     Text {
                         font.family: LibraryStyle.fontFamily
                         text: panel.programTarget ? "Service content preview" :
-                                                    "Sample content preview"
+                                                    panel.definition.kind === "presentation"
+                                                    ? "Editable layout preview" :
+                                                      "Sample content preview"
                         color: LibraryStyle.tone("#888888")
                         font.pixelSize: 11
                         Layout.fillWidth: true
@@ -424,8 +452,9 @@ Popup {
                 Text {
                     font.family: LibraryStyle.fontFamily
                     Layout.fillWidth: true
-                    text: panel.result.error
-                          || "Text splits to fit the template's boxes, fonts, and selected line limit."
+                    text: panel.result.error || (panel.definition.kind === "presentation"
+                                                 ? "Use this layout to start a slide. Edit layout updates the reusable template." :
+                                                   "Text splits to fit the template's boxes, fonts, and selected line limit.")
                     color: panel.result.error ? "#E1AD80" : LibraryStyle.tone("#999999")
                     font.pixelSize: 12
                     wrapMode: Text.Wrap

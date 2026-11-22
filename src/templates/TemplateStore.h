@@ -23,6 +23,8 @@ public:
     Q_INVOKABLE QVariantMap preview(const QString &id) const;
     Q_INVOKABLE bool importTemplate(const QUrl &url);
     Q_INVOKABLE bool exportTemplate(const QString &id, const QUrl &url);
+    // Bundled layouts have stable identities. Startup must never overwrite a user's edits.
+    bool installPreset(const QVariantMap &definition);
     static int selfTest();
 signals:
     void changed();

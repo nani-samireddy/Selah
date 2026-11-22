@@ -11,6 +11,7 @@
 #include "RemoteController.h"
 #include "SlideFactory.h"
 #include "TemplateChecks.h"
+#include "TemplatePresetChecks.h"
 #include "TemplateStore.h"
 #include "WorkspaceChecks.h"
 #include <QDebug>
@@ -60,6 +61,13 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
         startRemoteDemo(*remote, outputs, engine, app.arguments()[remoteIndex + 1]);
     }
     const int templateIndex = app.arguments().indexOf("--template-smoke");
+    const int presetsIndex = app.arguments().indexOf("--template-presets-smoke");
+    if (presetsIndex >= 0) {
+        if (presetsIndex + 1 >= app.arguments().size() || engine.rootObjects().isEmpty()) {
+            return 270;
+        }
+        runTemplatePresetChecks(engine, app.arguments()[presetsIndex + 1]);
+    }
     if (templateIndex >= 0) {
         if (templateIndex + 1 >= app.arguments().size() || engine.rootObjects().isEmpty()) {
             return 149;

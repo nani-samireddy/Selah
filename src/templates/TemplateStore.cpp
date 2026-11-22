@@ -117,11 +117,21 @@ QString TemplateStore::createTemplate(const QString &name, const QString &kind) 
     return persist(definition);
 }
 
+bool TemplateStore::installPreset(const QVariantMap &definition) {
+    const auto id = definition["id"].toString();
+    if (!id.startsWith("preset-")) {
+        return false;
+    }
+    return !layout(id).isEmpty() || !persist(definition).isEmpty();
+}
+
 QVariantMap TemplateStore::preview(const QString &id) const {
     const auto definition = layout(id);
     QString error;
     QVariantList slides;
-    if (definition["kind"] == "scripture") {
+    if (definition["kind"] == "presentation") {
+        slides = { definition["slide"] };
+    } else if (definition["kind"] == "scripture") {
         slides = TemplateComposer::scriptureSlides(
             { QVariantMap { { "text",
                                 "Sample scripture text flows inside the text box you designed. "

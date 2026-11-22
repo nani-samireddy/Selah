@@ -56,7 +56,7 @@ foreach(qml_file IN LISTS CHURCHDECK_QML)
 endforeach()
 file(GLOB STUDIO_ICONS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "assets/icons/*.svg")
 file(GLOB BRAND_ASSETS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "assets/branding/*.svg" "assets/branding/*.png")
-file(GLOB CONTENT_ASSETS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "assets/fonts/*" "assets/scriptures/*")
+file(GLOB_RECURSE CONTENT_ASSETS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "assets/fonts/*" "assets/scriptures/*")
 qt_add_qml_module(church-deck
     URI ChurchDeck
     VERSION 1.0

@@ -123,6 +123,9 @@ def main():
             notices.mkdir(parents=True, exist_ok=True)
             for notice in (ROOT / "assets/fonts").glob("*-OFL.txt"):
                 shutil.copy2(notice, notices / notice.name)
+            for notice in (ROOT / "assets/fonts").rglob("OFL.txt"):
+                shutil.copy2(notice, notices / (notice.parent.name + "-OFL.txt"))
+            shutil.copy2(ROOT / "assets/template-packs/README.md", notices / "Template-assets.md")
             for notice in (ROOT / "third_party").rglob("*LICENSE*"):
                 if notice.is_file():
                     shutil.copy2(notice, notices / (notice.parent.name + "-" + notice.name))

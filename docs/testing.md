@@ -46,3 +46,12 @@ cmake --build --preset release
 ```
 
 This build excludes model-test bodies and smoke commands. Verify this configuration after changing build boundaries. For self-contained macOS packages, use `python3 scripts/package-macos.py`. The helper audits dependencies, verifies ad-hoc signatures, checks DMG integrity and records checksums. Developer ID notarization and Windows deployment remain separate release work.
+
+To render every bundled Meadow/Garden template and check actual QML text bounds and media errors:
+
+```sh
+build/Selah.app/Contents/MacOS/Selah --fresh --template-presets-smoke "$PWD/captures/template-presets"
+```
+
+This uses an isolated verification profile and a temporary template catalog. It writes individual
+PNGs and a labeled contact sheet. It does not take slides live or alter the normal editor/programs.

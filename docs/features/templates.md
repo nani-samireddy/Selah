@@ -4,7 +4,7 @@ Templates connect the canvas editor to song and Bible content. A template is a n
 
 ## Create and edit
 
-1. Open **Libraries → Templates**. Three starter layouts are included: Lyrics, Bilingual lyrics and Scripture.
+1. Open **Libraries → Templates**. Three starter layouts (Lyrics, Bilingual lyrics and Scripture) and the Meadow/Garden reference packs are included.
 2. Choose a layout and **Edit layout**, or choose **New template → Create & edit**. Opening a layout replaces the editor draft as one undoable operation and enters Template mode.
 3. Resize/move/style text boxes on the canvas. In **Properties → Content binding**, assign each dynamic text box a source. Unbound (`None`) layers remain static.
 4. Choose **Save template** in the canvas toolbar (or Cmd/Ctrl+S in Template mode). **Save new** creates an independent layout. **Update template** creates a new revision of the opened layout.
@@ -68,3 +68,20 @@ build/Selah.app/Contents/MacOS/Selah --fresh --compact --template-smoke "$PWD/ca
 Model checks cover type/binding validation, text fit, lossless multilingual splitting, repeated arrangements, static layers, revision persistence, exchange, legacy passage recovery, program snapshots and undo. The native check previews service content, opens the editor, changes the layout, checks rendered text bounds/background updates and verifies live isolation. It uses the verification profile and original test lyrics.
 
 Portable asset packaging, additional content bindings, variable canvas sizes, template deletion and Windows rendering validation remain separate work.
+
+## Presentation layouts and reference packs
+
+**Presentation** templates hold editable wording and graphics for welcome screens, sermon titles,
+prayer, points, events and closing slides. They have no automatic song/scripture bindings.
+**Edit layout** opens the reusable design; **Use template** opens a separate one-slide Design draft.
+The latter does not save a Custom Slides library entry or add anything to a program automatically.
+Saving that draft or adding it to a program is explicit.
+
+The Meadow and Garden packs add 26 individual templates (20 presentation layouts plus six bound
+lyrics/bilingual/scripture layouts). See [asset provenance and font choices](../../assets/template-packs/README.md).
+The themed layouts are seeded once by stable identity; restarting never overwrites a user's saved
+changes. Media is copied from application resources into the profile's `template-assets` folder,
+so packaged apps and offline launches retain backgrounds without source-repository paths.
+Presentation layouts are excluded from song/Bible layout selectors and cannot be applied to those
+service items. New/Edit/Import/Export use the same `.churchtemplate` format with
+`kind: "presentation"` for this additional type.

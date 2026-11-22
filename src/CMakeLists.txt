@@ -11,6 +11,7 @@ qt_add_library(church-deck-core STATIC
     content/SlideFactory.cpp content/SlideFactory.h
     templates/TemplateStore.cpp templates/TemplateStore.h
     templates/TemplateDefinition.cpp templates/TemplateDefinition.h
+    templates/TemplatePresets.cpp templates/TemplatePresets.h
     templates/TemplateTextLayout.cpp templates/TemplateTextLayout.h
     templates/TemplateComposer.cpp templates/TemplateComposer.h
     media/MediaLibrary.cpp media/MediaLibrary.h
@@ -27,6 +28,15 @@ qt_add_library(church-deck-core STATIC
     broadcast/NdiController.cpp broadcast/NdiController.h
     broadcast/NdiWorker.cpp broadcast/NdiWorker.h
 )
+file(GLOB_RECURSE TEMPLATE_PRESET_ASSETS CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.json"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.jpeg"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.jpg"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.png"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.svg"
+)
+qt_add_resources(church-deck-core template_presets PREFIX "/template-presets"
+    BASE "${PROJECT_SOURCE_DIR}/assets/template-packs" FILES ${TEMPLATE_PRESET_ASSETS})
 target_include_directories(church-deck-core PUBLIC
     presentations
     app document content media programs outputs broadcast templates remote fonts

@@ -9,10 +9,14 @@
 #include "ProgramStore.h"
 #include "RemoteController.h"
 #include "SlideFactory.h"
+#include "TemplatePresets.h"
 #include "TemplateStore.h"
 #include "TextFormatting.h"
 
 int runModelChecks() {
+    if (auto result = TemplatePresets::selfTest()) {
+        return 260 + result;
+    }
     if (auto result = PresentationLibrary::selfTest()) {
         return 240 + result;
     }

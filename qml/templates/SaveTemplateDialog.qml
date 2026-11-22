@@ -48,6 +48,10 @@ Dialog {
             Layout.fillWidth: true
             model: [
                 {
+                    name: "Presentation",
+                    kind: "presentation"
+                },
+                {
                     name: "Lyrics",
                     kind: "song"
                 },
@@ -65,7 +69,9 @@ Dialog {
 
         Text {
             Layout.fillWidth: true
-            text: "Bind the content boxes in the inspector. Static layers, media, colors and fonts are kept."
+            text: kindField.model[kindField.currentIndex].kind === "presentation"
+                  ? "Keep the wording, media and graphics editable for future presentations." :
+                    "Bind the content boxes in the inspector. Static layers, media, colors and fonts are kept."
             color: LibraryStyle.tone("#999999")
             font.pixelSize: 12
             wrapMode: Text.Wrap
@@ -113,7 +119,9 @@ Dialog {
         let kind = existing.kind || (slide.elements.some(e => e.binding === "Scripture text")
                                      ? "scripture" : slide.elements.some(e => e.binding
                                                                               === "Translated lyrics")
-                                       ? "bilingual" : "song");
+                                       ? "bilingual" : slide.elements.some(e => e.binding
+                                                                                === "Primary lyrics")
+                                         ? "song" : "presentation");
         kindField.currentIndex = Math.max(0, kindField.model.findIndex(record => record.kind
                                                                                  === kind));
     }
