@@ -62,6 +62,24 @@ def compiler_runtime(stage):
         raise RuntimeError("MSVC runtime DLLs unavailable; run from an x64 VS developer shell")
 
 
+def sqlite_driver(stage):
+    # windeployqt's skipped type takes precedence over --include-plugins. Copy the
+    # one required SQL driver explicitly; its QtSql/Core dependencies are app links.
+    if platform.system() == "Windows":
+        qtpaths = shutil.which("qtpaths6") or shutil.which("qtpaths")
+        if not qtpaths:
+            raise RuntimeError("qtpaths6 is required to locate the SQLite plugin")
+        root = Path(subprocess.check_output(
+            [qtpaths, "--query", "QT_INSTALL_PLUGINS"], text=True).strip())
+        source = root / "sqldrivers/qsqlite.dll"
+        destination = stage / "plugins/sqldrivers/qsqlite.dll"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+    suffix = "qsqlite.dll" if platform.system() == "Windows" else "libqsqlite.so"
+    if not (stage / "plugins/sqldrivers" / suffix).is_file():
+        raise RuntimeError("Packaged SQLite driver missing")
+
+
 def environment(stage):
     env = os.environ.copy()
     for key in ("QT_PLUGIN_PATH", "QML_IMPORT_PATH", "QML2_IMPORT_PATH", "QT_QML_IMPORT_PATH"):
@@ -148,6 +166,7 @@ def main():
                 if flag not in cache:
                     raise RuntimeError("Invalid Release configuration: " + flag)
             run(["cmake", "--install", build, "--prefix", stage])
+            sqlite_driver(stage)
             if system == "Windows":
                 compiler_runtime(stage)
                 (stage / "Selah.cmd").write_text('@echo off\nstart "" "%~dp0bin\\Selah.exe" %*\n')
@@ -162,6 +181,7 @@ def main():
             config = json.loads((build / "release-config.json").read_text())
             manifest = {"product": "Selah", **config, "platform": system, "architecture": arch,
                         "buildType": "Release", "developerDiagnostics": False, "signing": "unsigned",
+                        "sqliteDriverBundled": True,
                         "createdUTC": datetime.now(timezone.utc).isoformat(), **audit, **validation}
             if system == "Linux":
                 manifest["buildDistribution"] = platform.freedesktop_os_release().get("PRETTY_NAME", "Linux")
