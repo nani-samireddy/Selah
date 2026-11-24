@@ -5,6 +5,7 @@ add_library(church-deck-test-cases STATIC
     unit/BibleXmlTests.cpp
     unit/EditorDocumentTests.cpp
     unit/MediaLibraryTests.cpp
+    unit/TransitionTests.cpp
     unit/OutputManagerTests.cpp
     unit/DefaultImageTests.cpp
     unit/NdiWorkerTests.cpp
@@ -51,8 +52,14 @@ if(CHURCHDECK_ENABLE_DIAGNOSTICS)
         smoke/TemplateChecks.cpp smoke/TemplateChecks.h
         smoke/TemplatePresetChecks.cpp smoke/TemplatePresetChecks.h
         smoke/PresentChecks.cpp smoke/PresentChecks.h
+        smoke/TransitionChecks.cpp smoke/TransitionChecks.h
+        smoke/FontPreviewChecks.cpp smoke/FontPreviewChecks.h
+        smoke/ResizeChecks.cpp smoke/ResizeChecks.h
+        smoke/BackgroundChecks.cpp smoke/BackgroundChecks.h
         smoke/BibleImportChecks.cpp smoke/BibleImportChecks.h
         smoke/DualScriptureChecks.cpp smoke/DualScriptureChecks.h
+        smoke/ProgramBrowserChecks.cpp smoke/ProgramBrowserChecks.h
+        smoke/OutputPanelChecks.cpp smoke/OutputPanelChecks.h
         smoke/PrototypeChecks.cpp smoke/PrototypeChecks.h
         smoke/RemoteChecks.cpp smoke/RemoteChecks.h
         smoke/WorkspaceChecks.cpp smoke/WorkspaceChecks.h

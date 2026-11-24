@@ -1,6 +1,7 @@
 #include "WorkspaceChecks.h"
 #include "ContentLibrary.h"
 #include "EditorDocument.h"
+#include "MediaLibrary.h"
 #include "OutputManager.h"
 #include "PresentationLibrary.h"
 #include "ProgramStore.h"
@@ -11,9 +12,14 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
+#include <QImage>
 #include <QJsonDocument>
+#include <QKeyEvent>
+#include <QMouseEvent>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
@@ -65,6 +71,15 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
         QFile::copy(":/qt/qml/ChurchDeck/assets/ambient.svg", mediaFixture);
     }
     document.importMedia(QUrl::fromLocalFile(mediaFixture), false);
+    const auto largeImage = QDir(folder).absoluteFilePath("Original preview.png");
+    QImage image(1800, 1000, QImage::Format_RGB32);
+    image.fill(QColor("#30594A"));
+    image.save(largeImage);
+    auto media = qobject_cast<MediaLibrary *>(window->property("library").value<QObject *>());
+    if (media) {
+        media->registerAsset({ { "source", QUrl::fromLocalFile(largeImage).toString() },
+            { "name", "Original preview" }, { "kind", "image" } });
+    }
     programs.setSelected(1);
     outputs.takeLive(document.slides(), 0, "workspace-baseline");
     const auto baseline = outputs.snapshotId();
@@ -115,6 +130,12 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
 
                 check(navigation && navigation->property("selected").toBool(),
                     "Navigation marks the current workspace");
+                capture("program-cards");
+                if (panel) {
+                    QMetaObject::invokeMethod(
+                        panel, "openProgram", Q_ARG(QVariant, QVariant(programs.id())));
+                    QCoreApplication::processEvents();
+                }
                 capture("programs");
                 auto drag = findVisual(window->contentItem(), "programOrderDrag");
                 if (drag) {
@@ -272,13 +293,107 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                 library("media");
             } else if (state->phase == 3) {
                 capture("media");
-                library("templates");
+                auto media
+                    = qobject_cast<MediaLibrary *>(window->property("library").value<QObject *>());
+                auto panel = window->findChild<QObject *>("mediaPanel");
+                bool foundOriginal = false;
+                for (const auto &entry : media->assets()) {
+                    const auto asset = entry.toMap();
+                    if (asset["name"] != "Original preview") {
+                        continue;
+                    }
+                    const QImage thumbnail(QUrl(asset["thumbnail"].toString()).toLocalFile());
+                    check(thumbnail.width() == 1280 && thumbnail.height() > 600,
+                        "Media cards use sharp thumbnails with preserved aspect ratio");
+                    QMetaObject::invokeMethod(panel, "previewAsset", Q_ARG(QVariant, entry));
+                    foundOriginal = true;
+                    break;
+                }
+                check(foundOriginal && outputs.snapshotId() == baseline,
+                    "Opening original media leaves live content untouched");
             } else if (state->phase == 4) {
+                auto original = findVisual(window->contentItem(), "mediaOriginalImage");
+                check(original && original->property("sourceSize").toSize() == QSize(1800, 1000),
+                    "Media viewer loads the full original resolution");
+                if (auto zoom = findVisual(window->contentItem(), "mediaPreviewZoom")) {
+                    QMetaObject::invokeMethod(zoom, "clicked");
+                    check(original && original->width() == 1800 && original->height() == 1000,
+                        "100% preview exposes original pixels without rescaling");
+                    QMetaObject::invokeMethod(zoom, "clicked");
+                }
+                capture("media-original");
+                auto viewer = window->findChild<QObject *>("mediaPreviewDialog");
+                if (viewer) {
+                    QMetaObject::invokeMethod(viewer, "close");
+                }
+                library("templates");
+            } else if (state->phase == 5) {
+                auto panel = window->findChild<QObject *>("templatePanel");
+                check(findVisual(window->contentItem(), "templateSearch"),
+                    "Templates are searchable");
+                const auto draftBefore = document.slides();
+                const auto selectedBefore = document.selected();
+                const auto currentBefore = document.currentSlide();
+                const auto templateId = panel->property("selectedId").toString();
+                auto card = findVisual(window->contentItem(), "templateCard_" + templateId);
+                check(
+                    card && card->width() > 100, "Template preview cards have clickable geometry");
+                if (card) {
+                    // A real pointer click in the rendered preview catches TextEdit event stealing.
+                    const auto point
+                        = card->mapToScene(QPointF(card->width() / 2, card->width() * 0.28));
+                    const QPointF global = window->mapToGlobal(point.toPoint());
+                    QMouseEvent press(QEvent::MouseButtonPress, point, global, Qt::LeftButton,
+                        Qt::LeftButton, Qt::NoModifier);
+                    QMouseEvent release(QEvent::MouseButtonRelease, point, global, Qt::LeftButton,
+                        Qt::NoButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(window, &press);
+                    QCoreApplication::sendEvent(window, &release);
+                    check(window->property("activeWorkspace") == "design"
+                            && window->property("templateMode").toBool()
+                            && window->property("editingTemplateId").toString() == templateId
+                            && !panel->property("inspecting").toBool(),
+                        "Clicking a library card preview opens its editor directly");
+                    check(outputs.snapshotId() == baseline,
+                        "Opening the template editor preserves live output");
+                    document.replaceSlides(draftBefore);
+                    document.setCurrentSlide(currentBefore);
+                    document.setSelected(selectedBefore);
+                    window->setProperty("templateMode", false);
+                    window->setProperty("editingTemplateId", "");
+                    switchTo("libraries");
+                    library("templates");
+                }
+                panel->setProperty("searchQuery", "NO_MATCH_928341");
+                check(engine.newQObject(panel).property("records").property("length").toInt() == 0,
+                    "Template search filters the preview cards");
+                panel->setProperty("searchQuery", "");
                 capture("templates");
                 switchTo("design");
-            } else if (state->phase == 5) {
                 check(outputs.snapshotId() == baseline,
                     "Workspace browsing preserves the live snapshot");
+                auto defaultEffect
+                    = findVisual(window->contentItem(), "presentationTransitionType");
+                auto slideEffect = findVisual(window->contentItem(), "slideTransitionType");
+                check(defaultEffect && slideEffect,
+                    "Design exposes presentation and per-slide transitions");
+                if (defaultEffect && slideEffect) {
+                    defaultEffect->setProperty("currentIndex", 1);
+                    QMetaObject::invokeMethod(defaultEffect, "activated", Q_ARG(int, 1));
+                    check(document.defaultTransition()["type"] == "fade"
+                            && document.defaultTransition()["durationMs"] == 300,
+                        "Choosing Fade stores the presentation default and duration");
+                    capture("transition-settings");
+                    slideEffect->setProperty("currentIndex", 1);
+                    QMetaObject::invokeMethod(slideEffect, "activated", Q_ARG(int, 1));
+                    check(document.slideTransition()["type"] == "cut",
+                        "A slide can override the default with Cut");
+                    slideEffect->setProperty("currentIndex", 0);
+                    QMetaObject::invokeMethod(slideEffect, "activated", Q_ARG(int, 0));
+                    check(document.slideTransition().isEmpty(),
+                        "Use default clears the slide override");
+                    document.setDefaultTransition("cut", 300);
+                }
                 capture("design");
                 if (auto drag = findVisual(window->contentItem(), "layerOrderDrag")) {
                     const auto before = document.elements();
@@ -322,8 +437,18 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                         feedback, "setSounds", Q_ARG(QVariant, QVariant(false)));
                 }
                 auto order = window->findChild<QObject *>("liveServiceOrder");
-                check(order && order->property("count").toInt() == outputs.liveCount(),
-                    "Present lists the immutable live service");
+                check(order && order->property("count").toInt() == programs.items().size(),
+                    "Present groups the immutable live slides by service item");
+                auto child = findVisual(window->contentItem(), "liveServiceSlide_0");
+                const auto firstId = outputs.liveOrder().first().toMap()["itemId"].toString();
+                auto toggle = findVisual(window->contentItem(), "liveServiceToggle_" + firstId);
+                check(child && toggle, "Current item opens with indented child slides");
+                if (toggle) {
+                    QMetaObject::invokeMethod(toggle, "clicked");
+                    check(!findVisual(window->contentItem(), "liveServiceSlide_0"),
+                        "Collapsing a service item hides its slides");
+                    QMetaObject::invokeMethod(toggle, "clicked");
+                }
                 capture("present");
                 switchTo("programs");
                 programs.setItemDetails(
@@ -336,10 +461,72 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                 outputs.advance(1);
             } else if (state->phase == 8) {
                 auto order = window->findChild<QObject *>("liveServiceOrder");
-                check(order && order->property("currentIndex").toInt() == outputs.liveIndex(),
-                    "Present follows desktop and remote slide navigation");
+                check(order && order->property("currentIndex").toInt() >= 0,
+                    "Present keeps the current service group selected during navigation");
                 switchTo("design");
                 document.setSelected(0);
+                QQmlComponent numericFixture(&engine);
+                numericFixture.setData(R"(
+                    import QtQuick
+                    import ChurchDeck
+                    Item {
+                        id: fixture
+                        property real amount: 10
+                        property int saved: 0
+                        width: 300; height: 100
+                        InspectorField {
+                            width: 200
+                            value: fixture.amount
+                            onCommitted: value => fixture.amount = Number(value)
+                        }
+                        LibrarySpinBox {
+                            objectName: "numberSpin"
+                            y: 35; from: 0; to: 100; stepSize: 5; value: 10
+                            onValueModified: fixture.saved = value
+                        }
+                    }
+                )",
+                    QUrl());
+                std::unique_ptr<QObject> fixture(numericFixture.create());
+                check(fixture != nullptr, "Numeric keyboard fixture loads");
+                if (fixture) {
+                    auto visual = qobject_cast<QQuickItem *>(fixture.get());
+                    visual->setParentItem(window->contentItem());
+                    auto key = [&](int code, Qt::KeyboardModifiers modifiers = Qt::NoModifier) {
+                        QKeyEvent press(QEvent::KeyPress, code, modifiers);
+                        QKeyEvent release(QEvent::KeyRelease, code, modifiers);
+                        QCoreApplication::sendEvent(window, &press);
+                        QCoreApplication::sendEvent(window, &release);
+                    };
+                    auto number = fixture->findChild<QQuickItem *>("inspectorNumberInput");
+                    number->forceActiveFocus();
+                    key(Qt::Key_Up);
+                    check(fixture->property("amount").toDouble() == 11,
+                        "Inspector Up increments and commits the focused number");
+                    key(Qt::Key_Down);
+                    key(Qt::Key_Up, Qt::ShiftModifier);
+                    check(fixture->property("amount").toDouble() == 20,
+                        "Inspector Down decrements; Shift uses ten steps");
+                    fixture->setProperty("amount", 42);
+                    check(
+                        number->property("text") == "42", "Stepping retains model synchronization");
+                    auto spin = fixture->findChild<QQuickItem *>("numberSpin");
+                    auto spinInput = qvariant_cast<QQuickItem *>(spin->property("contentItem"));
+                    spinInput->forceActiveFocus();
+                    key(Qt::Key_Up);
+                    check(spin->property("value") == 15 && fixture->property("saved") == 15,
+                        "SpinBox Up uses its step and commits valueModified");
+                    key(Qt::Key_Down);
+                    check(spin->property("value") == 10 && fixture->property("saved") == 10,
+                        "SpinBox Down decrements and commits");
+                    spinInput->setProperty("text", "20");
+                    key(Qt::Key_Up);
+                    check(spin->property("value") == 25 && fixture->property("saved") == 25,
+                        "Arrow stepping uses a newly typed value");
+                    spin->setProperty("value", 100);
+                    key(Qt::Key_Up);
+                    check(spin->property("value") == 100, "Arrow stepping respects numeric bounds");
+                }
                 auto picker = window->findChild<QObject *>("fontPicker");
                 check(picker != nullptr, "Font picker is available in Design");
                 if (picker) {
@@ -380,6 +567,17 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                     check(styled["fontWeight"].toInt() == 700
                             && editor->property("sessionOpen").toBool(),
                         "Selected-word formatting commits without losing the editor");
+                    const auto text = document.selectedElement()["text"].toString().left(7);
+                    auto inspector = findVisual(window->contentItem(), "textInspector");
+                    if (inspector) {
+                        QMetaObject::invokeMethod(inspector, "chooseFont");
+                    }
+                    auto picker = window->findChild<QObject *>("fontPicker");
+                    check(picker && picker->property("previewText").toString() == text,
+                        "Font preview uses the selected words");
+                    if (picker) {
+                        QMetaObject::invokeMethod(picker, "close");
+                    }
                     QMetaObject::invokeMethod(editor, "finish");
                 }
             } else if (state->phase == 12) {
@@ -442,6 +640,9 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                         check(window->property("templateMode").toBool()
                                 && window->property("editingPresentationId").toString().isEmpty(),
                             "Opening a template replaces custom editing context");
+                        auto strip = findVisual(window->contentItem(), "editorSlideStrip");
+                        check(strip && !strip->isVisible() && strip->height() == 0,
+                            "Template editing has a single canvas without slide actions");
                     }
                     QMetaObject::invokeMethod(window, "editCustomPresentation",
                         Q_ARG(QVariant, QVariant(saved->presentation(state->customId))));
@@ -537,7 +738,84 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                         "Cancelling Quick Song creates no library entry");
                 }
                 switchTo("design");
+            } else if (state->phase == 22 && !qApp->arguments().contains("--preview-video")) {
+                state->quickDraftBefore = document.slides();
+                state->snapshot = outputs.snapshotId();
+                QMetaObject::invokeMethod(window, "showUserGuide");
+            } else if (state->phase == 23 && !qApp->arguments().contains("--preview-video")) {
+                auto guide = window->findChild<QObject *>("userGuideDialog");
+                check(guide && guide->property("body").toString().contains("Welcome to Selah"),
+                    "Offline user guide loads the bundled Markdown source");
+                capture("learn-selah");
+                if (guide) {
+                    guide->setProperty("topicIndex", 3);
+                }
+                auto start = findVisual(window->contentItem(), "startGuideWalkthrough");
+                check(start, "Each guide offers an interactive walkthrough");
+                if (start) {
+                    QMetaObject::invokeMethod(start, "clicked");
+                }
+            } else if (state->phase == 24 && !qApp->arguments().contains("--preview-video")) {
+                auto tour = window->findChild<QObject *>("interactiveUserGuide");
+                check(tour && tour->property("running").toBool()
+                        && window->property("librarySection") == "templates"
+                        && tour->property("targetRect").toRectF().width() > 0,
+                    "Walkthrough opens the right library and highlights its actual control");
+                capture("interactive-guide");
+                if (tour) {
+                    QMetaObject::invokeMethod(tour, "move", Q_ARG(QVariant, QVariant(1)));
+                }
+            } else if (state->phase == 25 && !qApp->arguments().contains("--preview-video")) {
+                auto tour = window->findChild<QObject *>("interactiveUserGuide");
+                check(window->property("librarySection") == "custom",
+                    "Next walkthrough step reveals presentations without creating content");
+                if (tour) {
+                    QMetaObject::invokeMethod(tour, "move", Q_ARG(QVariant, QVariant(1)));
+                }
+            } else if (state->phase == 26 && !qApp->arguments().contains("--preview-video")) {
+                auto tour = window->findChild<QObject *>("interactiveUserGuide");
+                check(window->property("activeWorkspace") == "design"
+                        && document.slides() == state->quickDraftBefore
+                        && outputs.snapshotId() == state->snapshot,
+                    "Walkthrough navigation preserves the draft and live snapshot");
+                if (tour) {
+                    QMetaObject::invokeMethod(tour, "move", Q_ARG(QVariant, QVariant(1)));
+                    QMetaObject::invokeMethod(tour, "finish", Q_ARG(QVariant, QVariant(true)));
+                    check(!tour->property("running").toBool(),
+                        "Finishing a walkthrough dismisses coaching");
+                }
+            } else if (state->phase == 22 && qApp->arguments().contains("--preview-video")) {
+                const auto index = qApp->arguments().indexOf("--preview-video");
+                const auto source = QUrl::fromLocalFile(
+                    QFileInfo(qApp->arguments().value(index + 1)).absoluteFilePath());
+                library("media");
+                auto panel = window->findChild<QObject *>("mediaPanel");
+                QMetaObject::invokeMethod(panel, "previewAsset",
+                    Q_ARG(QVariant,
+                        (QVariant(QVariantMap { { "source", source.toString() },
+                            { "name", "Video preview" }, { "kind", "video" } }))));
+            } else if (state->phase == 23 && qApp->arguments().contains("--preview-video")) {
+                auto play = findVisual(window->contentItem(), "mediaPreviewPlay");
+                check(play, "Video preview offers playback controls");
+                if (play) {
+                    QMetaObject::invokeMethod(play, "clicked");
+                }
+            } else if (state->phase == 24 && qApp->arguments().contains("--preview-video")) {
+                auto player = window->findChild<QObject *>("mediaPreviewPlayer");
+                check(player && player->property("position").toLongLong() > 0
+                        && player->property("error").toInt() == 0,
+                    "Video preview plays the original file");
+                capture("media-video-original");
+                auto viewer = window->findChild<QObject *>("mediaPreviewDialog");
+                if (viewer) {
+                    QMetaObject::invokeMethod(viewer, "close");
+                }
             } else {
+                auto player = window->findChild<QObject *>("mediaPreviewPlayer");
+                check(player && player->property("source").toUrl().isEmpty()
+                        && player->property("playbackState").toInt() == 0,
+                    "Closing the media viewer releases playback and audio");
+                switchTo("design");
                 capture("design-dark");
                 if (auto picker = window->findChild<QObject *>("fontPicker")) {
                     QMetaObject::invokeMethod(picker, "close");

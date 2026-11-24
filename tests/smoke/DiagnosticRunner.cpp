@@ -1,22 +1,29 @@
 #include "DiagnosticRunner.h"
+#include "BackgroundChecks.h"
 #include "BibleImportChecks.h"
 #include "ContentLibrary.h"
 #include "DualScriptureChecks.h"
 #include "EditorDocument.h"
+#include "FontLibrary.h"
+#include "FontPreviewChecks.h"
 #include "MediaLibrary.h"
 #include "NativeMenuChecks.h"
 #include "NdiController.h"
 #include "OutputManager.h"
+#include "OutputPanelChecks.h"
 #include "PresentChecks.h"
+#include "ProgramBrowserChecks.h"
 #include "ProgramChecks.h"
 #include "ProgramStore.h"
 #include "PrototypeChecks.h"
 #include "RemoteChecks.h"
 #include "RemoteController.h"
+#include "ResizeChecks.h"
 #include "SlideFactory.h"
 #include "TemplateChecks.h"
 #include "TemplatePresetChecks.h"
 #include "TemplateStore.h"
+#include "TransitionChecks.h"
 #include "WorkspaceChecks.h"
 #include <QDebug>
 #include <QDir>
@@ -49,6 +56,61 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
         runNativeMenuChecks(engine, app.arguments()[menuIndex + 1]);
     }
 #endif
+    const int backgroundIndex = app.arguments().indexOf("--background-smoke");
+    if (backgroundIndex >= 0) {
+        if (backgroundIndex + 1 >= app.arguments().size() || engine.rootObjects().isEmpty()) {
+            return 320;
+        }
+        auto templates = qobject_cast<TemplateStore *>(
+            engine.rootObjects().first()->property("templates").value<QObject *>());
+        if (!templates) {
+            return 320;
+        }
+        runBackgroundChecks(
+            document, *templates, outputs, ndi, engine, app.arguments()[backgroundIndex + 1]);
+    }
+    const int resizeIndex = app.arguments().indexOf("--resize-smoke");
+    if (resizeIndex >= 0) {
+        if (resizeIndex + 1 >= app.arguments().size()) {
+            return 310;
+        }
+        runResizeChecks(document, outputs, engine, app.arguments()[resizeIndex + 1]);
+    }
+    const int fontPreviewIndex = app.arguments().indexOf("--font-preview-smoke");
+    if (fontPreviewIndex >= 0) {
+        if (fontPreviewIndex + 1 >= app.arguments().size() || engine.rootObjects().isEmpty()) {
+            return 300;
+        }
+        auto fonts = qobject_cast<FontLibrary *>(
+            engine.rootObjects().first()->property("fonts").value<QObject *>());
+        if (!fonts) {
+            return 300;
+        }
+        runFontPreviewChecks(
+            *fonts, document, outputs, engine, app.arguments()[fontPreviewIndex + 1]);
+    }
+    const int transitionIndex = app.arguments().indexOf("--transition-smoke");
+    if (transitionIndex >= 0) {
+        if (transitionIndex + 1 >= app.arguments().size()) {
+            return 290;
+        }
+        runTransitionOutputChecks(outputs, ndi, engine, app.arguments()[transitionIndex + 1]);
+    }
+    const int outputUxIndex = app.arguments().indexOf("--output-ux-smoke");
+    if (outputUxIndex >= 0) {
+        if (outputUxIndex + 1 >= app.arguments().size()) {
+            return 270;
+        }
+        runOutputPanelChecks(document, outputs, engine, app.arguments()[outputUxIndex + 1]);
+    }
+    const int browserIndex = app.arguments().indexOf("--program-browser-smoke");
+    if (browserIndex >= 0) {
+        if (browserIndex + 1 >= app.arguments().size()) {
+            return 260;
+        }
+        runProgramBrowserChecks(
+            content, document, outputs, programs, engine, app.arguments()[browserIndex + 1]);
+    }
     const int dualIndex = app.arguments().indexOf("--dual-scripture-smoke");
     if (dualIndex >= 0) {
         if (dualIndex + 1 >= app.arguments().size()) {

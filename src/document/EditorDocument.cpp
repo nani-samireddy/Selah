@@ -226,17 +226,6 @@ void EditorDocument::setNotes(const QString &value) {
     commit();
 }
 
-void EditorDocument::setBackground(const QString &value) {
-    if (!QColor(value).isValid() || value == background()) {
-        return;
-    }
-    checkpoint();
-    auto s = m_slides[m_current].toMap();
-    s["background"] = value;
-    m_slides[m_current] = s;
-    commit();
-}
-
 void EditorDocument::addText() {
     checkpoint();
     auto list = elements();
@@ -284,8 +273,9 @@ void EditorDocument::deleteSelected() {
 
 void EditorDocument::addSlide() {
     checkpoint();
-    m_slides.append(
-        slide("Untitled", "A fresh\nbeginning.", "Add your service details.", "#54435F"));
+    auto page = slide("Untitled", "A fresh\nbeginning.", "Add your service details.", "#54435F");
+    page["transitionDefault"] = defaultTransition();
+    m_slides.append(page);
     m_current = int(m_slides.size()) - 1;
     m_selected = 1;
     commit();
@@ -302,7 +292,12 @@ bool EditorDocument::appendGenerated(const QVariantList &slides, const QString &
     }
     checkpoint();
     const int first = m_slides.size();
-    m_slides += slides;
+    const auto transition = defaultTransition();
+    for (auto entry : slides) {
+        auto page = entry.toMap();
+        page["transitionDefault"] = transition;
+        m_slides.append(page);
+    }
     m_current = first;
     m_selected = -1;
     commit();

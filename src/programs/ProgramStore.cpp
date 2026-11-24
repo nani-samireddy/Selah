@@ -3,6 +3,7 @@
 #include "OutputManager.h"
 #include "ProgramSlides.h"
 #include "SlideFactory.h"
+#include "SlideTransition.h"
 #include <QDate>
 #include <QFile>
 #include <QFileInfo>
@@ -353,11 +354,37 @@ bool ProgramStore::updateSelectedSlides(const QVariantList &slides) {
     return true;
 }
 
+bool ProgramStore::setTransition(const QString &type, int durationMs) {
+    auto item = selectedItem();
+    if (item.isEmpty()) {
+        return false;
+    }
+    const QVariantMap transition { { "type", type }, { "durationMs", durationMs } };
+    if (type != "inherit" && !SlideTransition::valid(transition)) {
+        return false;
+    }
+    const auto previous = item;
+    if (type == "inherit") {
+        item.remove("transition");
+    } else {
+        item["transition"] = transition;
+    }
+    if (item == previous) {
+        return true;
+    }
+    checkpoint();
+    replaceItem(item);
+    return true;
+}
+
 QVariantList ProgramStore::renderItem(const QVariantMap &item) {
     auto slides = item["slides"].toList();
     const auto skin = item.value("template", "original").toString();
     for (auto &v : slides) {
         auto page = v.toMap();
+        if (SlideTransition::valid(item.value("transition"))) {
+            page["transition"] = item["transition"];
+        }
         if (skin != "original") {
             page["background"] = skin == "paper" ? "#EEEAE0" : "#101820";
             page["ambientOpacity"] = 0.0;
@@ -459,6 +486,13 @@ QStringList ProgramStore::warnings() const {
     QSet<QString> missing;
     for (const auto &item : items()) {
         for (const auto &slide : item.toMap()["slides"].toList()) {
+            const auto fill = slide.toMap().value("backgroundFill").toMap();
+            if (fill.value("type") == "image") {
+                const auto path = QUrl(fill.value("source").toString()).toLocalFile();
+                if (!QFileInfo::exists(path)) {
+                    missing.insert(QFileInfo(path).fileName());
+                }
+            }
             for (const auto &element : slide.toMap()["elements"].toList()) {
                 const auto e = element.toMap();
                 if (e["kind"] == "image" || e["kind"] == "video") {

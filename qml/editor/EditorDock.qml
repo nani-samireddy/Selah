@@ -6,6 +6,12 @@ StudioPanel {
     id: dock
 
     required property var host
+    property bool slidesPanelVisible: true
+    readonly property point slidesButtonCenter: Qt.point(dockRow.x + slidesToggle.x
+                                                         + slidesToggle.width / 2, dockRow.y
+                                                         + slidesToggle.y + slidesToggle.height / 2)
+
+    signal slidesPanelToggleRequested
 
     width: dockRow.implicitWidth + 14
     height: 46
@@ -37,7 +43,7 @@ StudioPanel {
             quiet: true
             checked: dock.host.handTool
             implicitWidth: 34
-            hint: "Pan tool — drag empty canvas"
+            hint: "Pan tool — drag anywhere on the canvas"
 
             onClicked: dock.host.handTool = true
         }
@@ -69,38 +75,31 @@ StudioPanel {
         }
 
         StudioButton {
+            id: slidesToggle
+
+            objectName: "toggleEditorSlidesPanel"
+            visible: !dock.host.templateMode
+            iconName: "layers"
+            quiet: true
+            checked: dock.slidesPanelVisible
+            implicitWidth: 34
+            hint: dock.slidesPanelVisible ? "Minimize slides and speaker notes" :
+                                            "Expand slides and speaker notes"
+            Accessible.name: "Toggle slides and speaker notes"
+            feedbackEnabled: false
+
+            onClicked: {
+                InteractionFeedback.play(dock.slidesPanelVisible ? "close" : "open");
+                dock.slidesPanelToggleRequested();
+            }
+        }
+
+        StudioButton {
             text: dock.host.videosPlaying ? "Pause" : "Play"
             quiet: true
             hint: "Play or pause videos in the editor (muted)"
 
             onClicked: dock.host.videosPlaying = !dock.host.videosPlaying
-        }
-
-        Rectangle {
-            width: 1
-            height: 20
-            color: LibraryStyle.tone("#383838")
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        StudioButton {
-            iconName: "undo-2"
-            quiet: true
-            implicitWidth: 32
-            hint: "Undo"
-            enabled: dock.host.doc.canUndo
-
-            onClicked: dock.host.doc.undo()
-        }
-
-        StudioButton {
-            iconName: "redo-2"
-            quiet: true
-            implicitWidth: 32
-            hint: "Redo"
-            enabled: dock.host.doc.canRedo
-
-            onClicked: dock.host.doc.redo()
         }
 
         Rectangle {

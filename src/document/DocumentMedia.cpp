@@ -130,3 +130,48 @@ bool EditorDocument::useMedia(const QVariantMap &asset) {
     }
     return insertMedia(el, m_current);
 }
+
+void EditorDocument::importBackground(const QUrl &url) {
+    if (m_importing) {
+        return;
+    }
+    const int targetSlide = m_current, generation = m_generation;
+    m_importing = true;
+    emit importingChanged();
+    setStatus("Importing background…");
+    auto watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcher<QVariantMap>::finished, this,
+        [this, watcher, targetSlide, generation] {
+            const auto result = watcher->result();
+            watcher->deleteLater();
+            m_importing = false;
+            emit importingChanged();
+            if (result.contains("importError") || result.value("kind") != "image") {
+                setStatus(result.value("importError", "Choose a supported image for the background")
+                        .toString());
+                emit importFailed(status());
+                return;
+            }
+            emit mediaImported(result);
+            if (generation != m_generation) {
+                setStatus("Project changed during import — image kept in library");
+                return;
+            }
+            checkpoint();
+            auto slide = m_slides[targetSlide].toMap();
+            slide["backgroundFill"] = QVariantMap { { "type", "image" },
+                { "source", result.value("source") }, { "fit", "cover" } };
+            slide["ambientOpacity"] = 0.0;
+            const auto color = QColor(slide.value("background").toString());
+            if (color.alpha() == 0) {
+                const QColor previous(slide.value("backgroundRestore").toString());
+                slide["background"] = previous.isValid() && previous.alpha() > 0
+                    ? previous.name(QColor::HexArgb)
+                    : QString("#252A3A");
+                slide.remove("backgroundRestore");
+            }
+            m_slides[targetSlide] = slide;
+            commit();
+        });
+    watcher->setFuture(QtConcurrent::run([url] { return prepareMedia(url); }));
+}

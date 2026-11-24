@@ -60,7 +60,7 @@ ColumnLayout {
                 hint: "Remove tag " + modelData
                 selected: true
                 implicitHeight: LibraryStyle.controlHeight
-                implicitWidth: Math.min(240, tagLabel.implicitWidth + 22)
+                implicitWidth: Math.min(editor.width, 240, tagLabel.implicitWidth + 22)
 
                 contentItem: Text {
                     id: tagLabel
@@ -85,7 +85,7 @@ ColumnLayout {
             id: entry
 
             objectName: editor.objectPrefix + "TagInput"
-            width: 180
+            width: Math.min(180, editor.width)
             placeholderText: "Add a tag…"
             Accessible.name: "Song tags, separated by commas"
 

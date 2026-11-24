@@ -9,7 +9,7 @@ if(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
 endif()
 
-find_package(Qt6 6.11 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent Sql Network GuiPrivate)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Concurrent Sql Network GuiPrivate ShaderTools)
 qt_standard_project_setup(REQUIRES 6.9)
 include(CTest)
 option(CHURCHDECK_ENABLE_DIAGNOSTICS "Build developer capture and verification commands" ON)
@@ -41,15 +41,29 @@ elseif(WIN32)
     target_sources(church-deck PRIVATE assets/branding/church-deck.rc)
     target_include_directories(church-deck PRIVATE "${PROJECT_SOURCE_DIR}/assets/branding")
 endif()
+# Compile one premultiplied-alpha crossfade for Metal, Direct3D, Vulkan and OpenGL.
+qt_add_shaders(church-deck slide-transitions
+    PREFIX "/shaders" BASE "${PROJECT_SOURCE_DIR}/assets/shaders"
+    FILES assets/shaders/crossfade.frag assets/shaders/panel-backdrop.frag
+        assets/shaders/panel-genie.vert assets/shaders/panel-genie.frag
+)
+
 qt_add_resources(church-deck google-font-catalog PREFIX "/google-fonts" BASE "${PROJECT_SOURCE_DIR}/assets/google-fonts" FILES assets/google-fonts/catalog.json assets/google-fonts/OFL.txt)
 qt_add_resources(church-deck remote-assets PREFIX "/remote" BASE "${PROJECT_SOURCE_DIR}/remote" FILES remote/index.html remote/style.css remote/app.js)
 
-qt_add_resources(church-deck feedback-sounds PREFIX "/sounds" BASE "${PROJECT_SOURCE_DIR}/assets/sounds" FILES assets/sounds/click.wav assets/sounds/select.wav)
+qt_add_resources(church-deck user-guides PREFIX "/guides" BASE "${PROJECT_SOURCE_DIR}/docs/user-guide"
+    FILES docs/user-guide/getting-started.md docs/user-guide/songs.md
+    docs/user-guide/bible.md docs/user-guide/design.md
+    docs/user-guide/presenting.md docs/user-guide/remote-and-data.md)
+
+qt_add_resources(church-deck feedback-sounds PREFIX "/sounds" BASE "${PROJECT_SOURCE_DIR}/assets/sounds" FILES assets/sounds/click.wav assets/sounds/select.wav
+    assets/sounds/tick.wav assets/sounds/switch.wav assets/sounds/back.wav
+    assets/sounds/drop.wav assets/sounds/pluck.wav assets/sounds/toggle.wav)
 
 set_source_files_properties(qml/controls/LibraryStyle.qml qml/controls/InteractionFeedback.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 # Keep resource URLs stable while the source tree is organized by feature.
-file(GLOB_RECURSE CHURCHDECK_QML CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "qml/*.qml")
+file(GLOB_RECURSE CHURCHDECK_QML CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "qml/*.qml" "qml/*.js")
 set(CHURCHDECK_QML_NAMES)
 foreach(qml_file IN LISTS CHURCHDECK_QML)
     get_filename_component(qml_name "${qml_file}" NAME)
@@ -65,9 +79,14 @@ file(GLOB_RECURSE CONTENT_ASSETS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOU
 qt_add_qml_module(church-deck
     URI ChurchDeck
     VERSION 1.0
+    DEPENDENCIES QtQuick
+    SOURCES src/fonts/FontPreviewItem.cpp src/fonts/FontPreviewItem.h
+        src/help/GuideContent.cpp src/help/GuideContent.h
     QML_FILES ${CHURCHDECK_QML}
     RESOURCES assets/ambient.svg ${BRAND_ASSETS} ${STUDIO_ICONS} ${CONTENT_ASSETS}
 )
+
+target_include_directories(church-deck PRIVATE "${PROJECT_SOURCE_DIR}/src/help")
 
 set_target_properties(church-deck PROPERTIES
     OUTPUT_NAME "Selah"

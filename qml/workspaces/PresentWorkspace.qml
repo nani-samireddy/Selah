@@ -16,6 +16,18 @@ Item {
     property bool canNavigate: visible && !host.settingsOpen && !controlHasFocus
                                && controller.liveCount > 0
 
+    function openOutputControls(section = "displays") {
+        outputControls.section = section;
+        Qt.callLater(() => {
+            const viewport = presentScroll.contentItem as Flickable;
+            if (!viewport)
+                return;
+            viewport.contentY = Math.max(0, Math.min(outputControls.y,
+                                                     presentContent.implicitHeight
+                                                     - presentScroll.availableHeight));
+        });
+    }
+
     function navigate(delta) {
         controller.advance(delta);
         forceActiveFocus();
@@ -109,6 +121,10 @@ Item {
             }
         }
 
+        PresentProgramPicker {
+            host: present.host
+        }
+
         RowLayout {
             id: body
 
@@ -124,37 +140,14 @@ Item {
                 Layout.fillHeight: true
 
                 onChosen: index => present.navigate(index - present.controller.liveIndex)
-                onPrepareRequested: present.host.showPrograms()
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: 0
-                spacing: 16
-
-                LiveSlideCard {
-                    controller: present.controller
-                    previewHeightLimit: Math.max(150, body.height - 190)
-                    Layout.fillWidth: true
-                }
-
-                Item {
-                    Layout.fillHeight: true
-                }
-
-                PresentNotes {
-                    controller: present.controller
-                    Layout.fillWidth: true
-
-                    onControlsRequested: present.host.showOutputs()
-                }
+                onPrepareRequested: present.host.showProgramEditor()
             }
 
             ScrollView {
-                id: sideScroll
+                id: presentScroll
 
-                Layout.preferredWidth: present.width > 1250 ? 270 : 235
+                objectName: "presentContentScroll"
+                Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 0
                 contentWidth: availableWidth
@@ -162,19 +155,61 @@ Item {
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                 ColumnLayout {
-                    width: sideScroll.availableWidth
-                    spacing: 12
+                    id: presentContent
 
-                    LiveSlideCard {
-                        controller: present.controller
-                        next: true
-                        previewHeightLimit: present.width > 1250 ? 10000 : 118
+                    width: presentScroll.availableWidth
+                    spacing: 20
+
+                    RowLayout {
+                        objectName: "presentDisplayPreviews"
                         Layout.fillWidth: true
+                        spacing: 16
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 2
+                            Layout.alignment: Qt.AlignTop
+                            spacing: 16
+
+                            LiveSlideCard {
+                                controller: present.controller
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            Layout.alignment: Qt.AlignTop
+                            spacing: 16
+
+                            LiveSlideCard {
+                                controller: present.controller
+                                next: true
+                                Layout.fillWidth: true
+                            }
+
+                            PresentImagePanel {
+                                controller: present.controller
+                                Layout.fillWidth: true
+                            }
+                        }
                     }
 
-                    PresentImagePanel {
-                        controller: present.controller
+                    Rectangle {
                         Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: LibraryStyle.divider
+                    }
+
+                    OutputControls {
+                        id: outputControls
+
+                        Layout.fillWidth: true
+                        controller: present.controller
+
+                        onRemoteRequested: present.host.showRemote()
+                        onBroadcastRequested: present.host.showNdi()
                     }
                 }
             }
@@ -196,8 +231,10 @@ Item {
 
         PresentTransport {
             controller: present.controller
+            presenting: present.host.presentationRunning
             Layout.fillWidth: true
 
+            onStopRequested: present.host.stopPresenting()
             onNavigate: delta => present.navigate(delta)
             onOutputsRequested: present.host.showOutputs()
         }

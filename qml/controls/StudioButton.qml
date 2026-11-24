@@ -8,6 +8,7 @@ Button {
     property int labelFontSize: 13
     property bool selected: false
     property bool accented: false
+    property bool destructive: false
     property bool quiet: false
     property string hint: ""
     property string iconName: ""
@@ -16,6 +17,8 @@ Button {
     readonly property color fillColor: {
         if (!enabled)
             return quiet ? "transparent" : LibraryStyle.tone("#232323");
+        if (destructive)
+            return down ? "#852828" : hovered ? "#C23C3C" : "#AA3030";
         if (accented) {
             if (down)
                 return LibraryStyle.tone("#BDBDBD");
@@ -32,6 +35,8 @@ Button {
     readonly property color labelColor: {
         if (!enabled)
             return LibraryStyle.tone("#606060");
+        if (destructive)
+            return "#FFFFFF";
         if (accented)
             return LibraryStyle.tone("#171717");
         return active ? LibraryStyle.tone("#F1F1F1") : LibraryStyle.tone("#CBCBCB");
@@ -69,9 +74,14 @@ Button {
                 width: 14
                 height: 14
                 name: control.iconName
-                tone: control.accented ? LibraryStyle.tone("#171717") : control.enabled
-                                         ? LibraryStyle.tone("#B8B8B8") : LibraryStyle.tone(
-                                               "#606060")
+                tone: control.destructive && control.enabled ? control.labelColor :
+                                                               control.accented ? LibraryStyle.tone(
+                                                                                      "#171717") :
+                                                                                  control.enabled
+                                                                                  ? LibraryStyle.tone(
+                                                                                        "#B8B8B8") :
+                                                                                    LibraryStyle.tone(
+                                                                                        "#606060")
                 anchors.verticalCenter: parent.verticalCenter
             }
 
@@ -108,8 +118,8 @@ Button {
     Connections {
         function onClicked() {
             if (control.feedbackEnabled)
-                InteractionFeedback.play(control.checkable || control.selected ? "select" :
-                                                                                 "click");
+                InteractionFeedback.play(control.checkable ? "toggle" : control.selected ? "select" :
+                                                                                           "click");
         }
 
         target: control

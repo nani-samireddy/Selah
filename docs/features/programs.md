@@ -4,10 +4,10 @@ Click **Programs** in the top bar. A program is a saved service order containing
 
 ## Prepare a service
 
-1. Choose **New program**, enter a title and optional `YYYY-MM-DD` date, and create it. The program selector reopens saved services. The last opened program is restored on launch.
+1. Choose **New program**, enter a title and optional `YYYY-MM-DD` date, and create it. Programs first shows a searchable grid of saved program cards. Click a card to open its service editor; **All programs** returns to the grid. The last opened program remains available as the default library destination.
 2. Choose **Add item** and select a song, Bible passage, image/video, the complete current editor presentation, or a `.churchdeck` presentation file. The song/Bible/media libraries show **Add to program** when opened from here.
 3. Drag an item’s grip to reorder it, or use **Up**, **Down** and **Remove**. A drop commits one undoable move; Escape or dropping outside the list cancels. The list scrolls when dragging near its top/bottom edge. Removal and changes support Undo/Redo. Repeated additions are independent items.
-4. Edit the item title or private speaker notes. These save after a brief pause, when switching items, and when closing Programs. Program title/date changes use **Apply details**. Changes to the program model autosave to SQLite after 450 ms; **Save program** or Cmd/Ctrl+S saves immediately.
+4. Edit the item title or private speaker notes. These save after a brief pause, when switching items, and when closing Programs. Use **Edit details** in the editor header to change the program name and date. Confirming the dialog saves both together. Changes to the program model autosave to SQLite after 450 ms; **Save program** or Cmd/Ctrl+S saves immediately.
 5. For a song, choose one of its saved arrangements. For a song or Bible passage, choose **Original**, **Midnight**, or **Warm paper** styling. These are built-in palette styles. **Choose template** previews and applies reusable content layouts; see [templates](templates.md).
 6. Use **Edit slides** to open an item in the presentation editor. This is an undoable replacement of the editor draft. Use **Update program item** in Design, or return to Programs and choose **Update from editor**, to explicitly replace that item's slides. Live content remains unchanged. Choosing another song arrangement regenerates its slides from the stored lyrics, replacing manual slide edits.
 
@@ -21,7 +21,7 @@ Songs, passages and applied template definitions/revisions are stored with the p
 - Use **Present from here** to enter Present with the prepared service. Current/next previews, live service navigation, audience blackout and audience/stage previews are available there. Outputs and Remote remain available globally.
 - **Present from here** updates the snapshot. Reordering, changing an arrangement, editing notes or removing items never updates a running snapshot automatically.
 - Audience and stage rendering, physical screen assignments and the NDI capture prototype use the existing OutputManager. Item notes are prepended to individual slide notes in the speaker view. NDI network transmission still requires the official SDK/runtime and receiver validation.
-- In Output settings, **Take editor slide live** explicitly switches the live source back to the editor, showing that editor snapshot in Present until a program is explicitly taken live again.
+- In Design, **Present slide** explicitly switches the live source back to the editor, showing that editor snapshot in Present until a program is explicitly taken live again.
 
 ## Storage and exchange
 
@@ -42,4 +42,6 @@ build/Selah.app/Contents/MacOS/Selah --fresh --compact --program-smoke "$PWD/cap
 
 Model checks cover create/save/reopen, independent export/import, arrangements, styles, title/notes, reorder/remove/undo/redo, missing media, opening/updating editor slides, rejecting invalid content without data loss, and live snapshot isolation. Rendering checks cover a mixed service with bilingual lyrics, Telugu Bible passages, media, current/next previews and separate audience/stage windows. Smoke runs use a separate verification profile and original test lyrics, preserving the normal user's programs and editor recovery file.
 
-Windows packaging and physical three-display/hot-plug validation remain outstanding. Portable media bundles, drag-to-reorder, whole-program duplication and library synchronization are not included in this implementation.
+Physical three-display/hot-plug validation remains outstanding. Portable media bundles, whole-program duplication and library synchronization are not included in this implementation.
+
+`--fresh --program-browser-smoke captures/program-browser` verifies the cards-first workflow, card navigation, a single editor heading, title/date edits, search, program creation and live-snapshot isolation using a temporary program database.

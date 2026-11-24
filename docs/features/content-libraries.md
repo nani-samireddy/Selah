@@ -98,9 +98,9 @@ Tags are visible below the song languages as removable chips. Type a tag and pre
 
 The sidebar tag filter matches a complete tag, without case sensitivity, and combines with the text search. Text search also matches tags. Song rows show their saved tags. Multilingual labels are Unicode-normalized and duplicate labels are removed. Clearing the last use of a tag removes it from suggestions and filters. Older string metadata and imported tag arrays remain compatible; storage uses a comma-separated string inside the existing song JSON, with no database migration.
 
-### Custom slides
+### Presentations
 
-Libraries → Custom slides catalogs named custom presentations separately from songs, scripture, media, and templates. New presentation creates a blank slide and opens it in Design. Edit opens one saved presentation in the same editor. The editor no longer offers a Design/Template mode switch: its context comes from the item opened in Libraries.
+Libraries → Presentations catalogs named presentations separately from songs, scripture, media, and templates. New presentation creates a blank slide and opens it in Design. Edit opens one saved presentation in the same editor. The editor no longer offers a Design/Template mode switch: its context comes from the item opened in Libraries.
 
 Save presentation updates that library entry; Save a copy creates another entry. Uncataloged drafts and program items can be saved through Save to library. The selected custom presentation's ID/name are remembered with local preferences alongside the existing recovery document. Templates retain their own Save template flow.
 
@@ -161,3 +161,8 @@ program items preserve both source translations for offline presentation and
 later template changes. See the [operator guide](../user-guide/bible.md).
 
 Speaker display and remote text summaries include both texts for dual Bible slides.
+
+Media cards use thumbnails up to 1280 × 720 and open an original-file viewer when
+clicked. Images support Fit and 100%; videos support play/pause, seeking and mute.
+Closing the viewer releases playback. Previewing media does not add it to a program
+or change the live snapshot.

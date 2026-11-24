@@ -8,6 +8,7 @@ Item {
     id: workspace
 
     required property var host
+    property bool slidesPanelVisible: true
 
     function rendererProbe() {
         return viewport.rendererProbe();
@@ -19,163 +20,196 @@ Item {
 
     anchors.fill: parent
 
-    Canvas {
-        id: workspaceGrid
-
-        property bool darkTheme: LibraryStyle.dark
+    Item {
+        id: canvasScene
 
         anchors.fill: parent
 
-        onDarkThemeChanged: requestPaint()
-        onPaint: {
-            let ctx = getContext("2d");
-            ctx.fillStyle = LibraryStyle.tone("#111111");
-            ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = LibraryStyle.tone("#2B2B2B");
-            for (let x = 12; x < width; x += 20)
-                for (let y = 12; y < height; y += 20) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, 0.65, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+        Canvas {
+            id: workspaceGrid
+
+            property bool darkTheme: LibraryStyle.dark
+
+            anchors.fill: parent
+
+            onDarkThemeChanged: requestPaint()
+            onPaint: {
+                let ctx = getContext("2d");
+                ctx.fillStyle = LibraryStyle.tone("#111111");
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = LibraryStyle.tone("#2B2B2B");
+                for (let x = 12; x < width; x += 20)
+                    for (let y = 12; y < height; y += 20) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 0.65, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+            }
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
         }
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
+
+        EditorCanvas {
+            id: viewport
+
+            objectName: "editorCanvasViewport"
+            host: workspace.host
+            anchors.fill: parent
+        }
+    }
+
+    EditorBackdrop {
+        id: backdrop
+
+        anchors.fill: parent
+        scene: canvasScene
+        active: workspace.visible
     }
 
     LayersPanel {
         id: layersPanel
 
+        backdropSource: backdrop.available ? backdrop.texture : null
+        backdropRect: Qt.rect(layersPanel.x, layersPanel.y, layersPanel.width, layersPanel.height)
+        objectName: "editorLayersPanel"
+        z: 20
         host: workspace.host
     }
 
-    Column {
-        x: 26
-        y: layersPanel.y + layersPanel.height + 24
-        width: 195
-        spacing: 11
-
-        StudioMicroLabel {
-            text: "WORKSPACE"
-        }
-
-        Text {
-            text: "Double-click text to edit.\nDrag a layer to move it.\nUse the corner to resize."
-            color: LibraryStyle.tone("#777777")
-            font.pixelSize: 11
-            lineHeight: 1.7
-        }
-
-        Text {
-            text: "⌘ Z  Undo    ·    ⌘ S  Save"
-            color: LibraryStyle.tone("#686868")
-            font.pixelSize: 10
-        }
-    }
-
+    // These overlays remain fixed while the workspace underneath pans and zooms.
     Item {
-        id: centerArea
+        id: bottomControls
+
+        z: 20
 
         anchors {
             left: layersPanel.right
             right: inspector.left
             top: parent.top
             bottom: parent.bottom
-            leftMargin: 28
-            rightMargin: 28
+            leftMargin: 18
+            rightMargin: 18
         }
 
-        RowLayout {
-            id: viewRow
+        Item {
+            id: trayFrame
 
-            height: 34
-
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                topMargin: 22
-            }
-
-            StudioButton {
-                text: workspace.host.templateMode ? "Templates" : "Custom slides"
-                iconName: "layers"
-                hint: "Return to library"
-
-                onClicked: workspace.host.browseLibrary(workspace.host.templateMode ? "templates" :
-                                                                                      "custom")
-            }
-
-            Text {
-                text: workspace.host.templateMode ? "Template layout" : "Custom presentation"
-                color: LibraryStyle.muted
-                font.pixelSize: 11
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                visible: !workspace.host.templateMode
-                text: "Audience layout"
-                color: LibraryStyle.tone("#959595")
-                font.pixelSize: 11
-            }
-        }
-
-        EditorCanvas {
-            id: viewport
-
-            host: workspace.host
-
-            anchors {
-                top: viewRow.bottom
-                left: parent.left
-                right: parent.right
-                bottom: slideStrip.top
-                topMargin: 12
-                bottomMargin: 16
-            }
-        }
-
-        SlideStrip {
-            id: slideStrip
-
-            host: workspace.host
-            canvas: viewport
+            objectName: "editorFloatingControls"
+            visible: workspace.host.templateMode || workspace.slidesPanelVisible
+                     || panelMotion.animating
+            height: slideStrip.height + notesBox.height + (!workspace.host.templateMode ? 12 : 0)
+                    + 20
 
             anchors {
                 left: parent.left
                 right: parent.right
-                bottom: notesBox.top
-                bottomMargin: 16
+                bottom: parent.bottom
+                bottomMargin: 18
+            }
+
+            StudioPanel {
+                id: contentTools
+
+                anchors.fill: parent
+                backdropSource: backdrop.available ? backdrop.texture : null
+                backdropRect: Qt.rect(bottomControls.x + trayFrame.x, bottomControls.y + trayFrame.y,
+                                      trayFrame.width, trayFrame.height)
+
+                SlideStrip {
+                    id: slideStrip
+
+                    host: workspace.host
+                    canvas: viewport
+
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: 10
+                    }
+                }
+
+                SpeakerNotes {
+                    id: notesBox
+
+                    host: workspace.host
+
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                        margins: 10
+                    }
+                }
             }
         }
 
-        SpeakerNotes {
-            id: notesBox
+        PanelGenie {
+            id: panelMotion
 
-            host: workspace.host
+            objectName: "slidesPanelMotion"
+            panel: trayFrame
+            expanded: workspace.host.templateMode || workspace.slidesPanelVisible
+            motionEnabled: !workspace.host.templateMode && workspace.visible
+            targetPoint: Qt.point(dock.x + dock.slidesButtonCenter.x - trayFrame.x, dock.y
+                                  + dock.slidesButtonCenter.y - trayFrame.y)
+        }
 
-            anchors {
-                left: parent.left
-                right: parent.right
-                bottom: dock.top
-                bottomMargin: 14
+        StudioPanel {
+            id: compactSlides
+
+            objectName: "compactEditorSlides"
+            visible: !workspace.host.templateMode && !workspace.slidesPanelVisible &&
+                     !panelMotion.animating
+            width: Math.max(70, Math.min(260, bottomControls.width - dock.width - 10))
+            height: dock.height
+            x: dock.x + dock.width + 10
+            y: dock.y
+            z: 2
+            backdropSource: backdrop.available ? backdrop.texture : null
+            backdropRect: Qt.rect(bottomControls.x + x, bottomControls.y + y, width, height)
+
+            SlideStrip {
+                objectName: "compactEditorSlideStrip"
+                host: workspace.host
+                canvas: viewport
+                compact: true
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 6
+                anchors.verticalCenter: parent.verticalCenter
             }
         }
 
         EditorDock {
             id: dock
 
+            backdropSource: backdrop.available ? backdrop.texture : null
+            backdropRect: Qt.rect(bottomControls.x + dock.x, bottomControls.y + dock.y, dock.width,
+                                  dock.height)
+            objectName: "editorFloatingDock"
+            z: 2
+            anchors.bottomMargin: 18 + (trayFrame.height + 12) * (1 - panelMotion.progress)
+            anchors.horizontalCenterOffset: workspace.host.templateMode ? 0 : -(compactSlides.width
+                                                                                + 10) / 2
+                                                                          * panelMotion.progress
             host: workspace.host
+            slidesPanelVisible: workspace.slidesPanelVisible
+
+            onSlidesPanelToggleRequested: {
+                notesBox.flush();
+                workspace.slidesPanelVisible = !workspace.slidesPanelVisible;
+            }
         }
     }
 
     InspectorPanel {
         id: inspector
 
+        backdropSource: backdrop.available ? backdrop.texture : null
+        backdropRect: Qt.rect(inspector.x, inspector.y, inspector.width, inspector.height)
+        objectName: "editorInspectorPanel"
+        z: 20
         host: workspace.host
     }
 

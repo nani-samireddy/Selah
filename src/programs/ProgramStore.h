@@ -85,6 +85,7 @@ public:
     Q_INVOKABLE void removeSelected();
     Q_INVOKABLE void setItemDetails(const QString &title, const QString &notes);
     Q_INVOKABLE bool setArrangement(int index);
+    Q_INVOKABLE bool setTransition(const QString &type, int durationMs);
     Q_INVOKABLE void setTemplate(const QString &name);
     Q_INVOKABLE bool updateSelectedSlides(const QVariantList &slides);
     Q_INVOKABLE void undo();

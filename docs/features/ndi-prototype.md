@@ -5,7 +5,7 @@ The offscreen capture path is implemented and tested on this Mac. The network ba
 ## What works now
 
 - Shared live slide rendering through `QQuickRenderControl`, with no visible/native capture window or assigned monitor.
-- Metal GPU composition and CPU readback at 1280×720 or 1920×1080. The UI accepts 30 or 60 fps; only 30 fps has been checked.
+- Metal GPU composition and CPU readback at 1280×720 or 1920×1080. The UI accepts 30 or 60 fps; transition diagnostics also exercise the 720p capture path at 60 fps.
 - Full slides, including decoded video, or transparent-canvas overlays preserving all authored text, images, video, and graphics.
 - Explicit conversion from premultiplied GPU pixels to straight RGBA for NDI. Channel order, vertical orientation, transparent corners, antialiased text, clear text, and transparent blackout have automated pixel checks.
 - Grayscale text antialiasing to prevent LCD color fringes in transparent broadcast text. The setting applies consistently across the application.
@@ -77,3 +77,16 @@ This checks audience and stage fullscreen **sequentially** on the second display
 - Integrate and validate audio synchronization before enabling audio in NDI controls.
 
 API references: [Qt render control](https://doc.qt.io/qt-6/qquickrendercontrol.html), [Qt QRhi compatibility](https://doc.qt.io/qt-6/qrhi.html), [NDI frame formats](https://docs.ndi.video/all/developing-with-ndi/sdk/frame-types), [NDI sending](https://docs.ndi.video/all/developing-with-ndi/sdk/ndi-send), [NDI distribution/licensing](https://docs.ndi.video/all/developing-with-ndi/sdk/licensing).
+
+## Slide transitions
+
+Physical audience output and NDI use `AudienceRenderer.qml`. A single live layer
+renderer preserves media delegates while two alternating GPU textures retain the
+outgoing frame. A compiled crossfade shader mixes premultiplied RGBA; transparent
+canvas output therefore fades both the colour and alpha correctly. No additional
+CPU readback is used for the fade itself.
+
+`OutputManager` owns the shared elapsed-time clock. Stage/next-slide displays stay
+immediate. Rapid navigation cancels an unfinished fade and cuts to the latest
+request. Audience blackout also clears NDI output immediately; the sender's own
+blackout remains available separately. Software-only presentation output cuts.

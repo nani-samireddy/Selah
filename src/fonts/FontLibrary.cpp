@@ -31,6 +31,7 @@ FontLibrary::FontLibrary(QObject *parent, const QString &directory)
 }
 
 FontLibrary::~FontLibrary() {
+    cancelPreview();
     cancel();
     for (int id : m_fontIds) {
         QFontDatabase::removeApplicationFont(id);

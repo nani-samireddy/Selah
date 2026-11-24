@@ -43,8 +43,8 @@ Physical operator rehearsal and keyboard/IME validation on Windows remain requir
 
 ## Present workspace and default image
 
-Present keeps the live service list on the left, an audience preview, scrollable speaker notes
-and stage timer in the center, and Up Next and a default-image card on the right. The bottom transport
+Present keeps the live service list on the left, an audience preview
+in the center, and Up Next and a default-image card on the right. The bottom transport
 keeps Previous/Next, media pause, Clear text, Blackout and output settings in fixed positions.
 The audience preview reflects cleared text, blackout and standby; Up Next continues to show the
 next prepared program slide. Compact and wide layouts use the same controls in both appearances.
@@ -90,3 +90,29 @@ profile. AppKit system-bar assertions additionally run when macOS grants the tes
 window foreground activation; otherwise verify placement in the running app.
 
 File → Import program and Export program use the same `.churchprogram` dialogs as the Programs toolbar. Pending item edits are flushed before either dialog opens; export requires an open program.
+
+Programs opens to a searchable card grid. Each card opens a dedicated service editor with a single heading, service date and Edit details dialog. Use All programs to return to the grid. Returning after adding library content or updating a designed program item opens the current service editor directly.
+
+The Present page contains output controls below the display previews, in two sections: Displays (audience/stage routing and network
+connections), and Speaker tools (notes, message, stage preview and countdown).
+Live transport actions have one home in the pinned bottom toolbar, including audio. Each display
+card shows its own status. Operator-screen fullscreen is disabled; windowed preview
+remains available. Audience blackout stays accessible in the pinned Present transport bar. Opening
+or switching sections does not route displays or change the loaded snapshot.
+
+The Present service list groups child slides by service item. Live ambience follows
+active audience/NDI sending, rather than merely having a loaded snapshot. Template
+editing uses one canvas; slide management belongs to Presentations. The template
+library offers searchable preview cards that open directly in Design. The program
+layout picker retains its content preview before applying a selected layout.
+Media thumbnails are regenerated at up to 1280 × 720 without upscaling originals;
+clicking a thumbnail opens the original with image Fit/100% or video playback.
+
+Speaker notes and the stage countdown live under Speaker tools, rather than beneath
+the audience preview. Live state uses a strong toolbar/footer tint and the LIVE
+badge; there is no full-window outline.
+
+The pinned Present transport includes a red Stop presenting action. The host stops
+both display roles, cancels pending fullscreen routing, stops NDI (including startup),
+pauses media/countdown and retains the prepared snapshot and selected slide. The
+Presentation menu exposes the same action; it is disabled when no output is active.

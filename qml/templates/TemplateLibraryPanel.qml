@@ -17,18 +17,13 @@ Popup {
                               slides: [],
                               error: ""
                           })
-    readonly property var records: library.layouts.filter(record => filter === "all" || filter
-                                                                    === "scripture" && record.kind
-                                                                    === "scripture" || filter
-                                                                    === "bilingual" && record.kind
-                                                                    === "bilingual" || filter
-                                                                    === "song" && (record.kind
-                                                                                   === "song"
-                                                                                   || record.kind
-                                                                                   === "bilingual")
-                                                                    || filter === "presentation"
-                                                                    && record.kind
-                                                                    === "presentation")
+    property string searchQuery: ""
+    property bool inspecting: false
+    readonly property var records: library.layouts.filter(record => {
+        const kindMatches = filter === "all" || record.kind === filter || filter === "song"
+              && record.kind === "bilingual";
+        return kindMatches && record.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+    })
     readonly property var definition: library.layouts.find(record => record.id === selectedId) || (
                                           {})
     readonly property var previewSlide: result.slides[previewIndex] || ({})
@@ -67,10 +62,13 @@ Popup {
 
     onOpened: {
         filter = programTarget ? programTarget.layoutKind : "all";
+        searchQuery = "";
+        inspecting = false;
         refreshPreview();
     }
     onSelectedIdChanged: refreshPreview()
     onFilterChanged: refreshPreview()
+    onSearchQueryChanged: refreshPreview()
 
     Connections {
         function onChanged() {
@@ -242,6 +240,45 @@ Popup {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+
+            LibraryButton {
+                text: "All layouts"
+                iconName: "chevron-left"
+                visible: panel.inspecting
+
+                onClicked: panel.inspecting = false
+            }
+
+            LibraryField {
+                objectName: "templateSearch"
+                Layout.fillWidth: true
+                leadingIcon: "search"
+                placeholderText: "Search templates…"
+                text: panel.searchQuery
+
+                onTextEdited: {
+                    panel.inspecting = false;
+                    panel.searchQuery = text;
+                }
+            }
+
+            Text {
+                text: panel.records.length + " templates"
+                color: LibraryStyle.muted
+                font.pixelSize: 11
+            }
+        }
+
+        LibraryEmptyState {
+            visible: !panel.records.length
+            Layout.fillWidth: true
+            title: "No matching templates"
+            description: "Try another name or choose a different category."
+            iconName: "search"
+        }
+
         LibraryTabs {
             visible: !panel.programTarget
             options: [
@@ -276,71 +313,113 @@ Popup {
             Layout.fillHeight: true
             spacing: 20
 
-            ListView {
-                Layout.preferredWidth: 235
-                Layout.maximumWidth: 260
+            ScrollView {
+                id: templateScroll
+
+                visible: !panel.inspecting
+                Layout.fillWidth: true
                 Layout.fillHeight: true
+                contentWidth: availableWidth
                 clip: true
-                spacing: 6
-                model: panel.records
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                ScrollBar.vertical: ScrollBar {
-                }
-                delegate: ItemDelegate {
-                    id: record
+                GridLayout {
+                    id: templateGrid
 
-                    required property var modelData
+                    width: templateScroll.availableWidth
+                    columns: Math.max(1, Math.floor(width / 230))
+                    columnSpacing: 12
+                    rowSpacing: 12
 
-                    width: ListView.view.width
-                    height: 72
-                    padding: 12
-                    Accessible.name: modelData.name
+                    Repeater {
+                        model: panel.records
 
-                    background: Rectangle {
-                        color: panel.selectedId === record.modelData.id ? LibraryStyle.tone(
-                                                                              "#323232") :
-                                                                          record.hovered
-                                                                          ? LibraryStyle.tone(
-                                                                                "#242424") :
-                                                                            LibraryStyle.tone(
-                                                                                "#202020")
-                        radius: 7
-                        border.color: panel.selectedId === record.modelData.id ? LibraryStyle.tone(
-                                                                                     "#565656") :
-                                                                                 LibraryStyle.tone(
-                                                                                     "#303030")
-                    }
-                    contentItem: Column {
-                        spacing: 7
+                        delegate: ItemDelegate {
+                            id: card
 
-                        Text {
-                            font.family: LibraryStyle.fontFamily
-                            width: parent.width
-                            text: record.modelData.name
-                            elide: Text.ElideRight
-                            color: LibraryStyle.tone("#DDDDDD")
-                            font.pixelSize: 13
+                            required property var modelData
+
+                            objectName: "templateCard_" + modelData.id
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: (templateGrid.width - (templateGrid.columns - 1)
+                                                    * 12) / templateGrid.columns
+                            Layout.maximumWidth: Layout.preferredWidth
+                            implicitHeight: width * 9 / 16 + 54
+                            padding: 8
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            Accessible.name: modelData.name + ", " + modelData.kind
+
+                            background: Rectangle {
+                                radius: 7
+                                color: card.hovered ? LibraryStyle.hover : LibraryStyle.field
+                                border.color: panel.selectedId === card.modelData.id
+                                              ? LibraryStyle.focus : LibraryStyle.border
+                            }
+                            contentItem: Column {
+                                // Preview TextEdits must not consume the card's pointer events.
+                                enabled: false
+                                spacing: 5
+
+                                Rectangle {
+                                    id: thumbnail
+
+                                    width: parent.width
+                                    height: width * 9 / 16
+                                    color: "#111111"
+                                    clip: true
+
+                                    SlideRenderer {
+                                        showTransparencyGrid: true
+                                        scale: thumbnail.width / 1920
+                                        transformOrigin: Item.TopLeft
+                                        elements: card.modelData.slide.elements || []
+                                        backgroundFill: card.modelData.slide.backgroundFill || ({})
+                                        backgroundColor: card.modelData.slide.background
+                                                         || "#111111"
+                                        ambientOpacity: card.modelData.slide.ambientOpacity || 0
+                                        videoEnabled: false
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: card.modelData.name
+                                    elide: Text.ElideRight
+                                    font.family: LibraryStyle.fontFamily
+                                    font.pixelSize: 12
+                                    color: LibraryStyle.text
+                                }
+
+                                Text {
+                                    text: card.modelData.kind + " · revision "
+                                          + card.modelData.revision
+                                    font.family: LibraryStyle.fontFamily
+                                    font.pixelSize: 10
+                                    color: LibraryStyle.muted
+                                }
+                            }
+
+                            onClicked: {
+                                panel.selectedId = modelData.id;
+                                if (panel.programTarget) {
+                                    panel.inspecting = true;
+                                } else {
+                                    panel.editRequested(modelData);
+                                    panel.close();
+                                }
+                            }
+
+                            HoverHandler {
+                                cursorShape: Qt.PointingHandCursor
+                            }
                         }
-
-                        Text {
-                            font.family: LibraryStyle.fontFamily
-                            text: record.modelData.kind + " · revision " + record.modelData.revision
-                            color: LibraryStyle.tone("#888888")
-                            font.pixelSize: 11
-                        }
                     }
-
-                    onClicked: panel.selectedId = modelData.id
                 }
-            }
-
-            Rectangle {
-                implicitWidth: 1
-                Layout.fillHeight: true
-                color: LibraryStyle.tone("#333333")
             }
 
             ColumnLayout {
+                visible: panel.inspecting
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 12
@@ -390,6 +469,7 @@ Popup {
                     clip: true
 
                     SlideRenderer {
+                        showTransparencyGrid: true
                         width: 1920
                         height: 1080
                         scale: Math.min(frame.width / 1920, frame.height / 1080)
@@ -397,6 +477,7 @@ Popup {
                         x: (frame.width - width * scale) / 2
                         y: (frame.height - height * scale) / 2
                         elements: panel.previewSlide.elements || []
+                        backgroundFill: panel.previewSlide.backgroundFill || ({})
                         backgroundColor: panel.previewSlide.background || LibraryStyle.tone(
                                              "#111111")
                         ambientOpacity: panel.previewSlide.ambientOpacity === undefined ? 0.5 :
@@ -490,6 +571,7 @@ Popup {
 
             LibraryButton {
                 text: "Export"
+                visible: panel.inspecting
                 enabled: !!panel.selectedId
 
                 onClicked: exportFile.open()
@@ -499,7 +581,7 @@ Popup {
                 objectName: "applyLayoutButton"
                 text: "Apply layout"
                 accented: true
-                visible: !!panel.programTarget
+                visible: !!panel.programTarget && panel.inspecting
                 enabled: panel.result.slides.length > 0 && !panel.result.error
 
                 onClicked: {

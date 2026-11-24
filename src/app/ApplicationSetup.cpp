@@ -41,6 +41,30 @@ void ApplicationSetup::configure(QGuiApplication &app) {
         app.setApplicationName("Church Deck Present Verification");
         QStandardPaths::setTestModeEnabled(true);
     }
+    if (app.arguments().contains("--background-smoke")) {
+        app.setApplicationName("Church Deck Background Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--resize-smoke")) {
+        app.setApplicationName("Church Deck Resize Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--font-preview-smoke")) {
+        app.setApplicationName("Church Deck Font Preview Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--transition-smoke")) {
+        app.setApplicationName("Church Deck Transition Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--output-ux-smoke")) {
+        app.setApplicationName("Church Deck Output UX Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--program-browser-smoke")) {
+        app.setApplicationName("Church Deck Program Browser Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
     if (app.arguments().contains("--menu-smoke")) {
         app.setApplicationName("Church Deck Menu Verification");
         QStandardPaths::setTestModeEnabled(true);

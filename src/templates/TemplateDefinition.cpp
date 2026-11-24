@@ -60,7 +60,7 @@ QVariantMap TemplateDefinition::starter(const QString &kind) {
                             : "Lyrics" },
         { "slide",
             QVariantMap { { "name", "Template" }, { "background", "#252A3A" },
-                { "ambientOpacity", 0.5 }, { "notes", "" }, { "elements", elements } } } };
+                { "ambientOpacity", 0.0 }, { "notes", "" }, { "elements", elements } } } };
 }
 
 bool TemplateDefinition::validate(const QVariantMap &definition, QString *error) {
@@ -159,6 +159,13 @@ bool TemplateDefinition::supports(
 
 QStringList TemplateDefinition::missingMedia(const QVariantMap &definition) {
     QSet<QString> missing;
+    const auto fill = definition["slide"].toMap().value("backgroundFill").toMap();
+    if (fill.value("type") == "image") {
+        const auto path = QUrl(fill.value("source").toString()).toLocalFile();
+        if (!QFileInfo::exists(path)) {
+            missing.insert(QFileInfo(path).fileName());
+        }
+    }
     for (const auto &value : definition["slide"].toMap()["elements"].toList()) {
         const auto element = value.toMap();
         if (element["kind"] == "image" || element["kind"] == "video") {

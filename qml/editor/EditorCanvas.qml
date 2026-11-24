@@ -12,33 +12,81 @@ Item {
         return editorRenderer.probe();
     }
 
+    // Preserve the canvas point beneath the cursor instead of zooming about the center.
+    function zoomAt(factor, point) {
+        if (!isFinite(factor) || factor <= 0)
+            return;
+        const before = host.zoom;
+        const after = Math.max(0.4, Math.min(2.5, before * factor));
+        const ratio = after / before;
+        host.panX = point.x - width / 2 - (point.x - width / 2 - host.panX) * ratio;
+        host.panY = point.y - height / 2 - (point.y - height / 2 - host.panY) * ratio;
+        host.zoom = after;
+    }
+
     clip: true
 
+    WheelHandler {
+        objectName: "canvasWheelHandler"
+        target: null
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+
+        onWheel: event => {
+            const pixels = event.pixelDelta;
+            const modified = event.modifiers & (Qt.ControlModifier | Qt.MetaModifier);
+            if (!modified && (pixels.x !== 0 || pixels.y !== 0)) {
+                viewport.host.panX += pixels.x;
+                viewport.host.panY += pixels.y;
+            } else {
+                const delta = pixels.y || event.angleDelta.y;
+                if (delta !== 0)
+                    viewport.zoomAt(Math.exp(delta * (pixels.y ? 0.008 : 0.001)), Qt.point(event.x,
+                                                                                           event.y));
+            }
+            event.accepted = true;
+        }
+    }
+
+    PinchHandler {
+        objectName: "canvasPinchHandler"
+        target: null
+        acceptedDevices: PointerDevice.TouchPad | PointerDevice.TouchScreen
+        rotationAxis.enabled: false
+        // Native trackpads report pan through wheel pixels, not pinch translation.
+        xAxis.enabled: false
+        yAxis.enabled: false
+
+        onScaleChanged: delta => viewport.zoomAt(delta, centroid.position)
+    }
+
+    MouseArea {
+        anchors.fill: parent
+
+        onClicked: viewport.host.selectCanvasSettings()
+    }
+
+    // Above element hit targets: panning must also work over text, images and handles.
     MouseArea {
         property point origin
         property point panOrigin
 
+        objectName: "canvasPanSurface"
+        z: 20000
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-        cursorShape: viewport.host.handTool ? Qt.OpenHandCursor : Qt.ArrowCursor
+        acceptedButtons: viewport.host.handTool ? Qt.LeftButton | Qt.MiddleButton : Qt.MiddleButton
+        cursorShape: pressed ? Qt.ClosedHandCursor : viewport.host.handTool ? Qt.OpenHandCursor :
+                                                                              Qt.ArrowCursor
 
         onPressed: mouse => {
-            if (viewport.host.handTool || mouse.button === Qt.MiddleButton) {
-                origin = Qt.point(mouse.x, mouse.y);
-                panOrigin = Qt.point(viewport.host.panX, viewport.host.panY);
-            } else
-                viewport.host.doc.selected = -1;
+            viewport.forceActiveFocus();
+            origin = Qt.point(mouse.x, mouse.y);
+            panOrigin = Qt.point(viewport.host.panX, viewport.host.panY);
         }
         onPositionChanged: mouse => {
-            if (pressed && (viewport.host.handTool || pressedButtons & Qt.MiddleButton)) {
+            if (pressed) {
                 viewport.host.panX = panOrigin.x + mouse.x - origin.x;
                 viewport.host.panY = panOrigin.y + mouse.y - origin.y;
             }
-        }
-        onWheel: wheel => {
-            viewport.host.zoom = Math.max(0.4, Math.min(2.5, viewport.host.zoom + (
-                                                            wheel.angleDelta.y > 0 ? 0.08 :
-                                                                                     -0.08)));
         }
     }
 
@@ -85,6 +133,7 @@ Item {
         Item {
             id: artboard
 
+            objectName: "editorArtboard"
             width: 1920
             height: 1080
             scale: viewport.fitScale * viewport.host.zoom
@@ -93,8 +142,11 @@ Item {
             SlideRenderer {
                 id: editorRenderer
 
+                enabled: false
+                showTransparencyGrid: true
                 objectName: "editorSlideRenderer"
                 elements: viewport.host.doc.elements
+                backgroundFill: viewport.host.doc.backgroundFill
                 backgroundColor: viewport.host.doc.backgroundColor
                 ambientOpacity: viewport.host.doc.ambientOpacity
                 playing: viewport.host.videosPlaying
@@ -109,8 +161,7 @@ Item {
                 enabled: !viewport.host.handTool
 
                 onClicked: {
-                    richEditor.finish();
-                    viewport.host.doc.selected = -1;
+                    viewport.host.selectCanvasSettings();
                 }
             }
 
@@ -164,7 +215,10 @@ Item {
                         drag.minimumY: 0
                         drag.maximumY: 1080 - objectBlock.height
 
-                        onPressed: viewport.host.doc.selected = objectBlock.index
+                        onPressed: {
+                            viewport.forceActiveFocus();
+                            viewport.host.doc.selected = objectBlock.index;
+                        }
                         onPositionChanged: if (drag.active)
                                                objectBlock.previewGeometry()
                         onDoubleClicked: {
@@ -190,66 +244,14 @@ Item {
                         }
                         onCanceled: editorRenderer.gestureId = ""
                     }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: -6
-                        visible: objectBlock.selected
-                        color: "transparent"
-                        border.color: "#CC8FE5"
-                        border.width: 1.3 / (viewport.fitScale * viewport.host.zoom)
-                    }
-
-                    Repeater {
-                        model: objectBlock.selected ? 4 : 0
-
-                        delegate: Rectangle {
-                            required property int index
-                            property real handleSize: 7 / (viewport.fitScale * viewport.host.zoom)
-
-                            width: handleSize
-                            height: handleSize
-                            x: (index % 2 ? objectBlock.width + 6 : -6) - width / 2
-                            y: (index > 1 ? objectBlock.height + 6 : -6) - height / 2
-                            color: "#F7F2FA"
-                            border.color: "#A865C7"
-                            border.width: 1 / (viewport.fitScale * viewport.host.zoom)
-                        }
-                    }
-
-                    Rectangle {
-                        visible: objectBlock.selected && !objectBlock.modelData.locked
-                        width: 22 / (viewport.fitScale * viewport.host.zoom)
-                        height: width
-                        x: parent.width - width / 2
-                        y: parent.height - height / 2
-                        color: "transparent"
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.SizeFDiagCursor
-
-                            onPositionChanged: mouse => {
-                                if (pressed) {
-                                    let p = mapToItem(artboard, mouse.x, mouse.y);
-                                    objectBlock.width = Math.max(80, Math.min(1920 - objectBlock.x,
-                                                                              p.x - objectBlock.x));
-                                    objectBlock.height = Math.max(40, Math.min(1080 - objectBlock.y,
-                                                                               p.y - objectBlock.y));
-                                    objectBlock.previewGeometry();
-                                }
-                            }
-                            onReleased: {
-                                viewport.host.doc.updateElement(objectBlock.index, {
-                                                                    width: objectBlock.width,
-                                                                    height: objectBlock.height
-                                                                });
-                                editorRenderer.gestureId = "";
-                            }
-                            onCanceled: editorRenderer.gestureId = ""
-                        }
-                    }
                 }
+            }
+
+            EditorResizeHandles {
+                host: viewport.host
+                renderer: editorRenderer
+                coordinateSpace: artboard
+                canvasScale: viewport.fitScale * viewport.host.zoom
             }
         }
     }

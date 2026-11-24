@@ -134,6 +134,7 @@ private:
     QElapsedTimer m_elapsed;
     QImage m_lastFrame;
     QSize m_size;
+    bool m_stopRequested = false;
     bool m_active = false, m_diagnostic = true, m_blackout = false, m_overlayOnly = false;
     int m_targetFps = 30;
     qint64 m_durationMs = 0;

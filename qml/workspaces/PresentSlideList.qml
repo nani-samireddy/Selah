@@ -7,13 +7,65 @@ Rectangle {
     id: rail
 
     required property var controller
+    property var expanded: ({})
+    readonly property var groups: {
+        let result = [];
+        for (const slide of controller.liveOrder) {
+            const key = slide.itemId || "presentation";
+            let group = result[result.length - 1];
+            if (!group || group.id !== key) {
+                group = {
+                    id: key,
+                    title: slide.itemTitle || "Presentation",
+                    slides: []
+                };
+                result.push(group);
+            }
+            group.slides.push(slide);
+        }
+        return result;
+    }
+    readonly property int activeSlide: controller.liveIndex
 
     signal chosen(int index)
     signal prepareRequested
 
+    function revealCurrent() {
+        const group = groups.find(group => group.slides.some(slide => slide.index
+                                                                      === controller.liveIndex));
+        if (group) {
+            let next = Object.assign({}, expanded);
+            next[group.id] = true;
+            expanded = next;
+            Qt.callLater(scrollToCurrent);
+        }
+    }
+
+    function scrollToCurrent() {
+        const groupIndex = groups.findIndex(group => group.slides.some(slide => slide.index
+                                                                                === controller.liveIndex));
+        if (groupIndex < 0)
+            return;
+        order.positionViewAtIndex(groupIndex, ListView.Contain);
+        const row = order.itemAtIndex(groupIndex);
+        if (!row)
+            return;
+        const childIndex = groups[groupIndex].slides.findIndex(slide => slide.index
+                                                                        === controller.liveIndex);
+        const top = row.y + 49 + childIndex * 43;
+        if (top < order.contentY)
+            order.contentY = top;
+        else if (top + 40 > order.contentY + order.height)
+            order.contentY = top + 40 - order.height;
+    }
+
+    objectName: "presentServiceRail"
     color: LibraryStyle.panel
     radius: 10
     border.color: LibraryStyle.divider
+
+    onGroupsChanged: revealCurrent()
+    onActiveSlideChanged: revealCurrent()
 
     ColumnLayout {
         anchors.fill: parent
@@ -21,20 +73,15 @@ Rectangle {
         spacing: 12
 
         RowLayout {
-            StudioIcon {
-                name: "list-ordered"
-            }
-
             Text {
-                text: "Service slides"
+                text: "Service order"
                 color: LibraryStyle.text
-                font.family: LibraryStyle.fontFamily
                 font.pixelSize: 13
                 Layout.fillWidth: true
             }
 
             Text {
-                text: rail.controller.liveCount
+                text: rail.groups.length
                 color: LibraryStyle.muted
                 font.pixelSize: 11
             }
@@ -47,81 +94,129 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 4
-            model: rail.controller.liveOrder
-            currentIndex: rail.controller.liveIndex
+            spacing: 6
+            model: rail.groups
+            currentIndex: rail.groups.findIndex(group => group.slides.some(slide => slide.index
+                                                                                    === rail.controller.liveIndex))
 
             ScrollBar.vertical: ScrollBar {
             }
-            delegate: ItemDelegate {
-                id: row
+            delegate: Column {
+                id: groupRow
 
                 required property var modelData
-                required property int index
-                readonly property bool current: index === rail.controller.liveIndex
+                readonly property bool opened: !!rail.expanded[modelData.id]
+                readonly property bool containsLive: modelData.slides.some(slide => slide.index
+                                                                                    === rail.controller.liveIndex)
 
-                width: ListView.view.width - 6
-                height: 54
-                padding: 9
-                Accessible.name: "Present slide " + (index + 1) + ": " + modelData.title
+                objectName: "liveServiceGroup_" + modelData.id
+                width: order.width - 6
+                spacing: 3
 
-                background: Rectangle {
-                    radius: 7
-                    color: row.current ? LibraryStyle.tone("#333333") : row.hovered
-                                         ? LibraryStyle.hover : "transparent"
-                    border.color: row.current ? LibraryStyle.tone("#606060") : "transparent"
-                }
-                contentItem: RowLayout {
-                    spacing: 9
+                ItemDelegate {
+                    objectName: "liveServiceToggle_" + groupRow.modelData.id
+                    width: groupRow.width
+                    height: 46
+                    padding: 8
+                    Accessible.name: (groupRow.opened ? "Collapse " : "Expand ")
+                                     + groupRow.modelData.title
 
-                    Text {
-                        text: String(row.index + 1).padStart(2, "0")
-                        color: row.current ? LibraryStyle.text : LibraryStyle.muted
-                        font.pixelSize: 10
-                        Layout.preferredWidth: 20
+                    background: Rectangle {
+                        radius: 6
+                        color: groupRow.containsLive ? LibraryStyle.hover : LibraryStyle.field
                     }
+                    contentItem: RowLayout {
+                        spacing: 6
 
-                    ColumnLayout {
-                        spacing: 4
+                        StudioIcon {
+                            name: groupRow.opened ? "chevron-down" : "chevron-right"
+                        }
 
                         Text {
-                            text: row.modelData.title
+                            text: groupRow.modelData.title
                             color: LibraryStyle.text
-                            font.family: LibraryStyle.fontFamily
                             font.pixelSize: 12
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
 
                         Text {
-                            text: row.modelData.itemTitle || "Presentation"
+                            text: groupRow.modelData.slides.length
                             color: LibraryStyle.muted
                             font.pixelSize: 10
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
                         }
+                    }
+
+                    onClicked: {
+                        let next = Object.assign({}, rail.expanded);
+                        next[groupRow.modelData.id] = !groupRow.opened;
+                        rail.expanded = next;
                     }
                 }
 
-                onClicked: rail.chosen(index)
+                Repeater {
+                    model: groupRow.opened ? groupRow.modelData.slides : []
+
+                    ItemDelegate {
+                        id: child
+
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: modelData.index
+                                                        === rail.controller.liveIndex
+
+                        objectName: "liveServiceSlide_" + modelData.index
+                        width: groupRow.width - 16
+                        x: 16
+                        height: 40
+                        padding: 8
+                        Accessible.name: "Present slide " + (modelData.index + 1) + ": "
+                                         + modelData.title
+
+                        background: Rectangle {
+                            radius: 5
+                            color: child.current ? LibraryStyle.hover : child.hovered
+                                                   ? LibraryStyle.field : "transparent"
+                            border.color: child.current ? LibraryStyle.focus : "transparent"
+                        }
+                        contentItem: RowLayout {
+                            Text {
+                                text: String(child.index + 1).padStart(2, "0")
+                                color: LibraryStyle.muted
+                                font.pixelSize: 10
+                                Layout.preferredWidth: 20
+                            }
+
+                            Text {
+                                text: child.modelData.title
+                                color: LibraryStyle.text
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        onClicked: rail.chosen(modelData.index)
+                    }
+                }
             }
 
-            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+            onCurrentIndexChanged: Qt.callLater(() => positionViewAtIndex(currentIndex,
+                                                                          ListView.Contain))
 
             Text {
                 anchors.centerIn: parent
                 width: parent.width - 16
                 visible: !rail.controller.liveCount
-                text: "No program is live.\nChoose a program to begin."
+                text: "No program is loaded.\nChoose a program to begin."
                 color: LibraryStyle.muted
-                font.pixelSize: 12
-                lineHeight: 1.5
                 horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: 12
                 wrapMode: Text.Wrap
             }
         }
 
-        StudioButton {
+        LibraryButton {
             text: "Programs"
             iconName: "list-ordered"
             Layout.fillWidth: true

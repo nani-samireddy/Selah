@@ -1,4 +1,5 @@
 #pragma once
+#include <QElapsedTimer>
 #include <QHash>
 #include <QObject>
 #include <QPointer>
@@ -12,6 +13,11 @@
 // Owns display routing and the immutable live snapshot, independent of editor drafts.
 class OutputManager final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(bool transitioning READ transitioning NOTIFY transitionChanged)
+    Q_PROPERTY(int transitionEffect READ transitionEffect NOTIFY transitionChanged)
+    Q_PROPERTY(QVariantMap audienceFill READ audienceFill NOTIFY liveChanged)
+    Q_PROPERTY(QVariantMap nextFill READ nextFill NOTIFY liveChanged)
+    Q_PROPERTY(double transitionProgress READ transitionProgress NOTIFY transitionChanged)
     Q_PROPERTY(QVariantList liveOrder READ liveOrder NOTIFY snapshotChanged)
     Q_PROPERTY(QString snapshotId READ snapshotId NOTIFY snapshotChanged)
     Q_PROPERTY(QVariantList displays READ displays NOTIFY displaysChanged)
@@ -58,6 +64,18 @@ public:
     explicit OutputManager(QObject *parent = nullptr);
     QVariantList displays() const;
     QVariantList liveOrder() const;
+
+    int transitionEffect() const { return m_transitionEffect; }
+
+    QVariantMap audienceFill() const {
+        return defaultImageShowing() ? QVariantMap {} : liveSlide().value("backgroundFill").toMap();
+    }
+
+    QVariantMap nextFill() const { return liveSlide(1).value("backgroundFill").toMap(); }
+
+    bool transitioning() const { return m_transitionTimer.isActive(); }
+
+    double transitionProgress() const { return m_transitionProgress; }
 
     QString status() const { return m_status; }
 
@@ -165,6 +183,7 @@ public:
     Q_INVOKABLE bool route(const QString &role, const QString &displayId);
     Q_INVOKABLE void preview(const QString &role);
     Q_INVOKABLE void stop(const QString &role);
+    Q_INVOKABLE void stopPresentation();
     Q_INVOKABLE void blackout(const QString &role, bool value);
     Q_INVOKABLE void clearText(bool value);
     Q_INVOKABLE void takeLive(
@@ -174,12 +193,17 @@ public:
     Q_INVOKABLE void stopCountdown();
     static int selfTest();
 signals:
+    void transitionStarting();
+    void transitionChanged();
     void displaysChanged();
     void stateChanged();
     void liveChanged();
     void snapshotChanged();
 
 private:
+    void initializeTransitions();
+    void prepareTransition(const QVariantMap &target);
+    void finishTransition();
     static QString screenId(QScreen *screen);
     static QString primaryText(const QVariantMap &slide);
     QVariantMap liveSlide(int offset = 0) const;
@@ -198,5 +222,9 @@ private:
     QString m_stageMessage, m_liveSource, m_snapshotId;
     QString m_defaultImageSource, m_defaultImageName, m_defaultImageFit = "contain";
     QVariantList m_defaultImageLive;
-    QTimer m_timer;
+    QTimer m_timer, m_transitionTimer;
+    QElapsedTimer m_transitionClock;
+    double m_transitionProgress = 1;
+    int m_transitionDuration = 300;
+    int m_transitionEffect = 0;
 };

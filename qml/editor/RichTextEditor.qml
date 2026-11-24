@@ -66,6 +66,9 @@ TextEdit {
         text = textElement.richText;
         TextFormatting.hydrate(textDocument, textElement);
         settingText = false;
+        // Store Qt's canonical document form now, so finishing the edit does not
+        // add a second history entry for the same visible formatting change.
+        textElement = currentElement();
         host.doc.updateElement(host.doc.selected, textElement);
         select(from, to);
         rememberSelection();
@@ -108,6 +111,22 @@ TextEdit {
     onSelectionEndChanged: rememberSelection()
     onTextChanged: if (!settingText && !committing && sessionOpen)
                        commit()
+    // Canvas text shares the document's formatting history; TextEdit's own
+    // history can otherwise consume Cmd/Ctrl+Z after programmatic formatting.
+    Keys.onShortcutOverride: event => {
+        if (event.matches(StandardKey.Undo) || event.matches(StandardKey.Redo))
+            event.accepted = true;
+    }
+    Keys.onPressed: event => {
+        if (event.matches(StandardKey.Undo)) {
+            event.accepted = true;
+            host.undoEditor();
+        } else if (event.matches(StandardKey.Redo)) {
+            event.accepted = true;
+            host.redoEditor();
+        } else
+            event.accepted = false;
+    }
     Keys.onEscapePressed: {
         finish();
         host.contentItem.forceActiveFocus();

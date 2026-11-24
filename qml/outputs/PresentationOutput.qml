@@ -24,15 +24,11 @@ Window {
         x: (output.width - width * scale) / 2
         y: (output.height - height * scale) / 2
 
-        SlideRenderer {
+        AudienceRenderer {
             visible: output.role === "audience"
-            elements: output.controller.audienceElements
-            backgroundColor: output.controller.audienceBackground
-            ambientOpacity: output.controller.audienceAmbientOpacity
-            playing: output.visible && output.controller.playing && output.role === "audience"
-            audible: output.visible && output.controller.audioEnabled && output.role === "audience"
-            showErrors: false
-            clearText: output.controller.textCleared
+            active: output.visible && output.role === "audience"
+            controller: output.controller
+            audible: output.controller.audioEnabled
             videoEnabled: output.role === "audience"
         }
 

@@ -6,9 +6,11 @@ Rectangle {
     id: transport
 
     required property var controller
+    required property bool presenting
 
     signal navigate(int delta)
     signal outputsRequested
+    signal stopRequested
 
     objectName: "presentTransport"
     implicitHeight: 56
@@ -22,6 +24,7 @@ Rectangle {
         spacing: 7
 
         StudioButton {
+            objectName: "outputPreviousButton"
             text: "Previous"
             iconName: "chevron-left"
             enabled: transport.controller.liveIndex > 0
@@ -30,6 +33,7 @@ Rectangle {
         }
 
         StudioButton {
+            objectName: "outputNextButton"
             text: "Next slide"
             iconName: "chevron-right"
             accented: true
@@ -53,6 +57,7 @@ Rectangle {
         }
 
         StudioButton {
+            objectName: "outputPlayButton"
             iconName: transport.controller.playing ? "pause" : "play"
             hint: transport.controller.playing ? "Pause media" : "Play media"
             enabled: transport.controller.liveCount > 0 && !transport.controller.defaultImageShowing
@@ -61,7 +66,18 @@ Rectangle {
         }
 
         StudioButton {
-            text: "Clear text"
+            objectName: "outputAudioButton"
+            text: transport.controller.audioEnabled ? "Audio on" : "Audio off"
+            checked: transport.controller.audioEnabled
+            hint: transport.controller.audioEnabled ? "Mute presentation audio" :
+                                                      "Enable presentation audio"
+
+            onClicked: transport.controller.audioEnabled = !transport.controller.audioEnabled
+        }
+
+        StudioButton {
+            objectName: "outputClearTextButton"
+            text: transport.controller.textCleared ? "Restore text" : "Clear text"
             iconName: "type"
             checked: transport.controller.textCleared
             enabled: transport.controller.liveCount > 0 && !transport.controller.defaultImageShowing
@@ -70,6 +86,7 @@ Rectangle {
         }
 
         StudioButton {
+            objectName: "outputAudienceBlackout"
             text: transport.controller.audienceBlack ? "Restore" : "Blackout"
             iconName: transport.controller.audienceBlack ? "eye" : "eye-off"
             checked: transport.controller.audienceBlack
@@ -84,6 +101,18 @@ Rectangle {
             hint: "Output settings"
 
             onClicked: transport.outputsRequested()
+        }
+
+        StudioButton {
+            objectName: "stopPresentingButton"
+            text: "Stop presenting"
+            iconName: "square"
+            destructive: true
+            enabled: transport.presenting
+            Layout.leftMargin: 8
+            hint: "Stop audience, stage and NDI outputs"
+
+            onClicked: transport.stopRequested()
         }
     }
 }

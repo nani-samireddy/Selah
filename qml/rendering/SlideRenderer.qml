@@ -6,6 +6,7 @@ Item {
     id: renderer
 
     property var elements: []
+    property var backgroundFill: ({})
     property color backgroundColor: "#54435F"
     property real ambientOpacity: 0.85
     property bool playing: false
@@ -14,6 +15,7 @@ Item {
     property bool showErrors: true
     property bool clearText: false
     property bool transparentBackground: false
+    property bool showTransparencyGrid: false
     property bool textOnly: false
     property string suppressedId: ""
     property string gestureId: ""
@@ -81,19 +83,34 @@ Item {
         dynamicRoles: true
     }
 
-    Rectangle {
+    TransparencyGrid {
         anchors.fill: parent
-        color: renderer.backgroundColor
-        visible: !renderer.transparentBackground
+        visible: renderer.showTransparencyGrid && (renderer.backgroundColor.a < 1 || ["linear",
+                                                                                      "radial"].includes(
+                                                       renderer.backgroundFill.type)) &&
+                 !renderer.transparentBackground
     }
 
-    Image {
+    Item {
         anchors.fill: parent
-        source: "../assets/ambient.svg"
-        opacity: renderer.ambientOpacity
         visible: !renderer.transparentBackground
-        sourceSize.width: 1920
-        sourceSize.height: 1080
+        opacity: renderer.backgroundColor.a
+        // Flatten semi-transparent fills so the ambient pattern shares their alpha.
+        layer.enabled: renderer.backgroundColor.a > 0 && renderer.backgroundColor.a < 1
+
+        CanvasFill {
+            anchors.fill: parent
+            definition: renderer.backgroundFill
+            baseColor: renderer.backgroundColor
+        }
+
+        Image {
+            anchors.fill: parent
+            source: "../assets/ambient.svg"
+            opacity: renderer.ambientOpacity
+            sourceSize.width: 1920
+            sourceSize.height: 1080
+        }
     }
 
     Item {

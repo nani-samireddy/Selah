@@ -7,8 +7,8 @@ ColumnLayout {
     id: itemEditor
 
     required property var programView
-    property alias titleText: itemTitle.text
-    property alias notesText: itemNotes.text
+    readonly property string titleText: programView.store.selectedItem.title || ""
+    property alias notesText: itemSettings.notesText
 
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -32,14 +32,6 @@ ColumnLayout {
             font.pixelSize: 11
             color: LibraryStyle.tone("#999999")
         }
-
-        StudioButton {
-            text: itemEditor.programView.workspaceMode ? "Present from here" : "Take slide live"
-            accented: true
-            enabled: itemEditor.programView.store.selectedSlides.length > 0
-
-            onClicked: itemEditor.programView.takeLive()
-        }
     }
 
     Rectangle {
@@ -56,6 +48,7 @@ ColumnLayout {
         clip: true
 
         SlideRenderer {
+            showTransparencyGrid: true
             width: 1920
             height: 1080
             scale: Math.min(draftFrame.width / 1920, draftFrame.height / 1080)
@@ -63,6 +56,7 @@ ColumnLayout {
             x: (draftFrame.width - width * scale) / 2
             y: (draftFrame.height - height * scale) / 2
             elements: itemEditor.programView.previewSlide.elements || []
+            backgroundFill: itemEditor.programView.previewSlide.backgroundFill || ({})
             backgroundColor: itemEditor.programView.previewSlide.background || LibraryStyle.tone(
                                  "#111111")
             ambientOpacity: itemEditor.programView.previewSlide.ambientOpacity === undefined ? 0.5 :
@@ -110,6 +104,7 @@ ColumnLayout {
             clip: true
 
             SlideRenderer {
+                showTransparencyGrid: true
                 x: 3
                 y: 3
                 width: 1920
@@ -117,6 +112,7 @@ ColumnLayout {
                 scale: 106 / 1920
                 transformOrigin: Item.TopLeft
                 elements: slideThumb.modelData.elements || []
+                backgroundFill: slideThumb.modelData.backgroundFill || ({})
                 backgroundColor: slideThumb.modelData.background
                 ambientOpacity: slideThumb.modelData.ambientOpacity === undefined ? 0.5 :
                                                                                     slideThumb.modelData.ambientOpacity
@@ -131,180 +127,13 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
-        Layout.fillWidth: true
+    ProgramItemSettings {
+        id: itemSettings
 
-        LibraryField {
-            id: itemTitle
-
-            objectName: "programItemTitle"
-            Layout.fillWidth: true
-            enabled: itemEditor.programView.store.selected >= 0
-            placeholderText: "Item title"
-
-            onTextEdited: {
-                itemEditor.programView.markItemDirty();
-            }
-        }
-
-        StudioButton {
-            text: "Edit slides"
-            enabled: itemEditor.programView.store.selected >= 0
-
-            onClicked: {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.editRequested(itemEditor.programView.store.editorSlides,
-                                                     itemEditor.programView.store.selectedItem.id);
-                itemEditor.programView.close();
-            }
-        }
-
-        StudioButton {
-            text: "Update from editor"
-            visible: itemEditor.programView.editingItemId.length > 0
-                     && itemEditor.programView.editingItemId
-                     === itemEditor.programView.store.selectedItem.id
-
-            onClicked: {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.store.updateSelectedSlides(
-                            itemEditor.programView.document.slides);
-            }
-        }
+        programView: itemEditor.programView
     }
 
-    RowLayout {
-        visible: itemEditor.programView.store.selectedItem.kind === "song"
-                 || itemEditor.programView.store.selectedItem.kind === "scripture"
-
-        Text {
-            text: "Style"
-            color: LibraryStyle.tone("#999999")
-            font.pixelSize: 11
-        }
-
-        LibraryCombo {
-            Layout.preferredWidth: 155
-            model: [
-                {
-                    label: "Original",
-                    id: "original"
-                },
-                {
-                    label: "Midnight",
-                    id: "midnight"
-                },
-                {
-                    label: "Warm paper",
-                    id: "paper"
-                }
-            ]
-            textRole: "label"
-            currentIndex: Math.max(0, model.findIndex(s => s.id
-                                                           === itemEditor.programView.store.selectedItem.template))
-
-            onActivated: index => {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.store.setTemplate(model[index].id);
-            }
-        }
-
-        Text {
-            visible: itemEditor.programView.store.selectedItem.kind === "song"
-            text: "Arrangement"
-            color: LibraryStyle.tone("#999999")
-            font.pixelSize: 11
-        }
-
-        LibraryCombo {
-            Layout.fillWidth: true
-            visible: itemEditor.programView.store.selectedItem.kind === "song"
-            model: itemEditor.programView.store.selectedItem.song?.arrangements || []
-            textRole: "name"
-            currentIndex: itemEditor.programView.store.selectedItem.song?.activeArrangement || 0
-
-            onActivated: index => {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.store.setArrangement(index);
-                itemEditor.programView.previewIndex = 0;
-            }
-        }
-    }
-
-    RowLayout {
-        visible: itemEditor.programView.store.layoutKind.length > 0
-
-        Text {
-            text: "Layout"
-            color: LibraryStyle.tone("#999999")
-            font.pixelSize: 11
-        }
-
-        Text {
-            text: itemEditor.programView.store.selectedItem.layoutTemplate?.name
-                  || "Automatic layout"
-            color: LibraryStyle.tone("#BBBBBB")
-            font.pixelSize: 11
-            Layout.fillWidth: true
-            elide: Text.ElideRight
-        }
-
-        StudioButton {
-            text: "Choose template"
-
-            onClicked: {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.templatesRequested();
-            }
-        }
-
-        StudioButton {
-            text: "Reset"
-            visible: !!itemEditor.programView.store.selectedItem.layoutTemplate?.id
-
-            onClicked: {
-                itemEditor.programView.flushItem();
-                itemEditor.programView.store.clearLayout();
-            }
-        }
-    }
-
-    Text {
-        text: "SPEAKER NOTES · THIS ITEM"
-        font.pixelSize: 10
-        font.letterSpacing: 1
-        color: LibraryStyle.tone("#888888")
-    }
-
-    ScrollView {
-        Layout.fillWidth: true
+    Item {
         Layout.fillHeight: true
-        Layout.minimumHeight: 45
-        clip: true
-
-        TextArea {
-            id: itemNotes
-
-            objectName: "programItemNotes"
-            enabled: itemEditor.programView.store.selected >= 0
-            placeholderText: "Private notes for the speaker…"
-            placeholderTextColor: LibraryStyle.tone("#777777")
-            color: LibraryStyle.tone("#DDDDDD")
-            font.pixelSize: 12
-            padding: 10
-            wrapMode: TextEdit.Wrap
-            selectByMouse: true
-
-            background: Rectangle {
-                color: LibraryStyle.tone("#222222")
-                border.color: itemNotes.activeFocus ? LibraryStyle.tone("#777777") :
-                                                      LibraryStyle.tone("#373737")
-                radius: 6
-            }
-
-            onTextChanged: if (!itemEditor.programView.loading && activeFocus) {
-                               itemEditor.programView.markItemDirty();
-                           }
-        }
     }
 }

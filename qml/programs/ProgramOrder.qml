@@ -8,19 +8,59 @@ ColumnLayout {
 
     required property var programView
 
-    Layout.preferredWidth: 270
-    Layout.maximumWidth: 290
-    Layout.minimumWidth: 230
+    Layout.preferredWidth: 306
+    Layout.maximumWidth: 330
+    Layout.minimumWidth: 296
     Layout.fillHeight: true
     spacing: 10
 
     RowLayout {
+        spacing: 4
+
         Text {
             text: "SERVICE ORDER"
             font.pixelSize: 10
             font.letterSpacing: 1
             color: LibraryStyle.tone("#888888")
             Layout.fillWidth: true
+        }
+
+        LibraryButton {
+            implicitWidth: 28
+            iconName: "chevron-up"
+            hint: "Move item up"
+            enabled: orderPane.programView.store.selected > 0
+
+            onClicked: {
+                orderPane.programView.flushItem();
+                orderPane.programView.store.moveItem(-1);
+            }
+        }
+
+        LibraryButton {
+            implicitWidth: 28
+            iconName: "chevron-down"
+            hint: "Move item down"
+            enabled: orderPane.programView.store.selected >= 0
+                     && orderPane.programView.store.selected
+                     < orderPane.programView.store.items.length - 1
+
+            onClicked: {
+                orderPane.programView.flushItem();
+                orderPane.programView.store.moveItem(1);
+            }
+        }
+
+        LibraryButton {
+            implicitWidth: 28
+            iconName: "trash-2"
+            hint: "Remove item"
+            enabled: orderPane.programView.store.selected >= 0
+
+            onClicked: {
+                orderPane.programView.flushItem();
+                orderPane.programView.store.removeSelected();
+            }
         }
 
         StudioButton {
@@ -62,7 +102,7 @@ ColumnLayout {
                 text: "Current editor presentation"
 
                 onTriggered: orderPane.programView.store.addPresentation(
-                                 orderPane.programView.document.slides, "Custom presentation")
+                                 orderPane.programView.document.slides, "Presentation")
             }
 
             MenuItem {
@@ -119,8 +159,8 @@ ColumnLayout {
                     spacing: 10
 
                     Item {
-                        width: 28
-                        height: parent.height
+                        width: 36
+                        height: orderItem.availableHeight
 
                         StudioIcon {
                             anchors.left: parent.left
@@ -134,7 +174,9 @@ ColumnLayout {
 
                         Text {
                             x: 13
-                            y: 2
+                            width: 20
+                            anchors.verticalCenter: parent.verticalCenter
+                            horizontalAlignment: Text.AlignHCenter
                             text: (orderItem.index + 1).toString().padStart(2, "0")
                             color: orderItem.isLive ? "#ABD3BC" : LibraryStyle.tone("#777777")
                             font.pixelSize: 10
@@ -168,7 +210,7 @@ ColumnLayout {
                     Column {
                         id: itemCopy
 
-                        width: parent.width - 38
+                        width: parent.width - 46
                         spacing: 4
 
                         Text {
@@ -216,45 +258,6 @@ ColumnLayout {
             z: 20
             view: orderList
             programView: orderPane.programView
-        }
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-
-        StudioButton {
-            text: "Up"
-            enabled: orderPane.programView.store.selected > 0
-            Layout.fillWidth: true
-
-            onClicked: {
-                orderPane.programView.flushItem();
-                orderPane.programView.store.moveItem(-1);
-            }
-        }
-
-        StudioButton {
-            text: "Down"
-            enabled: orderPane.programView.store.selected >= 0
-                     && orderPane.programView.store.selected
-                     < orderPane.programView.store.items.length - 1
-            Layout.fillWidth: true
-
-            onClicked: {
-                orderPane.programView.flushItem();
-                orderPane.programView.store.moveItem(1);
-            }
-        }
-
-        StudioButton {
-            text: "Remove"
-            enabled: orderPane.programView.store.selected >= 0
-            Layout.fillWidth: true
-
-            onClicked: {
-                orderPane.programView.flushItem();
-                orderPane.programView.store.removeSelected();
-            }
         }
     }
 }

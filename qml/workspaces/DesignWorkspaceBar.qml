@@ -23,14 +23,23 @@ Rectangle {
         anchors.rightMargin: 24
         spacing: 10
 
+        StudioButton {
+            objectName: "editorLibraryNavigation"
+            text: bar.host.templateMode ? "Templates" : "Presentations"
+            iconName: "chevron-left"
+            quiet: true
+            hint: "Return to library"
+
+            onClicked: bar.host.browseLibrary(bar.host.templateMode ? "templates" : "custom")
+        }
+
         Column {
             spacing: 3
 
             Text {
                 text: bar.host.templateMode ? "Template design" : bar.host.programEditingItem
                                               ? "Program item design" :
-                                                bar.host.customPresentationTitle
-                                                || "Custom presentation"
+                                                bar.host.customPresentationTitle || "Presentation"
                 color: LibraryStyle.tone("#DEDEDE")
                 font.pixelSize: 12
             }
@@ -47,6 +56,30 @@ Rectangle {
         }
 
         StudioButton {
+            objectName: "editorUndoButton"
+            text: bar.width >= 1360 ? "Undo" : ""
+            iconName: "undo-2"
+            implicitWidth: text.length ? 74 : 32
+            enabled: bar.host.doc.canUndo
+            hint: Qt.platform.os === "osx" ? "Undo (⌘Z)" : "Undo (Ctrl+Z)"
+            Accessible.name: "Undo"
+
+            onClicked: bar.host.undoEditor()
+        }
+
+        StudioButton {
+            objectName: "editorRedoButton"
+            text: bar.width >= 1360 ? "Redo" : ""
+            iconName: "redo-2"
+            implicitWidth: text.length ? 74 : 32
+            enabled: bar.host.doc.canRedo
+            hint: Qt.platform.os === "osx" ? "Redo (⇧⌘Z)" : "Redo"
+            Accessible.name: "Redo"
+
+            onClicked: bar.host.redoEditor()
+        }
+
+        StudioButton {
             text: "Update program item"
             visible: bar.host.programEditingItem.length > 0
             enabled: bar.host.programEditingItem === bar.host.programs.selectedItem.id
@@ -54,7 +87,7 @@ Rectangle {
             onClicked: {
                 if (bar.host.programs.updateSelectedSlides(bar.host.doc.slides)) {
                     bar.host.notify("Program item updated");
-                    bar.host.showPrograms();
+                    bar.host.showProgramEditor();
                 }
             }
         }

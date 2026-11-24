@@ -551,84 +551,144 @@ Popup {
                     width: songDetailsScroll.availableWidth
                     spacing: LibraryStyle.fieldGap
 
-                    RowLayout {
-                        LibraryField {
-                            id: titleField
-
-                            Layout.fillWidth: true
-                            placeholderText: "Song title"
-                            font.pixelSize: 14
-
-                            onTextEdited: panel.changed()
-                        }
-
-                        Text {
-                            font.family: LibraryStyle.fontFamily
-                            text: panel.dirty ? "Unsaved" : panel.draft.id ? "Saved" : "New song"
-                            color: LibraryStyle.tone("#929292")
-                            font.pixelSize: 11
-                        }
-
-                        LibraryButton {
-                            text: "Save song"
-
-                            onClicked: panel.save()
-                        }
-                    }
-
-                    RowLayout {
-                        SongLanguageCombo {
-                            id: language
-
-                            objectName: "songPrimaryLanguage"
-                            Layout.fillWidth: true
-                            value: "English"
-                            recent: songPreferences.recentLanguages
-
-                            onChosen: panel.rememberLanguages()
-                        }
-
-                        LibraryButton {
-                            text: panel.detailsOpen ? "Hide details" : "Details"
-                            quiet: true
-
-                            onClicked: panel.detailsOpen = !panel.detailsOpen
-                        }
-
-                        SongLanguageCombo {
-                            id: translation
-
-                            objectName: "songSecondaryLanguage"
-                            Layout.fillWidth: true
-                            optional: true
-                            value: ""
-                            recent: songPreferences.recentLanguages
-
-                            onChosen: panel.rememberLanguages()
-                        }
-                    }
-
-                    RowLayout {
-                        visible: panel.detailsOpen
-
-                        LibraryField {
-                            id: credits
-
-                            Layout.fillWidth: true
-                            placeholderText: "Author / copyright / licence"
-
-                            onTextEdited: panel.changed()
-                        }
-                    }
-
-                    SongTagEditor {
-                        id: tagEditor
-
-                        objectName: "songTagEditor"
+                    Rectangle {
                         Layout.fillWidth: true
-                        library: panel.library
+                        implicitHeight: metadata.implicitHeight + 24
+                        color: LibraryStyle.tone("#1B1B1B")
+                        border.color: LibraryStyle.border
+                        radius: 8
 
-                        onEdited: panel.changed()
+                        ColumnLayout {
+                            id: metadata
+
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 10
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                LibraryField {
+                                    id: titleField
+
+                                    objectName: "songTitleInput"
+                                    Layout.fillWidth: true
+                                    placeholderText: "Song title"
+                                    Accessible.name: "Song title"
+                                    font.pixelSize: 14
+
+                                    onTextEdited: panel.changed()
+                                }
+
+                                LibraryCaption {
+                                    text: panel.dirty ? "Unsaved changes" : panel.draft.id
+                                                        ? "Saved" : "New song"
+                                }
+
+                                LibraryButton {
+                                    objectName: "saveSongButton"
+                                    text: "Save song"
+                                    accented: true
+
+                                    onClicked: panel.save()
+                                }
+                            }
+
+                            GridLayout {
+                                Layout.fillWidth: true
+                                columns: metadata.width >= 480 ? 2 : 1
+                                columnSpacing: 12
+                                rowSpacing: 10
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 5
+
+                                    LibraryCaption {
+                                        text: "Primary language"
+                                    }
+
+                                    SongLanguageCombo {
+                                        id: language
+
+                                        objectName: "songPrimaryLanguage"
+                                        Layout.fillWidth: true
+                                        value: "English"
+                                        recent: songPreferences.recentLanguages
+
+                                        onChosen: panel.rememberLanguages()
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 5
+
+                                    LibraryCaption {
+                                        text: "Translation language"
+                                    }
+
+                                    SongLanguageCombo {
+                                        id: translation
+
+                                        objectName: "songSecondaryLanguage"
+                                        Layout.fillWidth: true
+                                        optional: true
+                                        value: ""
+                                        recent: songPreferences.recentLanguages
+
+                                        onChosen: panel.rememberLanguages()
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+
+                                SongTagEditor {
+                                    id: tagEditor
+
+                                    objectName: "songTagEditor"
+                                    Layout.fillWidth: true
+                                    library: panel.library
+
+                                    onEdited: panel.changed()
+                                }
+
+                                LibraryButton {
+                                    objectName: "songDetailsToggle"
+                                    Layout.alignment: Qt.AlignTop
+                                    text: panel.detailsOpen ? "Hide details" : "More details"
+                                    iconName: panel.detailsOpen ? "chevron-up" : "chevron-down"
+                                    quiet: true
+                                    hint: "Show or hide credits and section details"
+
+                                    onClicked: panel.detailsOpen = !panel.detailsOpen
+                                }
+                            }
+
+                            ColumnLayout {
+                                visible: panel.detailsOpen
+                                Layout.fillWidth: true
+                                spacing: 5
+
+                                LibraryCaption {
+                                    text: "Credits & copyright"
+                                }
+
+                                LibraryField {
+                                    id: credits
+
+                                    Layout.fillWidth: true
+                                    placeholderText: "Author / copyright / licence"
+                                    Accessible.name: "Credits and copyright"
+
+                                    onTextEdited: panel.changed()
+                                }
+                            }
+                        }
                     }
 
                     RowLayout {

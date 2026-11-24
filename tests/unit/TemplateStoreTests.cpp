@@ -6,6 +6,7 @@
 #include "TemplateDefinition.h"
 #include "TemplateStore.h"
 #include "TemplateTextLayout.h"
+#include <QColor>
 #include <QDebug>
 #include <QFile>
 #include <QJsonDocument>
@@ -71,6 +72,92 @@ int TemplateStore::selfTest() {
     TemplateStore library(nullptr, directory.path());
     if (!check(library.layouts().size() == 4, "Four starter layouts")) {
         return 1;
+    }
+    {
+        QTemporaryDir backgroundDirectory;
+        TemplateStore backgrounds(nullptr, backgroundDirectory.path());
+        EditorDocument background(nullptr, false);
+        background.replaceSlides({ backgrounds.layout("starter-bilingual")["slide"] });
+        const auto elements = background.elements();
+        background.setBackground("#335577");
+        background.setAmbientOpacity(0.5);
+        background.setBackgroundTransparent(true);
+        if (!check(QColor(background.background()).alpha() == 0 && background.elements() == elements
+                    && background.ambientOpacity() == 0.5,
+                "Transparent canvas preserves authored layers")) {
+            return 40;
+        }
+        background.undo();
+        if (!check(
+                QColor(background.background()) == QColor("#335577"), "Undo transparent canvas")) {
+            return 41;
+        }
+        background.redo();
+        const auto templateId = backgrounds.saveTemplate(
+            "Transparent test", "bilingual", background.slides().first().toMap());
+        QString error;
+        const auto pages
+            = TemplateComposer::songSlides(song(), 2, backgrounds.layout(templateId), &error);
+        if (!check(!templateId.isEmpty() && error.isEmpty() && !pages.isEmpty()
+                    && QColor(pages.first().toMap()["background"].toString()).alpha() == 0,
+                "Transparent template retains alpha when composed")) {
+            return 42;
+        }
+        const auto path
+            = QUrl::fromLocalFile(backgroundDirectory.filePath("transparent.churchtemplate"));
+        if (!backgrounds.exportTemplate(templateId, path) || !backgrounds.importTemplate(path)) {
+            return 43;
+        }
+        background.setBackgroundTransparent(false);
+        if (!check(QColor(background.background()) == QColor("#335577"),
+                "Solid mode restores the chosen color")) {
+            return 44;
+        }
+        const QVariantMap gradient { { "type", "linear" }, { "angle", 45 },
+            { "stops",
+                QVariantList { QVariantMap { { "color", "#FF0000" }, { "position", 0.0 } },
+                    QVariantMap { { "color", "#0000FF" }, { "position", 1.0 } } } } };
+        if (!background.setBackgroundFill(gradient)) {
+            return 46;
+        }
+        const auto gradientId = backgrounds.saveTemplate(
+            "Gradient test", "bilingual", background.slides().first().toMap());
+        const auto gradientPages
+            = TemplateComposer::songSlides(song(), 2, backgrounds.layout(gradientId), &error);
+        if (gradientPages.isEmpty()
+            || gradientPages.first().toMap().value("backgroundFill").toMap() != gradient) {
+            return 47;
+        }
+        background.undo();
+        if (!background.backgroundFill().isEmpty()) {
+            return 48;
+        }
+        background.redo();
+        if (background.backgroundFill() != gradient) {
+            return 49;
+        }
+        auto invalid = gradient;
+        invalid["angle"] = qQNaN();
+        auto invalidSlides = background.slides();
+        auto invalidSlide = invalidSlides.first().toMap();
+        invalidSlide["backgroundFill"] = invalid;
+        invalidSlides[0] = invalidSlide;
+        if (background.setBackgroundFill(invalid) || background.replaceSlides(invalidSlides)
+            || background.backgroundFill() != gradient) {
+            return 50;
+        }
+        const auto gradientFile
+            = QUrl::fromLocalFile(backgroundDirectory.filePath("gradient.churchdeck"));
+        EditorDocument reopened(nullptr, false);
+        if (!background.saveProject(gradientFile) || !reopened.openProject(gradientFile)
+            || reopened.backgroundFill() != gradient) {
+            return 51;
+        }
+        background.setBackground("#80335577");
+        if (!check(QColor(background.background()).alpha() == 128,
+                "Color alpha is stored losslessly")) {
+            return 45;
+        }
     }
     auto definition = library.layout("starter-bilingual");
     QString error;

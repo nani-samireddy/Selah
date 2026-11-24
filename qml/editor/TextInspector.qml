@@ -104,6 +104,8 @@ ColumnLayout {
         InspectorField {
             Layout.preferredWidth: 75
             caption: "px"
+            minimumValue: 8
+            maximumValue: 400
             value: inspector.value("fontSize", 36)
 
             onCommitted: value => inspector.set("fontSize", Number(value))
@@ -260,30 +262,14 @@ ColumnLayout {
         onActivated: inspector.set("textSizing", currentValue)
     }
 
-    RowLayout {
+    ColorField {
+        objectName: "textColorInput"
         Layout.fillWidth: true
+        label: "Text color"
+        value: inspector.value("color", "#FFFFFF")
 
-        Rectangle {
-            implicitWidth: 28
-            implicitHeight: 28
-            radius: 4
-            color: inspector.value("color", "#FFFFFF")
-            border.color: LibraryStyle.border
-
-            MouseArea {
-                anchors.fill: parent
-
-                onClicked: inspector.host.showTextPicker()
-            }
-        }
-
-        InspectorField {
-            Layout.fillWidth: true
-            numeric: false
-            value: inspector.value("color", "#FFFFFF").toUpperCase()
-
-            onCommitted: value => inspector.set("color", value)
-        }
+        onPickerRequested: inspector.host.showTextPicker()
+        onCommitted: value => inspector.set("color", value)
     }
 
     LibraryButton {

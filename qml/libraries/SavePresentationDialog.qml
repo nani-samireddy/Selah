@@ -29,7 +29,7 @@ Dialog {
             host.editingPresentationId = id;
             host.customPresentationTitle = nameField.text.trim();
             host.doc.saveProject();
-            host.notify("Presentation saved to Custom slides");
+            host.notify("Presentation saved to Presentations");
         }
         close();
     }

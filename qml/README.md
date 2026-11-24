@@ -6,7 +6,7 @@
 | --- | --- |
 | `workspaces` | WorkspaceNavigation, LibraryWorkspaceBar, DesignWorkspaceBar, PresentWorkspace and LiveSlideCard |
 | `controls` | StudioButton/Icon/Panel plus the shared LibraryStyle, fields, selects, tabs, textareas and numeric controls |
-| `editor` | EditorWorkspace, EditorCanvas, InspectorPanel, LayersPanel, SlideStrip, SpeakerNotes, EditorDock |
+| `editor` | EditorWorkspace, EditorCanvas, EditorResizeHandles, InspectorPanel, LayersPanel, SlideStrip, SpeakerNotes, EditorDock |
 | `fonts` | FontPicker for Google/system families, preview and offline downloads |
 | `libraries` | SongLibraryPanel, BibleLibraryPanel, MediaLibraryPanel |
 | `programs` | ProgramPanel composes ProgramOrder, ProgramItemEditor and ProgramLiveControls |
@@ -28,3 +28,18 @@ Layers are listed front to back. Dragging a row previews an insertion line, auto
 `menus/ApplicationMenuBar.qml` owns desktop application menus and their shared
 shortcuts. Route commands through the Main window's workflow functions rather
 than duplicating persistence or presentation behavior inside menu handlers.
+
+Program preparation is split between `programs/ProgramBrowser.qml` (cards and search), `ProgramEditorHeader.qml` (service heading/actions), and `ProgramDetailsDialog.qml` (shared create/edit form). `ProgramPanel.qml` coordinates the browse/editor state and existing service-order components.
+
+Inline Present output settings use `outputs/OutputControls.qml` for display/speaker section navigation. `OutputDisplayCard.qml` and
+`OutputSpeakerControls.qml` own their respective controls; `OutputGroup.qml` keeps
+their surfaces and spacing consistent. Routing and live state stay in OutputManager.
+
+Live transport actions live only in `workspaces/PresentTransport.qml`; output
+settings contain display routing and speaker tools. Present an editor draft using
+Design's Present slide action.
+
+`EditorResizeHandles.qml` keeps selection decoration and resize hit areas above the
+rich-text editor and layer hitboxes. Resize previews use the shared renderer's
+transient geometry; release commits one patch. Keep the four corner handles in
+this overlay, rather than inside layer delegates that can be obscured or rebuilt.

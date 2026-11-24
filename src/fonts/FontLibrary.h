@@ -9,6 +9,11 @@ class QNetworkReply;
 // Full Google Fonts metadata with explicit, persistent, on-demand native font downloads.
 class FontLibrary final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString previewFamily READ previewFamily NOTIFY previewChanged)
+    Q_PROPERTY(QString previewStatus READ previewStatus NOTIFY previewChanged)
+    Q_PROPERTY(bool previewAvailable READ previewAvailable NOTIFY previewChanged)
+    Q_PROPERTY(bool previewBusy READ previewBusy NOTIFY previewChanged)
+    Q_PROPERTY(QByteArray previewBytes READ previewBytes NOTIFY previewChanged)
     Q_PROPERTY(int count READ count NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
@@ -17,6 +22,19 @@ class FontLibrary final : public QObject {
 public:
     explicit FontLibrary(QObject *parent = nullptr, const QString &directory = {});
     ~FontLibrary() override;
+
+    QString previewFamily() const { return m_previewFamily; }
+
+    QString previewStatus() const { return m_previewStatus; }
+
+    bool previewAvailable() const { return !m_previewBytes.isEmpty(); }
+
+    bool previewBusy() const { return m_previewBusy; }
+
+    QByteArray previewBytes() const { return m_previewBytes; }
+
+    Q_INVOKABLE void requestPreview(const QString &family);
+    Q_INVOKABLE void cancelPreview();
 
     int count() const { return m_records.size(); }
 
@@ -38,6 +56,7 @@ public:
     static int selfTest();
     static int networkSelfTest(const QString &reportDirectory);
 signals:
+    void previewChanged();
     void changed();
     void stateChanged();
     void familyReady(const QString &requested, const QString &resolved);
@@ -50,6 +69,8 @@ private:
         bool font = false;
     };
 
+    void previewCss();
+    void fetchPreview(const File &file, bool cssFallback);
     void loadCache();
     QString directoryFor(const QString &family) const;
     void next();
@@ -71,4 +92,11 @@ private:
     bool m_busy = false, m_css = false;
     int m_progress = 0, m_total = 0;
     quint64 m_generation = 0;
+    quint64 m_previewGeneration = 0;
+    QPointer<QNetworkReply> m_previewReply;
+    QString m_previewFamily, m_previewStatus;
+    QByteArray m_previewBytes;
+    QHash<QString, QByteArray> m_previewCache;
+    QStringList m_previewOrder;
+    bool m_previewBusy = false;
 };

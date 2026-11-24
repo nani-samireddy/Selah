@@ -1,7 +1,18 @@
 # Interface sounds
 
-`click.wav` is the user-supplied `click-004.mp3`, decoded to mono 44.1 kHz, 16-bit PCM for Qt SoundEffect. It replaces the synthesized click for button and selection feedback. The source attachment was `click-004.mp3`; playback uses the bundled WAV and does not depend on the Downloads folder.
+The bundled cues come from [Kenney Interface Sounds 1.0](https://kenney.nl/assets/interface-sounds), licensed CC0. The source mirror is [Calinou/kenney-interface-sounds](https://github.com/Calinou/kenney-interface-sounds). The original license is included as `Kenney-LICENSE.txt`.
 
-`select.wav` is the earlier synthesized cue retained as an unused source asset. Both active SoundEffect instances use `click.wav`.
+| Bundled file | Original file | Use |
+| --- | --- | --- |
+| click.wav | click_002.wav | Button activation |
+| select.wav | select_001.wav | Selection |
+| toggle.wav | toggle_002.wav | Checkable controls |
+| switch.wav | switch_001.wav | Expand panels |
+| back.wav | back_001.wav | Collapse panels |
+| drop.wav | drop_001.wav | Layer reorder |
+| pluck.wav | pluck_001.wav | Success cue available to callers |
+| tick.wav | tick_001.wav | Fine feedback cue available to callers |
 
-`InteractionFeedback.qml` preloads these assets, limits playback rate and keeps volume low. They belong to the operator interface, separate from media playback and output capture. Sound preferences and automatic muting in Present continue to apply.
+Cues are mono 44.1 kHz PCM, filtered to 90–2200 Hz, with an 8 ms attack and 25 ms release fade. Peak levels are normalized to -22 dBFS before playback gain. This set replaces the previous user-supplied click.
+
+`InteractionFeedback.qml` preloads the cues, limits playback rate, and respects the sound preference. Presentation mode automatically mutes operator sounds. They are separate from slide/media audio and output capture.

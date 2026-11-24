@@ -38,7 +38,7 @@ Rectangle {
                     value: "media"
                 },
                 {
-                    text: "Custom slides",
+                    text: "Presentations",
                     value: "custom"
                 },
                 {

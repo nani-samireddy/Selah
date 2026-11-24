@@ -2,6 +2,7 @@
 #include "OutputManager.h"
 #include "ProgramSlides.h"
 #include "ProgramStore.h"
+#include "SlideTransition.h"
 #include "TemplateDefinition.h"
 #include <QDate>
 #include <QDir>
@@ -42,6 +43,9 @@ bool ProgramStore::validate(QVariantMap &program, bool newIds) {
     QSet<QString> ids;
     for (auto &v : items) {
         auto item = v.toMap();
+        if (item.contains("transition") && !SlideTransition::valid(item["transition"])) {
+            return false;
+        }
         if (item["id"].toString().isEmpty() || ids.contains(item["id"].toString())
             || item["title"].toString().trimmed().isEmpty() || item["title"].toString().size() > 200
             || item["notes"].toString().size() > 10000

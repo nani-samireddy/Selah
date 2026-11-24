@@ -7,14 +7,32 @@ Rectangle {
     property string caption: ""
     property string value: ""
     property bool numeric: true
+    property real stepSize: 1
+    property real minimumValue: -360
+    property real maximumValue: 10000
+    property int decimals: 1
     readonly property string currentText: input.text
 
     signal committed(string value)
+
+    function step(direction, modifiers) {
+        const typed = Number(input.text);
+        const current = input.text.trim().length && Number.isFinite(typed) ? typed : Number(value);
+        if (!Number.isFinite(current))
+            return;
+        const multiplier = modifiers & Qt.ShiftModifier ? 10 : 1;
+        const amount = Math.max(minimumValue, Math.min(maximumValue, current + direction * stepSize
+                                                       * multiplier));
+        input.text = String(Number(amount.toFixed(decimals)));
+        committed(input.text);
+    }
 
     implicitHeight: LibraryStyle.controlHeight
     color: LibraryStyle.tone("#252525")
     border.color: input.activeFocus ? LibraryStyle.tone("#888888") : LibraryStyle.tone("#383838")
     radius: 5
+
+    onValueChanged: input.text = value
 
     Text {
         renderType: Text.QtRendering
@@ -28,6 +46,7 @@ Rectangle {
     TextField {
         id: input
 
+        objectName: "inspectorNumberInput"
         renderType: Text.QtRendering
         text: field.value
         color: LibraryStyle.tone("#DDDDDD")
@@ -42,6 +61,16 @@ Rectangle {
         background: Item {
         }
 
+        Keys.onUpPressed: event => {
+            event.accepted = field.numeric;
+            if (field.numeric)
+                field.step(1, event.modifiers);
+        }
+        Keys.onDownPressed: event => {
+            event.accepted = field.numeric;
+            if (field.numeric)
+                field.step(-1, event.modifiers);
+        }
         onEditingFinished: field.committed(text)
 
         anchors {
@@ -55,9 +84,9 @@ Rectangle {
         DoubleValidator {
             id: numberValidator
 
-            bottom: -360
-            top: 10000
-            decimals: 1
+            bottom: field.minimumValue
+            top: field.maximumValue
+            decimals: field.decimals
             locale: "en_US"
         }
     }

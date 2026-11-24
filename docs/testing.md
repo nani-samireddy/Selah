@@ -90,3 +90,42 @@ layouts, lossless Indic pagination, attribution and program save/reopen isolatio
 translation picker, verse selection, paired preview, and offline guide dialog in
 a separate verification profile; it captures screenshots without changing saved
 operator programs.
+
+`--fresh --output-ux-smoke captures/output-ux` checks output settings at the minimum
+window size: section visibility, operator-screen protection, role-specific blackout,
+pinned transport blackout, navigation/audio/text controls, speaker message/countdown, and
+snapshot/draft isolation. It uses a separate verification profile, never starts
+fullscreen or preview outputs, and captures each section for layout review.
+
+`--fresh --workspace-smoke captures/ux-feedback` also checks template search,
+grouped service items, selected-word font previews, single-canvas template editing,
+and original-resolution media previews with Fit/100% views. Add
+`--preview-video /absolute/path/to/video.mp4` to exercise original-video playback
+and release-on-close. `--present-smoke` verifies Ready/Live/Blackout ambience, including
+that NDI diagnostics alone do not indicate an active sender.
+
+`--fresh --transition-smoke captures/transitions` checks the actual GPU-rendered
+fade endpoints and midpoint, physical-audience/NDI timing, premultiplied overlay
+alpha, rapid navigation and immediate blackout. Add
+`--transition-video /absolute/path/to/video.mp4` to verify that a shared video
+layer keeps decoding through slide changes without replacing its delegate.
+`tests/unit/TransitionTests.cpp` covers defaults/overrides, validation, persistence,
+undo and isolation of live snapshots from program preparation edits.
+
+Present diagnostics also click Stop presenting with audience, stage and NDI capture
+active. They check that all outputs stop, media pauses, and the snapshot/index remain
+unchanged, then exercise Stop during NDI startup to reject a queued sender-ready signal.
+
+`--fresh --resize-smoke captures/editor-resize` sends actual pointer drags through
+all four text/image corner handles, including zoom, rotation, an active rich-text
+editor and overlapping layer hit areas. It checks transient preview vs committed
+geometry, fixed opposite corners, one-step undo, snapping, canvas/minimum bounds,
+locked layers and cancellation when switching tools. The live snapshot stays
+unchanged throughout.
+
+`--fresh --background-smoke captures/canvas-background` checks the template editor's
+Background action, color field and Color/Transparent switch, saving/composing the
+template, reversible color restoration, and actual GPU capture with zero/partial
+alpha. Authored artwork remains opaque, ambient fill shares the canvas alpha, and
+checkerboards do not leak into output. Template model checks cover alpha persistence,
+composition, import/export and undo.

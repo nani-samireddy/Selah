@@ -6,7 +6,7 @@ Prepare multilingual songs, Bible passages, media and custom slides, arrange the
 
 ## Build and run
 
-Requirements: CMake 3.24+, a C++20 compiler, Ninja (for the presets), and Qt 6.11+ with Quick, Quick Controls, Multimedia, Concurrent, Sql, Network and Gui private development headers. This Mac has been verified with Qt 6.12. Qt's private graphics API is used only by the NDI capture prototype and requires validation when upgrading Qt.
+Requirements: CMake 3.24+, a C++20 compiler, Ninja (for the presets), and Qt 6.11+ with Quick, Quick Controls, Multimedia, Concurrent, Sql, Network, Shader Tools and Gui private development headers. This Mac has been verified with Qt 6.12. Qt's private graphics API is used only by the NDI capture prototype and requires validation when upgrading Qt.
 
 On macOS with Homebrew Qt installed:
 

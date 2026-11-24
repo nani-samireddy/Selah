@@ -14,10 +14,12 @@ MenuBar {
     readonly property var textTarget: menuTextTarget || focusedText
     readonly property bool design: host.activeWorkspace === "design"
     readonly property bool programs: host.activeWorkspace === "programs"
-    readonly property var historyTarget: textTarget || (!host.settingsOpen ? (design ? host.doc :
-                                                                                       programs
-                                                                                       ? host.programs :
-                                                                                         null) : null)
+    readonly property var historyTarget: (textTarget === host.activeTextEditor && design ? host.doc :
+                                                                                           textTarget)
+                                         || (!host.settingsOpen ? (design ? host.doc : programs
+                                                                            && host.programEditorOpen
+                                                                            ? host.programs : null) :
+                                                                  null)
 
     objectName: "applicationMenuBar"
     height: Qt.platform.os === "osx" ? 0 : implicitHeight
@@ -67,7 +69,8 @@ MenuBar {
                                                                                         "Save template…") :
                                                                                     qsTr("Save presentation…")
             shortcut: StandardKey.Save
-            enabled: (menus.design || menus.programs) && !menus.host.settingsOpen
+            enabled: (menus.design || (menus.programs && menus.host.programEditorOpen)) &&
+                     !menus.host.settingsOpen
 
             onTriggered: menus.host.saveActiveWorkspace()
         }
@@ -83,7 +86,8 @@ MenuBar {
         Action {
             objectName: "menuExportProgram"
             text: qsTr("Export program…")
-            enabled: !!menus.host.programs.id && !menus.host.settingsOpen
+            enabled: !!menus.host.programs.id && (!menus.programs || menus.host.programEditorOpen)
+                     && !menus.host.settingsOpen
 
             onTriggered: menus.host.exportProgram()
         }
@@ -117,21 +121,33 @@ MenuBar {
         onClosed: Qt.callLater(() => menus.menuTextTarget = null)
 
         Action {
+            objectName: "menuUndo"
             text: qsTr("Undo")
             shortcut: StandardKey.Undo
             enabled: !!menus.historyTarget && !menus.historyTarget.readOnly && !
                      !menus.historyTarget.canUndo
 
-            onTriggered: menus.historyTarget.undo()
+            onTriggered: {
+                if (menus.historyTarget === menus.host.doc)
+                    menus.host.undoEditor();
+                else
+                    menus.historyTarget.undo();
+            }
         }
 
         Action {
+            objectName: "menuRedo"
             text: qsTr("Redo")
             shortcut: StandardKey.Redo
             enabled: !!menus.historyTarget && !menus.historyTarget.readOnly && !
                      !menus.historyTarget.canRedo
 
-            onTriggered: menus.historyTarget.redo()
+            onTriggered: {
+                if (menus.historyTarget === menus.host.doc)
+                    menus.host.redoEditor();
+                else
+                    menus.historyTarget.redo();
+            }
         }
 
         MenuSeparator {
@@ -196,6 +212,7 @@ MenuBar {
 
         Action {
             text: qsTr("Programs")
+            enabled: !menus.host.settingsOpen
             ActionGroup.group: workspaceActions
             checkable: true
             checked: menus.programs
@@ -206,6 +223,7 @@ MenuBar {
         Action {
             objectName: "menuLibraries"
             text: qsTr("Libraries")
+            enabled: !menus.host.settingsOpen
             ActionGroup.group: workspaceActions
             checkable: true
             checked: menus.host.activeWorkspace === "libraries"
@@ -215,6 +233,7 @@ MenuBar {
 
         Action {
             text: qsTr("Design")
+            enabled: !menus.host.settingsOpen
             ActionGroup.group: workspaceActions
             checkable: true
             checked: menus.design
@@ -224,6 +243,7 @@ MenuBar {
 
         Action {
             text: qsTr("Present")
+            enabled: !menus.host.settingsOpen
             ActionGroup.group: workspaceActions
             checkable: true
             checked: menus.host.activeWorkspace === "present"
@@ -321,6 +341,14 @@ MenuBar {
             enabled: menus.host.outputs.hasAudienceContent
 
             onTriggered: menus.host.outputs.blackout("audience", !menus.host.outputs.audienceBlack)
+        }
+
+        Action {
+            objectName: "menuStopPresenting"
+            text: qsTr("Stop presenting")
+            enabled: menus.host.presentationRunning
+
+            onTriggered: menus.host.stopPresenting()
         }
 
         Action {

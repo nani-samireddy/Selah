@@ -7,6 +7,7 @@ Popup {
     id: panel
 
     required property var catalog
+    property string previewText: ""
     property string currentFamily: "Arial"
     property string selectedFamily: ""
     property string targetId: ""
@@ -18,6 +19,8 @@ Popup {
         const row = results.find(record => record.family === selectedFamily);
         return row ? row.available : catalog.available(selectedFamily);
     }
+    readonly property bool previewReady: catalog.previewFamily === selectedFamily
+                                         && catalog.previewAvailable
 
     signal chosen(string family, string elementId)
 
@@ -39,16 +42,32 @@ Popup {
         border.color: LibraryStyle.tone("#3C3C3C")
     }
 
+    onSelectedFamilyChanged: if (opened) {
+                                 catalog.cancelPreview();
+                                 previewDelay.restart();
+                             }
     onOpened: {
         selectedFamily = currentFamily;
         search.clear();
         refresh();
+        previewDelay.restart();
         search.forceActiveFocus();
     }
     onClosed: {
+        previewDelay.stop();
+        catalog.cancelPreview();
         if (pendingFamily && catalog.busy && catalog.activeFamily === pendingFamily)
             catalog.cancel();
         pendingFamily = "";
+    }
+
+    Timer {
+        id: previewDelay
+
+        interval: 250
+
+        onTriggered: if (panel.opened)
+                         panel.catalog.requestPreview(panel.selectedFamily)
     }
 
     Connections {
@@ -302,27 +321,75 @@ Popup {
                     Layout.fillWidth: true
                 }
 
-                Text {
+                ScrollView {
+                    id: previewScroll
+
                     Layout.fillWidth: true
-                    text: panel.ready
-                          ? "The Lord is my shepherd\nI shall not want.\n\nనా తల్లియు నీవే\nयीशु तेरा धन्यवाद" :
-                            "Aa Bb Cc\n1234567890"
-                    font.family: panel.ready ? panel.catalog.resolvedFamily(panel.selectedFamily) :
-                                               LibraryStyle.fontFamily
-                    font.pixelSize: 30
-                    color: LibraryStyle.tone("#E6E6E6")
-                    wrapMode: Text.Wrap
+                    Layout.fillHeight: true
+                    contentWidth: availableWidth
+                    clip: true
+                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                    Column {
+                        width: previewScroll.availableWidth
+
+                        Text {
+                            width: parent.width
+                            objectName: "fontSelectionPreview"
+                            visible: panel.ready
+                            textFormat: Text.PlainText
+                            text: panel.ready ? (panel.previewText || "Aa Bb Cc\n1234567890") : ""
+                            font.family: panel.ready ? panel.catalog.resolvedFamily(
+                                                           panel.selectedFamily) :
+                                                       LibraryStyle.fontFamily
+                            font.pixelSize: 30
+                            color: LibraryStyle.tone("#E6E6E6")
+                            wrapMode: Text.Wrap
+                        }
+
+                        FontPreviewItem {
+                            id: rawPreview
+
+                            objectName: "downloadableFontPreview"
+                            width: parent.width
+                            height: visible ? implicitHeight : 0
+                            visible: !panel.ready && panel.previewReady
+                            fontBytes: panel.catalog.previewBytes
+                            text: panel.previewText || "Aa Bb Cc\n1234567890"
+                            color: LibraryStyle.text
+                        }
+
+                        BusyIndicator {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            running: panel.opened && !panel.ready && !panel.previewReady
+                                     && panel.catalog.previewBusy
+                            visible: running
+                        }
+                    }
                 }
 
                 LibraryCaption {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     text: panel.ready ? "Preview uses the selected family with language fallbacks." :
-                                        "Download this family to preview and use it in your presentation."
+                                        panel.previewReady ? (rawPreview.missingCharacters
+                                                              ? "This font does not include some of the selected characters." :
+                                                                rawPreview.truncated
+                                                                ? "Preview shortened for display." :
+                                                                  panel.catalog.previewStatus) :
+                                                             panel.catalog.previewFamily
+                                                             === panel.selectedFamily
+                                                             ? panel.catalog.previewStatus :
+                                                               "Loading preview…"
                 }
 
-                Item {
-                    Layout.fillHeight: true
+                LibraryButton {
+                    text: "Retry preview"
+                    quiet: true
+                    visible: !panel.ready && !panel.previewReady && !panel.catalog.previewBusy
+                             && panel.catalog.previewFamily === panel.selectedFamily
+
+                    onClicked: panel.catalog.requestPreview(panel.selectedFamily)
                 }
 
                 LibraryButton {
@@ -369,6 +436,9 @@ Popup {
                 enabled: panel.selectedFamily.length > 0 && !panel.catalog.busy
 
                 onClicked: {
+                    previewDelay.stop();
+                    if (panel.catalog.previewBusy)
+                        panel.catalog.cancelPreview();
                     panel.pendingFamily = panel.selectedFamily;
                     panel.catalog.install(panel.selectedFamily);
                 }

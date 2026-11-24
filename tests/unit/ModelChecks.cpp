@@ -14,10 +14,15 @@
 #include "TextFormatting.h"
 #include <QDebug>
 int runDefaultImageChecks();
+int runTransitionChecks();
 int runDualScriptureChecks();
 int runBibleXmlChecks(const QString &realFile = QString());
 
 int runModelChecks() {
+    if (auto result = runTransitionChecks()) {
+        qCritical() << "Transition check failed:" << result;
+        return 360 + result;
+    }
     if (auto result = runDualScriptureChecks()) {
         qCritical() << "Dual scripture check failed:" << result;
         return 330 + result;

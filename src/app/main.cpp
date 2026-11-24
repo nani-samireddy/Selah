@@ -56,7 +56,9 @@ int main(int argc, char *argv[]) {
     }
     PresentationLibrary presentations;
     OutputManager outputs;
-    ProgramStore programs(&outputs);
+    QTemporaryDir browserDirectory;
+    ProgramStore programs(&outputs, nullptr,
+        app.arguments().contains("--program-browser-smoke") ? browserDirectory.path() : QString());
     NdiController ndi(&outputs);
     RemoteController remote(&outputs, &library);
     // These controllers live on the C++ stack, including when wrapped by diagnostics.

@@ -8,6 +8,7 @@ Popup {
     id: panel
 
     property bool workspaceMode: false
+    property bool editorOpen: false
     required property var store
     required property var controller
     required property var document
@@ -27,6 +28,7 @@ Popup {
         return !!f && (f.cursorPosition !== undefined || f.currentIndex !== undefined);
     }
     readonly property bool dialogOpen: newDialog.opened || importFile.visible || exportFile.visible
+                                       || editorHeader.dialogOpen
 
     signal presentRequested
     signal songsRequested
@@ -35,6 +37,27 @@ Popup {
     signal templatesRequested
     signal outputsRequested
     signal editRequested(var slides, string itemId)
+
+    function showAllPrograms() {
+        flushItem();
+        if (store.save())
+            editorOpen = false;
+    }
+
+    function showEditor() {
+        if (store.id.length > 0) {
+            editorOpen = true;
+            loadItem();
+        }
+    }
+
+    function openProgram(programId) {
+        flushItem();
+        if (store.openProgram(programId)) {
+            previewIndex = 0;
+            showEditor();
+        }
+    }
 
     function showNewProgramDialog() {
         flushItem();
@@ -84,7 +107,6 @@ Popup {
     function loadItem() {
         loading = true;
         loadedItem = store.selectedItem.id || "";
-        itemEditor.titleText = store.selectedItem.title || "";
         itemEditor.notesText = store.selectedItem.notes || "";
         itemDirty = false;
         previewIndex = Math.max(0, Math.min(previewIndex, store.selectedSlides.length - 1));
@@ -212,191 +234,46 @@ Popup {
 
         onAccepted: {
             panel.flushItem();
-            panel.store.importProgram(selectedFile);
+            if (panel.store.importProgram(selectedFile))
+                panel.showEditor();
         }
     }
 
-    Dialog {
+    ProgramDetailsDialog {
         id: newDialog
 
-        modal: true
-        anchors.centerIn: parent
-        width: 380
-        title: "New program"
+        store: panel.store
+        creating: true
 
-        background: Rectangle {
-            color: LibraryStyle.tone("#252525")
-            border.color: LibraryStyle.tone("#444444")
-            radius: 8
-        }
-        contentItem: ColumnLayout {
-            spacing: 12
-
-            LibraryField {
-                id: newTitle
-
-                objectName: "newProgramTitle"
-                placeholderText: "Sunday Worship"
-                Layout.fillWidth: true
-            }
-
-            LibraryField {
-                id: newDate
-
-                placeholderText: "YYYY-MM-DD (optional)"
-                Layout.fillWidth: true
-            }
-
-            Text {
-                text: panel.store.status
-                color: LibraryStyle.tone("#AAAAAA")
-                font.pixelSize: 11
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-            }
-
-            RowLayout {
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StudioButton {
-                    text: "Cancel"
-
-                    onClicked: newDialog.close()
-                }
-
-                StudioButton {
-                    text: "Create program"
-                    accented: true
-
-                    onClicked: {
-                        panel.flushItem();
-                        if (panel.store.createProgram(newTitle.text, newDate.text))
-                            newDialog.close();
-                    }
-                }
-            }
-        }
-
-        onOpened: {
-            newTitle.text = "Sunday Worship";
-            newDate.text = Qt.formatDate(new Date(), "yyyy-MM-dd");
-            newTitle.forceActiveFocus();
-            newTitle.selectAll();
-        }
+        onSaved: panel.showEditor()
     }
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 14
 
-        RowLayout {
-            Text {
-                text: "Programs"
-                color: LibraryStyle.tone("#EEEEEE")
-                font.pixelSize: 21
-                font.weight: Font.Medium
-            }
+        ProgramBrowser {
+            visible: !panel.editorOpen
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            store: panel.store
 
-            LibraryCombo {
-                Layout.preferredWidth: 270
-                model: panel.store.programs.map(p => ({
-                    id: p.id,
-                    label: p.title + (p.date ? " · " + p.date : "")
-                }))
-                textRole: "label"
-                currentIndex: model.findIndex(p => p.id === panel.store.id)
+            onProgramChosen: programId => panel.openProgram(programId)
+            onCreateRequested: panel.showNewProgramDialog()
+            onImportRequested: panel.showImportDialog()
+        }
 
-                onActivated: index => {
-                    panel.flushItem();
-                    panel.store.openProgram(model[index].id);
-                    panel.previewIndex = 0;
-                }
-            }
+        ProgramEditorHeader {
+            id: editorHeader
 
-            StudioButton {
-                text: "New program"
-                iconName: "plus"
+            visible: panel.editorOpen
+            programView: panel
 
-                onClicked: panel.showNewProgramDialog()
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            StudioButton {
-                text: "Import"
-
-                onClicked: panel.showImportDialog()
-            }
-
-            StudioButton {
-                text: "Export"
-                enabled: panel.store.id.length > 0
-
-                onClicked: panel.showExportDialog()
-            }
-
-            StudioButton {
-                text: "Close"
-                visible: !panel.workspaceMode
-                quiet: true
-
-                onClicked: panel.close()
-            }
+            onBackRequested: panel.showAllPrograms()
         }
 
         RowLayout {
-            visible: panel.store.id.length > 0
-            spacing: 10
-
-            LibraryField {
-                id: programTitle
-
-                objectName: "programTitle"
-                text: panel.store.title
-                Layout.fillWidth: true
-                placeholderText: "Program title"
-            }
-
-            LibraryField {
-                id: programDate
-
-                text: panel.store.date
-                Layout.preferredWidth: 130
-                placeholderText: "YYYY-MM-DD"
-            }
-
-            StudioButton {
-                text: "Apply details"
-
-                onClicked: panel.store.updateDetails(programTitle.text, programDate.text)
-            }
-
-            StudioButton {
-                text: "Undo"
-                enabled: panel.store.canUndo
-
-                onClicked: {
-                    panel.flushItem();
-                    panel.store.undo();
-                }
-            }
-
-            StudioButton {
-                text: "Redo"
-                enabled: panel.store.canRedo
-
-                onClicked: {
-                    panel.flushItem();
-                    panel.store.redo();
-                }
-            }
-        }
-
-        RowLayout {
+            visible: panel.editorOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 16
@@ -435,7 +312,7 @@ Popup {
         }
 
         Text {
-            visible: panel.store.warnings.length > 0
+            visible: panel.editorOpen && panel.store.warnings.length > 0
             text: "Missing media: " + panel.store.warnings.join(", ")
             color: "#E1AD80"
             Layout.fillWidth: true
@@ -459,12 +336,14 @@ Popup {
             }
 
             Text {
+                visible: panel.editorOpen
                 text: panel.store.items.length + " service items"
                 color: LibraryStyle.tone("#777777")
                 font.pixelSize: 11
             }
 
             StudioButton {
+                visible: panel.editorOpen
                 text: panel.store.dirty ? "Save program" : "Saved"
                 enabled: panel.store.id.length > 0
 

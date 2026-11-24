@@ -8,6 +8,7 @@
 // Editable presentation draft. History and autosave belong here, never in output windows.
 class EditorDocument final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QVariantMap backgroundFill READ backgroundFill NOTIFY changed)
     Q_PROPERTY(QString backgroundColor READ background NOTIFY changed)
     Q_PROPERTY(double ambientOpacity READ ambientOpacity NOTIFY changed)
     Q_PROPERTY(QVariantList elements READ elements NOTIFY changed)
@@ -18,6 +19,8 @@ class EditorDocument final : public QObject {
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
+    Q_PROPERTY(QVariantMap defaultTransition READ defaultTransition NOTIFY changed)
+    Q_PROPERTY(QVariantMap slideTransition READ slideTransition NOTIFY changed)
     Q_PROPERTY(QString notes READ notes WRITE setNotes NOTIFY changed)
     Q_PROPERTY(bool importing READ importing NOTIFY importingChanged)
 public:
@@ -40,6 +43,10 @@ public:
 
     QString status() const { return m_status; }
 
+    QVariantMap defaultTransition() const;
+    QVariantMap slideTransition() const;
+    Q_INVOKABLE bool setDefaultTransition(const QString &type, int durationMs);
+    Q_INVOKABLE bool setSlideTransition(const QString &type, int durationMs);
     QString notes() const;
     void setNotes(const QString &notes);
     Q_INVOKABLE void updateElement(int index, const QVariantMap &patch);
@@ -62,7 +69,16 @@ public:
         const QVariantMap &song, int maxLines = 3, const QVariantMap &definition = {});
     Q_INVOKABLE bool addScriptureSlides(
         const QVariantList &verses, int maxLines = 4, const QVariantMap &definition = {});
+
+    QVariantMap backgroundFill() const {
+        return m_slides[m_current].toMap().value("backgroundFill").toMap();
+    }
+
+    Q_INVOKABLE bool setBackgroundFill(const QVariantMap &fill);
+    Q_INVOKABLE void importBackground(const QUrl &url);
     Q_INVOKABLE void setBackground(const QString &color);
+    Q_INVOKABLE void setBackgroundTransparent(bool transparent);
+    Q_INVOKABLE void setAmbientOpacity(double opacity);
     Q_INVOKABLE QString background() const;
 
     double ambientOpacity() const {

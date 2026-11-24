@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 
 // Uses static video placeholders to avoid decoding every slide in the deck.
 Item {
@@ -8,14 +9,35 @@ Item {
 
     required property var host
     required property Item canvas
-    readonly property real previewWidth: 126
-    readonly property real previewPadding: 4
+    property bool compact: false
+    readonly property real previewWidth: compact ? 56 : 126
+    readonly property real previewPadding: compact ? 2 : 4
     readonly property real previewHeight: (previewWidth - 2 * previewPadding) * 9 / 16 + 2
                                           * previewPadding
 
-    height: 32 + previewHeight + 22
+    function revealCurrent() {
+        const start = host.doc.currentSlide * (previewWidth + thumbnailRow.spacing);
+        const end = start + previewWidth;
+        const desired = start < scroller.contentX ? start : end > scroller.contentX
+                                                    + scroller.width ? end - scroller.width :
+                                                                       scroller.contentX;
+        scroller.contentX = Math.max(0, Math.min(desired, scroller.contentWidth - scroller.width));
+    }
+
+    objectName: "editorSlideStrip"
+    visible: !host.templateMode
+    height: !host.templateMode ? (compact ? previewHeight : 32 + previewHeight + 22) : 0
+
+    Connections {
+        function onChanged() {
+            Qt.callLater(slideStrip.revealCurrent);
+        }
+
+        target: slideStrip.host.doc
+    }
 
     RowLayout {
+        visible: !slideStrip.compact
         height: 20
 
         anchors {
@@ -35,12 +57,16 @@ Item {
             quiet: true
             implicitHeight: 25
             hint: "Create a new slide"
+            enabled: !slideStrip.host.templateMode
 
-            onClicked: slideStrip.host.doc.addSlide()
+            onClicked: if (!slideStrip.host.templateMode)
+                           slideStrip.host.doc.addSlide()
         }
     }
 
     Flickable {
+        id: scroller
+
         contentWidth: thumbnailRow.width
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -49,14 +75,26 @@ Item {
             left: parent.left
             right: parent.right
             top: parent.top
-            topMargin: 32
+            topMargin: slideStrip.compact ? 0 : 32
             bottom: parent.bottom
+        }
+
+        WheelHandler {
+            target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+
+            onWheel: event => {
+                const delta = event.pixelDelta.x || event.pixelDelta.y || event.angleDelta.y / 2;
+                scroller.contentX = Math.max(0, Math.min(scroller.contentX - delta,
+                                                         scroller.contentWidth - scroller.width));
+                event.accepted = true;
+            }
         }
 
         Row {
             id: thumbnailRow
 
-            spacing: 14
+            spacing: slideStrip.compact ? 6 : 14
 
             Repeater {
                 model: slideStrip.host.doc.slides
@@ -68,7 +106,10 @@ Item {
                     required property int index
 
                     width: slideStrip.previewWidth
-                    height: slideStrip.previewHeight + 22
+                    height: slideStrip.previewHeight + (slideStrip.compact ? 0 : 22)
+                    ToolTip.visible: slideStrip.compact && thumbMouse.containsMouse
+                    ToolTip.text: String(thumbnail.index + 1) + " · " + thumbnail.modelData.name
+                    ToolTip.delay: 500
 
                     Rectangle {
                         width: thumbnail.width
@@ -86,7 +127,9 @@ Item {
                             clip: true
 
                             SlideRenderer {
+                                showTransparencyGrid: true
                                 elements: thumbnail.modelData.elements
+                                backgroundFill: thumbnail.modelData.backgroundFill || ({})
                                 backgroundColor: thumbnail.modelData.background
                                 ambientOpacity: thumbnail.modelData.ambientOpacity === undefined ? (
                                                                                                        thumbnail.index
@@ -100,6 +143,7 @@ Item {
                     }
 
                     Text {
+                        visible: !slideStrip.compact
                         y: slideStrip.previewHeight + 5
                         width: thumbnail.width
                         elide: Text.ElideRight
@@ -111,10 +155,15 @@ Item {
                     }
 
                     MouseArea {
+                        id: thumbMouse
+
+                        hoverEnabled: slideStrip.compact
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
 
                         onClicked: {
+                            if (slideStrip.host.activeTextEditor)
+                                slideStrip.host.activeTextEditor.finish();
                             slideStrip.canvas.forceActiveFocus();
                             slideStrip.host.doc.currentSlide = thumbnail.index;
                             slideStrip.host.panX = 0;

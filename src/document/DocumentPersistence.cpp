@@ -1,4 +1,6 @@
+#include "BackgroundFill.h"
 #include "EditorDocument.h"
+#include "SlideTransition.h"
 #include <algorithm>
 #include <cmath>
 #include <QColor>
@@ -29,7 +31,15 @@ bool EditorDocument::restore(const QJsonObject &obj) {
     QSet<QString> identifiers;
     for (auto &v : slides) {
         auto map = v.toMap();
-        if (!QColor(map["background"].toString()).isValid() || !map.contains("elements")
+        for (const auto &key : { "transition", "transitionDefault" }) {
+            if (map.contains(key) && !SlideTransition::valid(map.value(key))) {
+                return false;
+            }
+        }
+        if ((map.contains("backgroundFill")
+                && (map["backgroundFill"].metaType().id() != QMetaType::QVariantMap
+                    || !BackgroundFill::valid(map["backgroundFill"].toMap())))
+            || !QColor(map["background"].toString()).isValid() || !map.contains("elements")
             || map["elements"].toList().size() > 1000) {
             return false;
         }

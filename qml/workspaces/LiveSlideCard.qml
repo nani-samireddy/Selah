@@ -45,16 +45,27 @@ ColumnLayout {
         clip: true
 
         SlideRenderer {
-            visible: card.available
+            visible: card.available && card.next
             scale: frame.width / 1920
             transformOrigin: Item.TopLeft
             elements: card.next ? card.controller.nextElements : card.controller.audienceElements
+            backgroundFill: card.next ? card.controller.nextFill : card.controller.audienceFill
             backgroundColor: card.next ? card.controller.nextBackground :
                                          card.controller.audienceBackground
             ambientOpacity: card.next ? card.controller.nextAmbientOpacity :
                                         card.controller.audienceAmbientOpacity
             clearText: !card.next && card.controller.textCleared
             videoEnabled: false
+        }
+
+        AudienceRenderer {
+            visible: card.available && !card.next
+            active: card.visible && !card.next
+            controller: card.controller
+            scale: frame.width / 1920
+            transformOrigin: Item.TopLeft
+            videoEnabled: false
+            playing: false
         }
 
         Rectangle {

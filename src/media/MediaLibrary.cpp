@@ -43,8 +43,10 @@ MediaLibrary::MediaLibrary(QObject *parent)
         if (image.isNull()) {
             return;
         }
-        image.scaled(320, 180, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-            .save(thumbnailPath(m_thumbnailAsset["source"].toString()), "JPG", 85);
+        image
+            .scaled(image.size().boundedTo(QSize(1280, 720)), Qt::KeepAspectRatio,
+                Qt::SmoothTransformation)
+            .save(thumbnailPath(m_thumbnailAsset["source"].toString()), "JPG", 92);
         finishThumbnail();
     });
     refresh();
@@ -102,7 +104,7 @@ QString MediaLibrary::thumbnailPath(const QString &source) const {
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/thumbnails/"
         + QString::fromLatin1(
             QCryptographicHash::hash(source.toUtf8(), QCryptographicHash::Sha256).toHex())
-        + ".jpg";
+        + "-1280-v2.jpg";
 }
 
 void MediaLibrary::registerAsset(const QVariantMap &element) {
@@ -179,10 +181,11 @@ void MediaLibrary::nextThumbnail() {
             reader.setAutoTransform(true);
             const auto size = reader.size();
             if (size.isValid()) {
-                reader.setScaledSize(size.scaled(320, 180, Qt::KeepAspectRatio));
+                reader.setScaledSize(
+                    size.scaled(size.boundedTo(QSize(1280, 720)), Qt::KeepAspectRatio));
             }
             const auto image = reader.read();
-            return !image.isNull() && image.save(output, "JPG", 85);
+            return !image.isNull() && image.save(output, "JPG", 92);
         }));
     } else {
         m_player.setSource(QUrl(asset["source"].toString()));

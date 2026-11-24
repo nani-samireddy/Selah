@@ -62,6 +62,9 @@ ScrollView {
                         elements: liveCard.index === 0
                                   ? liveControls.programView.controller.audienceElements :
                                     liveControls.programView.controller.nextElements
+                        backgroundFill: liveCard.index === 0
+                                        ? liveControls.programView.controller.audienceFill :
+                                          liveControls.programView.controller.nextFill
                         backgroundColor: liveCard.index === 0
                                          ? liveControls.programView.controller.audienceBackground :
                                            liveControls.programView.controller.nextBackground

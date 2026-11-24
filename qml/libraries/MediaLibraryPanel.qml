@@ -6,6 +6,7 @@ import QtQuick.Layouts
 Popup {
     id: panel
 
+    readonly property bool previewOpen: mediaPreview.opened
     property bool workspaceMode: false
     property var library
     property var programTarget: null
@@ -23,6 +24,11 @@ Popup {
     signal contentAdded(bool toProgram)
     signal importRequested
 
+    function previewAsset(asset) {
+        mediaPreview.asset = asset;
+        mediaPreview.open();
+    }
+
     function addAsset(asset, programId = "") {
         const ok = programTarget ? programTarget.addMedia(asset, programId) : document.useMedia(
                                        asset);
@@ -38,6 +44,7 @@ Popup {
         contentAdded(toProgram);
     }
 
+    objectName: "mediaPanel"
     closePolicy: workspaceMode ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
     width: workspaceMode ? parent.width : Math.min(880, parent.width - 60)
     height: workspaceMode ? parent.height : Math.min(630, parent.height - 40)
@@ -57,6 +64,10 @@ Popup {
     onOpened: {
         library.refresh();
         search.forceActiveFocus();
+    }
+
+    MediaPreviewDialog {
+        id: mediaPreview
     }
 
     ColumnLayout {
@@ -196,6 +207,16 @@ Popup {
                                     source: asset.modelData.thumbnail
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
+                                    mipmap: true
+                                    sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)
+                                    sourceSize.height: Math.ceil(height * Screen.devicePixelRatio)
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+
+                                    onClicked: panel.previewAsset(asset.modelData)
                                 }
 
                                 StudioIcon {

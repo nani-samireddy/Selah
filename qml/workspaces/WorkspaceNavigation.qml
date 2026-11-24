@@ -12,7 +12,7 @@ Rectangle {
     readonly property real captionRight: !fullscreen && Qt.platform.os === "windows" ? 150 : 0
 
     implicitHeight: 66
-    color: LibraryStyle.tone("#191919")
+    color: navigation.host.onAir ? navigation.host.liveSurface : LibraryStyle.tone("#191919")
 
     Rectangle {
         anchors.bottom: parent.bottom
@@ -135,23 +135,23 @@ Rectangle {
         }
 
         Rectangle {
-            visible: navigation.host.outputs.liveCount > 0
+            visible: navigation.host.outputs.hasAudienceContent
             implicitWidth: liveLabel.implicitWidth + 28
             implicitHeight: 28
             radius: 14
-            color: navigation.host.outputs.audienceBlack ? "#392D21" : "#25312A"
+            color: navigation.host.onAir ? navigation.host.liveSurface : LibraryStyle.field
 
             Text {
                 id: liveLabel
 
+                objectName: "onAirIndicator"
                 anchors.centerIn: parent
-                text: navigation.host.outputs.audienceBlack ? "AUDIENCE BLACKOUT" : "LIVE · " + (
-                                                                  navigation.host.outputs.liveIndex
-                                                                  + 1) + " / "
-                                                              + navigation.host.outputs.liveCount
-                color: navigation.host.outputs.audienceBlack ? "#E7BE91" : "#B5D8C1"
-                font.pixelSize: 10
-                font.letterSpacing: 0.7
+                text: navigation.host.onAir ? (navigation.host.liveBlackout ? "BLACKOUT" : "LIVE") :
+                                              "READY"
+                color: navigation.host.onAir ? navigation.host.liveAccent : LibraryStyle.muted
+                font.pixelSize: 11
+                font.weight: Font.DemiBold
+                font.letterSpacing: 0.8
             }
         }
 

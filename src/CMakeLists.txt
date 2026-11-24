@@ -1,11 +1,12 @@
 # The shared runtime is independent of the application entry point and test cases.
 qt_add_library(church-deck-core STATIC
     app/ApplicationSetup.cpp app/ApplicationSetup.h
-    fonts/FontLibrary.cpp fonts/FontLibrary.h fonts/FontDownloads.cpp
+    fonts/FontLibrary.cpp fonts/FontLibrary.h fonts/FontDownloads.cpp fonts/FontPreviews.cpp
     presentations/PresentationLibrary.cpp presentations/PresentationLibrary.h
     document/EditorDocument.cpp document/EditorDocument.h
     document/DocumentElements.cpp document/DocumentElements.h
-    document/DocumentPersistence.cpp document/DocumentMedia.cpp
+    document/DocumentPersistence.cpp document/DocumentMedia.cpp document/DocumentBackground.cpp
+    document/DocumentTransitions.cpp document/SlideTransition.h document/BackgroundFill.h
     content/ContentLibrary.cpp content/ContentLibrary.h content/ScripturePairing.cpp
     content/ScriptureImporter.cpp content/ScriptureImporter.h
     content/BibleXmlReader.cpp content/BibleXmlReader.h
@@ -26,7 +27,7 @@ qt_add_library(church-deck-core STATIC
     remote/RemoteHttpServer.cpp remote/RemoteHttpServer.h
     remote/RemotePreview.cpp remote/RemotePreview.h
     ../third_party/qrcodegen/qrcodegen.cpp
-    outputs/OutputManager.cpp outputs/OutputManager.h
+    outputs/OutputManager.cpp outputs/OutputManager.h outputs/OutputTransitions.cpp
     outputs/DefaultImage.cpp outputs/DefaultImage.h
     broadcast/NdiController.cpp broadcast/NdiController.h
     broadcast/NdiWorker.cpp broadcast/NdiWorker.h

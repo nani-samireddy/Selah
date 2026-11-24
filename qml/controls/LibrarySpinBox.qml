@@ -5,6 +5,21 @@ import QtQuick.Controls
 SpinBox {
     id: control
 
+    // Editable content owns keyboard focus, so step here before the key bubbles out.
+    function stepFromInput(direction) {
+        const before = value;
+        const parsed = valueFromText(numberInput.text, locale);
+        if (Number.isFinite(parsed))
+            value = parsed;
+        if (direction > 0)
+            increase();
+        else
+            decrease();
+        numberInput.text = Qt.binding(() => control.textFromValue(control.value, control.locale));
+        if (value !== before)
+            valueModified();
+    }
+
     implicitHeight: LibraryStyle.controlHeight
     implicitWidth: 96
     editable: true
@@ -24,6 +39,8 @@ SpinBox {
         border.color: control.activeFocus ? LibraryStyle.focus : LibraryStyle.border
     }
     contentItem: TextInput {
+        id: numberInput
+
         renderType: Text.QtRendering
         text: control.textFromValue(control.value, control.locale)
         font: control.font
@@ -36,6 +53,15 @@ SpinBox {
         selectByMouse: true
         selectionColor: LibraryStyle.tone("#484848")
         selectedTextColor: LibraryStyle.tone("#FFFFFF")
+
+        Keys.onUpPressed: event => {
+            control.stepFromInput(1);
+            event.accepted = true;
+        }
+        Keys.onDownPressed: event => {
+            control.stepFromInput(-1);
+            event.accepted = true;
+        }
     }
     down.indicator: Rectangle {
         x: 1

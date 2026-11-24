@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QFontDatabase>
 #include <QJsonDocument>
+#include <QRawFont>
 #include <QTemporaryDir>
 #include <QTimer>
 
@@ -61,6 +62,24 @@ int FontLibrary::selfTest() {
     if (local.isEmpty() || fonts.search(local.first(), "system").isEmpty()) {
         return 8;
     }
+    QFile previewFixture(":/qt/qml/ChurchDeck/assets/fonts/Inter.ttf");
+    if (!previewFixture.open(QIODevice::ReadOnly)) {
+        return 10;
+    }
+    const auto previewBytes = previewFixture.readAll();
+    const auto registeredBefore = QFontDatabase::families();
+    fonts.m_previewCache.insert("Preview-only fixture", previewBytes);
+    fonts.requestPreview("Preview-only fixture");
+    if (!fonts.previewAvailable() || fonts.previewBusy() || fonts.available("Preview-only fixture")
+        || fonts.previewBytes() != previewBytes || registeredBefore != QFontDatabase::families()) {
+        return 11;
+    }
+    fonts.m_busy = true;
+    fonts.cancelPreview();
+    if (fonts.previewAvailable() || !fonts.previewFamily().isEmpty() || !fonts.busy()) {
+        return 12;
+    }
+    fonts.m_busy = false;
     qInfo() << "Font checks passed: full catalog, script search, trusted native URLs, offline "
                "cache, license notices and system fonts";
     return 0;
@@ -73,6 +92,34 @@ int FontLibrary::networkSelfTest(const QString &reportDirectory) {
     {
         FontLibrary fonts(nullptr, directory.path());
         for (const QString &family : QStringList { "Abel", "Edu NSW ACT Hand Pre" }) {
+            if (!fonts.available(family)) {
+                QEventLoop previewLoop;
+                QTimer previewDeadline;
+                previewDeadline.setSingleShot(true);
+                previewDeadline.start(55000);
+                const auto registeredBefore = QFontDatabase::families();
+                auto changed
+                    = QObject::connect(&fonts, &FontLibrary::previewChanged, &previewLoop, [&] {
+                          if (fonts.previewFamily() == family && !fonts.previewBusy()) {
+                              previewLoop.quit();
+                          }
+                      });
+                QObject::connect(
+                    &previewDeadline, &QTimer::timeout, &previewLoop, &QEventLoop::quit);
+                fonts.requestPreview(family);
+                if (fonts.previewBusy()) {
+                    previewLoop.exec();
+                }
+                QObject::disconnect(changed);
+                if (!fonts.previewAvailable() || !QRawFont(fonts.previewBytes(), 30).isValid()
+                    || fonts.available(family) || registeredBefore != QFontDatabase::families()) {
+                    qWarning() << "Private preview failed" << family << fonts.previewStatus();
+                    passed = false;
+                    break;
+                }
+                qInfo() << "Previewed without registration or installation" << family;
+                fonts.cancelPreview();
+            }
             QEventLoop loop;
             QTimer deadline;
             deadline.setSingleShot(true);

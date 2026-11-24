@@ -7,6 +7,7 @@ Item {
     required property var controller
     property bool overlayOnly: false
     property bool blackout: false
+    readonly property bool effectiveBlackout: blackout || controller.audienceBlack
     property bool verificationPattern: false
 
     function probe() {
@@ -16,26 +17,19 @@ Item {
     width: 1920
     height: 1080
 
-    SlideRenderer {
+    AudienceRenderer {
         id: broadcastRenderer
 
-        elements: scene.controller.audienceElements
-        backgroundColor: scene.controller.audienceBackground
-        ambientOpacity: scene.controller.audienceAmbientOpacity
+        controller: scene.controller
         transparentBackground: scene.overlayOnly
-        // Only the canvas fill is removed; every authored layer keeps its own alpha.
-        textOnly: false
-        clearText: scene.controller.textCleared
-        playing: scene.controller.playing
         audible: false
-        showErrors: false
-        visible: !scene.blackout
+        visible: !scene.effectiveBlackout
     }
 
     Rectangle {
         anchors.fill: parent
         color: scene.overlayOnly ? "transparent" : "#000000"
-        visible: scene.blackout
+        visible: scene.effectiveBlackout
     }
 
     Rectangle {

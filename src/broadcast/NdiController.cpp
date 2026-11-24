@@ -189,8 +189,13 @@ bool NdiController::start(
         emit changed();
         return false;
     }
+    m_stopRequested = false;
     m_worker = new NdiWorker(safeName, m_runtimePath, fps, diagnostic);
     connect(m_worker, &NdiWorker::senderReady, this, [this, fps] {
+        // Stop may be requested while the sender-ready signal is still queued.
+        if (m_stopRequested) {
+            return;
+        }
         m_active = true;
         m_elapsed.start();
         m_timer.start(qMax(1, qRound(1000.0 / fps)));
@@ -229,6 +234,7 @@ bool NdiController::start(
 }
 
 void NdiController::stop() {
+    m_stopRequested = true;
     if (m_active) {
         m_durationMs = m_elapsed.elapsed();
     }

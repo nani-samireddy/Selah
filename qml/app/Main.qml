@@ -13,15 +13,23 @@ ApplicationWindow {
     required property var library
     required property var content
     required property var programs
+    readonly property bool onAir: outputs.hasAudienceContent && (outputs.audienceEnabled || (
+                                                                     ndi.active && !ndi.diagnostic))
+    readonly property bool liveBlackout: onAir && outputs.audienceBlack
+    readonly property color liveAccent: liveBlackout ? (LibraryStyle.dark ? "#F1C581" : "#75440F") :
+                                                       (LibraryStyle.dark ? "#A0E1BA" : "#195F36")
+    readonly property color liveSurface: liveBlackout ? (LibraryStyle.dark ? "#533A1F" : "#F3D6A4") :
+                                                        (LibraryStyle.dark ? "#174532" : "#C5E9D3")
     property string startupWorkspace: "programs"
+    readonly property bool programEditorOpen: programPanel.editorOpen
     property string activeWorkspace: "design"
     property string librarySection: "songs"
     property string libraryDestination: "program"
     property bool fontPickerOpen: false
-    readonly property bool settingsOpen: savePresentationDialog.opened || fontPickerOpen
-                                         || outputPanel.opened || ndiPanel.opened
-                                         || remotePanel.opened || saveTemplateDialog.opened
-                                         || userGuide.opened || programPanel.dialogOpen
+    readonly property bool settingsOpen: libraryPanel.previewOpen || savePresentationDialog.opened
+                                         || fontPickerOpen || ndiPanel.opened || remotePanel.opened
+                                         || saveTemplateDialog.opened || userGuide.opened
+                                         || programPanel.dialogOpen
     property string programEditingItem: ""
     required property var outputs
     required property var presentations
@@ -48,8 +56,33 @@ ApplicationWindow {
                                                    !programPanel.opened && !templatePanel.opened &&
                                                    !saveTemplateDialog.opened && !songPanel.opened
                                                    && !biblePanel.opened && !libraryPanel.opened &&
-                                                   !outputPanel.opened && !ndiPanel.opened &&
-                                                   !remotePanel.opened
+                                                   !ndiPanel.opened && !remotePanel.opened
+    readonly property bool presentationRunning: outputs.audienceEnabled || outputs.stageEnabled
+                                                || ndi.busy
+
+    signal canvasSettingsRequested
+
+    function selectCanvasSettings() {
+        if (activeTextEditor)
+            activeTextEditor.finish();
+        doc.selected = -1;
+        canvasSettingsRequested();
+        workspace.focusCanvas();
+    }
+
+    function undoEditor() {
+        if (activeTextEditor)
+            activeTextEditor.finish();
+        doc.undo();
+        workspace.focusCanvas();
+    }
+
+    function redoEditor() {
+        if (activeTextEditor)
+            activeTextEditor.finish();
+        doc.redo();
+        workspace.focusCanvas();
+    }
 
     function formatText(patch) {
         if (app.activeTextEditor)
@@ -139,11 +172,13 @@ ApplicationWindow {
         app.contentItem.forceActiveFocus();
         closeContentPanels();
         activeWorkspace = name;
-        if (name === "programs")
+        if (name === "programs") {
+            programPanel.showAllPrograms();
             Qt.callLater(() => {
                 if (activeWorkspace === "programs")
                     programPanel.open();
             });
+        }
         if (name === "libraries")
             Qt.callLater(() => {
                 if (activeWorkspace === "libraries")
@@ -213,8 +248,12 @@ ApplicationWindow {
 
     function contentAdded(toProgram, embedded) {
         app.notify(toProgram ? "Added to " + programs.title : "Added to the Design presentation");
-        if (embedded)
-            switchWorkspace(toProgram ? "programs" : "design");
+        if (embedded) {
+            if (toProgram)
+                showProgramEditor();
+            else
+                switchWorkspace("design");
+        }
     }
 
     function editTemplate(definition) {
@@ -235,21 +274,40 @@ ApplicationWindow {
         saveTemplateDialog.open();
     }
 
+    function showProgramEditor() {
+        switchWorkspace("programs");
+        programPanel.showEditor();
+    }
+
+    function loadProgramForPresentation(programId) {
+        programPanel.flushItem();
+        if (!programs.openProgram(programId))
+            return false;
+        programPanel.previewIndex = 0;
+        programPanel.loadItem();
+        return programs.present(0);
+    }
+
     function showPrograms() {
         switchWorkspace("programs");
     }
 
-    function showOutputs() {
-        outputPanel.open();
+    function stopPresenting() {
+        outputs.stopPresentation();
+        ndi.stop();
+        app.notify("Presentation stopped");
+    }
+
+    function showOutputs(section = "displays") {
+        switchWorkspace("present");
+        Qt.callLater(() => presentWorkspace.openOutputControls(section));
     }
 
     function showRemote() {
-        outputPanel.close();
         remotePanel.open();
     }
 
     function showNdi() {
-        outputPanel.close();
         ndiPanel.open();
     }
 
@@ -262,19 +320,21 @@ ApplicationWindow {
     }
 
     function newProgram() {
-        switchWorkspace("programs");
+        if (activeWorkspace !== "programs")
+            switchWorkspace("programs");
         Qt.callLater(() => programPanel.showNewProgramDialog());
     }
 
     function importProgram() {
-        switchWorkspace("programs");
+        if (activeWorkspace !== "programs")
+            switchWorkspace("programs");
         Qt.callLater(() => programPanel.showImportDialog());
     }
 
     function exportProgram() {
         if (!programs.id)
             return;
-        switchWorkspace("programs");
+        showProgramEditor();
         Qt.callLater(() => programPanel.showExportDialog());
     }
 
@@ -298,6 +358,7 @@ ApplicationWindow {
     }
 
     function showUserGuide() {
+        guideTour.finish();
         userGuide.open();
     }
 
@@ -316,6 +377,7 @@ ApplicationWindow {
 
     function preview() {
         outputWindow.contentSnapshot = app.doc.elements;
+        outputWindow.fillSnapshot = app.doc.backgroundFill;
         outputWindow.slideColor = app.doc.background();
         outputWindow.backgroundOpacity = app.doc.ambientOpacity;
         outputWindow.playing = true;
@@ -347,7 +409,7 @@ ApplicationWindow {
     }
     footer: Rectangle {
         height: 30
-        color: LibraryStyle.tone("#171717")
+        color: app.onAir ? app.liveSurface : LibraryStyle.tone("#171717")
 
         Rectangle {
             width: parent.width
@@ -364,24 +426,29 @@ ApplicationWindow {
                 text: app.activeWorkspace === "design" ? (app.templateMode
                                                           ? "Template design · Reusable layout" :
                                                             "Design · Draft changes stay off live output") :
-                                                         app.activeWorkspace === "programs"
-                                                         ? "Prepare your service · Select content, arrange, then present" :
-                                                           app.activeWorkspace === "libraries"
-                                                           ? "Your content · Available offline on this computer" :
-                                                             "Present · Controls affect the live output"
-                color: LibraryStyle.tone("#777777")
+                                                         app.activeWorkspace === "programs" ? (
+                                                                                                  app.programEditorOpen
+                                                                                                  ? "Prepare your service · Select content, arrange, then present" :
+                                                                                                    "Your programs · Choose a service to prepare") :
+                                                                                              app.activeWorkspace
+                                                                                              === "libraries"
+                                                                                              ? "Your content · Available offline on this computer" :
+                                                                                                "Present · Controls affect the live output"
+                color: app.onAir ? app.liveAccent : LibraryStyle.tone("#777777")
                 font.pixelSize: 10
                 Layout.fillWidth: true
             }
 
             Text {
                 text: app.outputs.defaultImageShowing ? "DEFAULT IMAGE  ·  " + app.outputs.status :
-                                                        app.outputs.liveIndex >= 0 ? "LIVE  /  "
+                                                        app.outputs.liveIndex >= 0 ? (app.onAir
+                                                                                      ? "LIVE  /  " :
+                                                                                        "READY  /  ")
                                                                                      + app.outputs.liveTitle
                                                                                      + "  ·  "
                                                                                      + app.outputs.status :
                                                                                      "Outputs stopped"
-                color: LibraryStyle.tone("#929292")
+                color: app.onAir ? app.liveAccent : LibraryStyle.tone("#929292")
                 font.pixelSize: 10
             }
         }
@@ -406,6 +473,19 @@ ApplicationWindow {
 
     UserGuideDialog {
         id: userGuide
+
+        tour: guideTour
+    }
+
+    UserGuideTour {
+        id: guideTour
+
+        host: app
+
+        onGuideRequested: index => {
+            userGuide.topicIndex = index;
+            userGuide.open();
+        }
     }
 
     Settings {
@@ -496,7 +576,8 @@ ApplicationWindow {
     ColorDialog {
         id: backgroundColor
 
-        title: "Background tint"
+        title: "Canvas background color"
+        options: ColorDialog.ShowAlphaChannel
         selectedColor: app.doc.backgroundColor
 
         onAccepted: app.doc.setBackground(selectedColor.toString())
@@ -549,6 +630,8 @@ ApplicationWindow {
         }
 
         PresentWorkspace {
+            id: presentWorkspace
+
             host: app
             anchors.fill: parent
             visible: app.activeWorkspace === "present"
@@ -618,9 +701,8 @@ ApplicationWindow {
         operatorWindow: app
         editingItemId: app.programEditingItem
         keyboardAllowed: !songPanel.opened && !biblePanel.opened && !libraryPanel.opened &&
-                         !outputPanel.opened && !templatePanel.opened && !saveTemplateDialog.opened
-                         && !remotePanel.opened && !customSlidesPanel.opened &&
-                         !savePresentationDialog.opened
+                         !templatePanel.opened && !saveTemplateDialog.opened && !remotePanel.opened
+                         && !customSlidesPanel.opened && !savePresentationDialog.opened
 
         onPresentRequested: app.switchWorkspace("present")
         onSongsRequested: {
@@ -635,7 +717,7 @@ ApplicationWindow {
             libraryPanel.programTarget = app.programs;
             libraryPanel.open();
         }
-        onOutputsRequested: outputPanel.open()
+        onOutputsRequested: app.showOutputs()
         onTemplatesRequested: app.showTemplates(app.programs)
         onEditRequested: (slides, itemId) => {
             app.editingPresentationId = "";
@@ -691,20 +773,6 @@ ApplicationWindow {
         }
     }
 
-    OutputPanel {
-        id: outputPanel
-
-        parent: Overlay.overlay
-        controller: app.outputs
-        document: app.doc
-
-        onRemoteRequested: {
-            outputPanel.close();
-            remotePanel.open();
-        }
-        onBroadcastRequested: app.showNdi()
-    }
-
     RemotePanel {
         id: remotePanel
 
@@ -738,6 +806,7 @@ ApplicationWindow {
         id: outputWindow
 
         property var contentSnapshot: []
+        property var fillSnapshot: ({})
         property color slideColor: "#54435F"
         property real backgroundOpacity: 0.85
         property bool playing: false
@@ -809,6 +878,7 @@ ApplicationWindow {
                 id: outputRenderer
 
                 elements: outputWindow.contentSnapshot
+                backgroundFill: outputWindow.fillSnapshot
                 backgroundColor: outputWindow.slideColor
                 ambientOpacity: outputWindow.backgroundOpacity
                 playing: outputWindow.playing && outputWindow.visible

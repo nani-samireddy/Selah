@@ -9,6 +9,11 @@ Rectangle {
     required property var host
     property bool expanded: false
 
+    function flush() {
+        if (noteField.activeFocus)
+            host.doc.notes = noteField.text;
+    }
+
     height: expanded ? 69 : 32
     color: LibraryStyle.tone("#181818")
     border.color: LibraryStyle.tone("#2D2D2D")
@@ -35,6 +40,8 @@ Rectangle {
     }
 
     TextField {
+        id: noteField
+
         visible: notesBox.expanded
         text: notesBox.host.doc.notes
         placeholderText: "Add a note for the speaker…"

@@ -9,6 +9,7 @@
 
 OutputManager::OutputManager(QObject *parent)
     : QObject(parent) {
+    initializeTransitions();
     QSettings settings;
     m_audienceDisplay = settings.value("outputs/audience").toString();
     m_stageDisplay = settings.value("outputs/stage").toString();
@@ -258,8 +259,20 @@ void OutputManager::stop(const QString &role) {
     emit stateChanged();
 }
 
+void OutputManager::stopPresentation() {
+    finishTransition();
+    stop("audience");
+    stop("stage");
+    m_playing = false;
+    m_timer.stop();
+    m_status = "Presentation stopped";
+    // Keep the prepared snapshot and position available for the next session.
+    emit stateChanged();
+}
+
 void OutputManager::blackout(const QString &role, bool value) {
     if (role == "audience") {
+        finishTransition();
         m_audienceBlack = value;
     } else if (role == "stage") {
         m_stageBlack = value;
@@ -270,6 +283,7 @@ void OutputManager::blackout(const QString &role, bool value) {
 }
 
 void OutputManager::clearText(bool value) {
+    finishTransition();
     m_textCleared = value;
     emit stateChanged();
 }
@@ -278,6 +292,7 @@ void OutputManager::takeLive(const QVariantList &slides, int index, const QStrin
     if (index < 0 || index >= slides.size()) {
         return;
     }
+    prepareTransition(slides[index].toMap());
     m_snapshotId = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_liveSource = source;
     m_liveSlides = slides;
@@ -294,6 +309,10 @@ void OutputManager::advance(int delta) {
     if (next < 0 || next >= m_liveSlides.size()) {
         return;
     }
+    if (next == m_index && !defaultImageShowing()) {
+        return;
+    }
+    prepareTransition(m_liveSlides[next].toMap());
     m_index = next;
     m_defaultImageLive.clear();
     emit liveChanged();
@@ -347,6 +366,7 @@ bool OutputManager::showDefaultImage(bool showing) {
         emit stateChanged();
         return false;
     }
+    finishTransition();
     // Keep the service snapshot, notes, index and transport state intact behind standby.
     m_defaultImageLive = showing
         ? QVariantList { DefaultImage::layer(m_defaultImageSource, m_defaultImageFit) }

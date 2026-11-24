@@ -99,3 +99,20 @@ Pagination measures both boxes independently and keeps verse pairs together.
 When a shorter translation finishes first, its final chunk remains visible while
 the other translation continues. Full source text and both copyright/license
 records remain in the saved program snapshot.
+
+## Canvas fill
+
+Template canvas fills support solid colors and alpha, including fully transparent
+fills. Canvas settings are reached via Layers → Background; layer opacity is a
+separate control. The optional ambient pattern is composed with the fill's alpha,
+so it cannot cover a transparent canvas. New templates use zero ambient opacity.
+The renderer draws a checkerboard only when a UI preview opts into it, never in
+physical audience or NDI output. Canvas color/ambient changes are undoable and
+remain part of template save, import/export and content composition.
+
+
+Canvas backgrounds also support linear/radial gradients (2–8 positioned color stops,
+with alpha), gradient angle, and imported images with Fill/Fit/Stretch. Background
+images use managed media storage and participate in missing-media warnings. The
+optional `backgroundFill` slide map is retained in template composition, project
+recovery, presentation saves and program snapshots. Older slides use solid fills.

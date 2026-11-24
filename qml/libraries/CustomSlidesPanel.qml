@@ -55,7 +55,7 @@ Popup {
                 spacing: 5
 
                 Text {
-                    text: "Custom slides"
+                    text: "Presentations"
                     color: LibraryStyle.text
                     font.pixelSize: 22
                     font.family: LibraryStyle.fontFamily
@@ -86,7 +86,7 @@ Popup {
 
             Layout.fillWidth: true
             leadingIcon: "search"
-            placeholderText: "Search custom presentations…"
+            placeholderText: "Search presentations…"
         }
 
         GridView {
@@ -128,11 +128,13 @@ Popup {
                         clip: true
 
                         SlideRenderer {
+                            showTransparencyGrid: true
                             width: 1920
                             height: 1080
                             scale: preview.width / 1920
                             transformOrigin: Item.TopLeft
                             elements: preview.firstSlide.elements || []
+                            backgroundFill: preview.firstSlide.backgroundFill || ({})
                             backgroundColor: preview.firstSlide.background || "#171717"
                             ambientOpacity: preview.firstSlide.ambientOpacity === undefined ? 0.85 :
                                                                                               preview.firstSlide.ambientOpacity
@@ -165,6 +167,7 @@ Popup {
 
                         LibraryButton {
                             text: "Edit"
+                            accented: true
                             iconName: "pen-tool"
 
                             onClicked: panel.editRequested(card.modelData)
@@ -186,7 +189,7 @@ Popup {
                 anchors.centerIn: parent
                 visible: cards.count === 0
                 text: search.text ? "No matching presentations" :
-                                    "Create your first custom presentation.\nIt will open in Design."
+                                    "Create your first presentation.\nIt will open in Design."
                 color: LibraryStyle.muted
                 font.pixelSize: 14
                 horizontalAlignment: Text.AlignHCenter
