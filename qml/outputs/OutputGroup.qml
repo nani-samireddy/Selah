@@ -11,7 +11,7 @@ Pane {
     contentItem: ColumnLayout {
         spacing: 12
     }
-    background: Rectangle {
+    background: SquircleSurface {
         radius: 10
         color: LibraryStyle.panel
         border.color: LibraryStyle.border

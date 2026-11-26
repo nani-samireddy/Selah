@@ -150,12 +150,8 @@ StudioPanel {
                 iconName: panel.collapsed ? "chevron-down" : "chevron-up"
                 hint: panel.collapsed ? "Expand Layers" : "Collapse Layers"
                 Accessible.name: hint
-                feedbackEnabled: false
 
-                onClicked: {
-                    panel.collapsed = !panel.collapsed;
-                    InteractionFeedback.play(panel.collapsed ? "close" : "open");
-                }
+                onClicked: panel.collapsed = !panel.collapsed
             }
         }
 

@@ -1,9 +1,12 @@
 #include "OutputManager.h"
+#include <QCoreApplication>
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
 #include <QSettings>
 #include <QTemporaryDir>
+#include <QThread>
 
 namespace {
 struct ImagePreferences {
@@ -118,6 +121,46 @@ int runDefaultImageChecks() {
     QFile::remove(saved.toLocalFile());
     if (outputs.showDefaultImage(true) || outputs.defaultImageShowing()) {
         return 14;
+    }
+    const auto video = directory.filePath("Welcome.mp4");
+    if (!QFile::copy(":/test-fixtures/standby.mp4", video)) {
+        return 15;
+    }
+    outputs.setPlaying(false);
+    const int beforeImport = changes;
+    const auto beforeVideo = outputs.liveSlides();
+    outputs.importStandbyMedia(QUrl::fromLocalFile(video));
+    if (!outputs.importingStandbyMedia()) {
+        return 16;
+    }
+    QElapsedTimer elapsed;
+    elapsed.start();
+    while (outputs.importingStandbyMedia() && elapsed.elapsed() < 5000) {
+        QCoreApplication::processEvents();
+        QThread::msleep(5);
+    }
+    if (outputs.importingStandbyMedia() || outputs.standbyMediaKind() != "video"
+        || changes != beforeImport || outputs.liveSlides() != beforeVideo) {
+        return 17;
+    }
+    const auto managed = outputs.defaultImageSource();
+    QFile::remove(video);
+    if (!outputs.showDefaultImage(true)) {
+        return 18;
+    }
+    const auto layer = outputs.audienceElements()[0].toMap();
+    if (layer["kind"] != "video" || !layer["loop"].toBool() || !layer["muted"].toBool()
+        || layer["source"] != managed.toString()) {
+        return 19;
+    }
+    OutputManager persisted;
+    if (persisted.defaultImageSource() != managed || persisted.standbyMediaKind() != "video"
+        || persisted.defaultImageShowing()) {
+        return 20;
+    }
+    outputs.showDefaultImage(false);
+    if (outputs.liveSlides() != beforeVideo || outputs.playing()) {
+        return 21;
     }
     qInfo() << "Default image checks passed: durable import, persistence, explicit show/resume, "
                "snapshot isolation, fit, missing files, navigation and blackout priority.";

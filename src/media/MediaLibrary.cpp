@@ -81,6 +81,7 @@ MediaLibrary::MediaLibrary(QObject *parent)
             const auto type = mime.mimeTypeForFile(file).name();
             QString kind = type.startsWith("image/") ? "image"
                 : type.startsWith("video/")          ? "video"
+                : type.startsWith("audio/")          ? "audio"
                                                      : "";
             if (!kind.isEmpty()) {
                 found.append(QVariantMap { { "source", source }, { "kind", kind },
@@ -110,7 +111,8 @@ QString MediaLibrary::thumbnailPath(const QString &source) const {
 void MediaLibrary::registerAsset(const QVariantMap &element) {
     const auto kind = element["kind"].toString();
     const auto source = element["source"].toString();
-    if ((kind != "image" && kind != "video") || !QUrl(source).isLocalFile() || !m_db.isOpen()) {
+    if ((kind != "image" && kind != "video" && kind != "audio") || !QUrl(source).isLocalFile()
+        || !m_db.isOpen()) {
         return;
     }
     QSqlQuery q(m_db);
@@ -124,7 +126,8 @@ void MediaLibrary::registerAsset(const QVariantMap &element) {
         return;
     }
     const auto thumb = thumbnailPath(source);
-    if (!QFileInfo::exists(thumb) && QFileInfo::exists(QUrl(source).toLocalFile())) {
+    if (kind != "audio" && !QFileInfo::exists(thumb)
+        && QFileInfo::exists(QUrl(source).toLocalFile())) {
         bool queued = m_thumbnailAsset.value("source") == source;
         for (const auto &asset : m_queue) {
             queued = queued || asset["source"] == source;

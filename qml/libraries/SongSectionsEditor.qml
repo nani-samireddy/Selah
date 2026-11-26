@@ -11,6 +11,8 @@ GridLayout {
     required property string primaryLanguage
     required property string secondaryLanguage
     required property var fontForText
+    required property var library
+    property bool chordsMode: false
     property bool showDetails: false
     property bool syncing: false
     property bool ready: false
@@ -65,6 +67,7 @@ GridLayout {
         sync();
     }
 
+    // Inline chord tokens remain editable and travel with each section.
     ListModel {
         id: cards
 
@@ -76,7 +79,7 @@ GridLayout {
 
         model: cards
 
-        Rectangle {
+        SquircleSurface {
             id: card
 
             required property int index
@@ -123,6 +126,35 @@ GridLayout {
                     placeholderText: "Section name"
 
                     onTextEdited: editor.updateSection(card.index, "label", text)
+                }
+
+                LibraryField {
+                    visible: editor.chordsMode
+                    Layout.fillWidth: true
+                    placeholderText: "Stage cue, e.g. Repeat chorus / Instrumental"
+                    text: card.payload.stageCue || ""
+
+                    onTextEdited: editor.updateSection(card.index, "stageCue", text)
+                }
+
+                Text {
+                    visible: editor.chordsMode
+                    Layout.fillWidth: true
+                    text: "Add chords before words: [C]Amazing [G]grace"
+                    color: LibraryStyle.muted
+                    font.pixelSize: 11
+                    wrapMode: Text.Wrap
+                }
+
+                ChordLyricsItem {
+                    visible: editor.chordsMode
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(110, Math.min(300, (card.payload.primary || "").split(
+                                                                       "\n").length * 52))
+                    content: editor.library.chordPreview(card.payload.primary || "")
+                    pixelSize: 24
+                    color: LibraryStyle.text
+                    chordColor: LibraryStyle.dark ? "#E8C987" : "#79520E"
                 }
 
                 RowLayout {

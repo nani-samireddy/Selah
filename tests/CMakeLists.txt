@@ -1,15 +1,25 @@
+qt_add_executable(selah-ai-test-runtime fixtures/CactusFixture.cpp)
+target_link_libraries(selah-ai-test-runtime PRIVATE Qt6::Core)
+
 # Unit bodies are shared by the standalone runner and the optional --self-test command.
 add_library(church-deck-test-cases STATIC
     unit/ModelChecks.cpp unit/ModelChecks.h
+    unit/BookMatcherTests.cpp
+    unit/ServiceToolsTests.cpp unit/BackupTests.cpp unit/ServiceCueTests.cpp
+    unit/UpdateTests.cpp
+    unit/AiAssistantTests.cpp
+    unit/QuickAddTests.cpp
+    unit/TextLayoutTests.cpp
     unit/ContentLibraryTests.cpp unit/DualScriptureTests.cpp
     unit/BibleXmlTests.cpp
     unit/EditorDocumentTests.cpp
-    unit/MediaLibraryTests.cpp
+    unit/MediaLibraryTests.cpp unit/AudioLibraryTests.cpp
     unit/TransitionTests.cpp
     unit/OutputManagerTests.cpp
     unit/DefaultImageTests.cpp
     unit/NdiWorkerTests.cpp
     unit/SlideFactoryTests.cpp
+    unit/ProgramSectionsTests.cpp
     unit/ProgramStoreTests.cpp
     unit/TemplateStoreTests.cpp
     unit/TemplatePresetTests.cpp
@@ -18,8 +28,14 @@ add_library(church-deck-test-cases STATIC
     unit/PresentationLibraryTests.cpp
     unit/TextFormattingTests.cpp
 )
+target_compile_definitions(church-deck-test-cases PRIVATE
+    SELAH_AI_TEST_RUNTIME_PATH="$<TARGET_FILE:selah-ai-test-runtime>")
+add_dependencies(church-deck-test-cases selah-ai-test-runtime)
 target_include_directories(church-deck-test-cases PUBLIC unit)
 target_link_libraries(church-deck-test-cases PUBLIC church-deck-core)
+
+qt_add_resources(church-deck-test-cases standby-fixture PREFIX "/test-fixtures"
+    BASE "${PROJECT_SOURCE_DIR}/tests/fixtures" FILES "${PROJECT_SOURCE_DIR}/tests/fixtures/standby.mp4")
 
 if(BUILD_TESTING)
     qt_add_executable(church-deck-tests unit/main.cpp)
@@ -47,6 +63,11 @@ endif()
 if(CHURCHDECK_ENABLE_DIAGNOSTICS)
     add_library(church-deck-diagnostics STATIC
         smoke/DiagnosticRunner.cpp smoke/DiagnosticRunner.h
+        smoke/StandbyChecks.cpp smoke/StandbyChecks.h
+        smoke/UpdateSetupChecks.cpp smoke/UpdateSetupChecks.h
+        smoke/AiChecks.cpp smoke/AiChecks.h
+        smoke/QuickAddChecks.cpp smoke/QuickAddChecks.h
+        smoke/TextFitChecks.cpp smoke/TextFitChecks.h
         smoke/ContentChecks.cpp smoke/RoutingChecks.cpp smoke/MediaChecks.cpp
         smoke/ProgramChecks.cpp smoke/ProgramChecks.h
         smoke/TemplateChecks.cpp smoke/TemplateChecks.h

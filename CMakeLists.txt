@@ -56,9 +56,7 @@ qt_add_resources(church-deck user-guides PREFIX "/guides" BASE "${PROJECT_SOURCE
     docs/user-guide/bible.md docs/user-guide/design.md
     docs/user-guide/presenting.md docs/user-guide/remote-and-data.md)
 
-qt_add_resources(church-deck feedback-sounds PREFIX "/sounds" BASE "${PROJECT_SOURCE_DIR}/assets/sounds" FILES assets/sounds/click.wav assets/sounds/select.wav
-    assets/sounds/tick.wav assets/sounds/switch.wav assets/sounds/back.wav
-    assets/sounds/drop.wav assets/sounds/pluck.wav assets/sounds/toggle.wav)
+qt_add_resources(church-deck feedback-sounds PREFIX "/sounds" BASE "${PROJECT_SOURCE_DIR}/assets/sounds" FILES assets/sounds/click.wav)
 
 set_source_files_properties(qml/controls/LibraryStyle.qml qml/controls/InteractionFeedback.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
@@ -81,6 +79,7 @@ qt_add_qml_module(church-deck
     VERSION 1.0
     DEPENDENCIES QtQuick
     SOURCES src/fonts/FontPreviewItem.cpp src/fonts/FontPreviewItem.h
+        src/songs/ChordLyricsItem.cpp src/songs/ChordLyricsItem.h
         src/help/GuideContent.cpp src/help/GuideContent.h
     QML_FILES ${CHURCHDECK_QML}
     RESOURCES assets/ambient.svg ${BRAND_ASSETS} ${STUDIO_ICONS} ${CONTENT_ASSETS}

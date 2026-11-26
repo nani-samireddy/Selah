@@ -58,3 +58,8 @@ Headless startup is not a physical display, hardware decoding, or NDI receiver t
 `packaging/Dockerfile.linux` describes a native Linux SDK container for x64/ARM64
 builders. It requires sufficient local disk space and a running Docker daemon;
 Windows executables still require a Windows runner.
+
+For a website installer, add `--windows-installer --windows-publisher "Your legal name"`
+on Windows with Inno Setup 6 installed. It creates an EXE installer alongside the ZIP.
+See [Windows signing and installer setup](windows-release.md). Unsigned CI installers
+are testing builds; installation and upgrade acceptance remain release gates.

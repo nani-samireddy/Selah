@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -24,6 +25,8 @@ Popup {
     property var verses: []
     property var selected: []
     property string message: ""
+    property var referenceChoices: []
+    property var referenceResolution: ({})
     readonly property var secondaryVersions: [
         {
             id: "",
@@ -37,8 +40,132 @@ Popup {
                                                                                    verses, secondaryId)
     readonly property string pairingError: pairedSelection.error || ""
     property bool searchMode: search.text.trim().length > 0
+    property bool liveMode: false
+    readonly property bool keyboardNavigationAllowed: {
+        if (!opened)
+            return false;
+        const window = scriptureContent.Window.window;
+        let item = window ? window.activeFocusItem : null;
+        while (item) {
+            if (item.cursorPosition !== undefined || item instanceof ComboBox
+                    || item instanceof SpinBox)
+                return false;
+            item = item.parent;
+        }
+        return true;
+    }
+    property var sessionController: null
+    property var outputs: null
+    property var liveAnchor: ({})
+    property var liveFirstAnchor: ({})
+    property bool takePending: false
+    readonly property var sessionPreferences: ({
+                                                   bible: version.id || "",
+                                                   second: secondaryId,
+                                                   layout: templateChoice.selectedId
+                                               })
 
+    signal sessionClosed
     signal contentAdded(bool toProgram)
+
+    function restorePreferences(preferences) {
+        const primaryIndex = versions.findIndex(row => row.id === preferences.bible);
+        if (primaryIndex >= 0)
+            versionPicker.currentIndex = primaryIndex;
+        secondaryPicker.currentIndex = Math.max(0, secondaryVersions.findIndex(row => row.id
+                                                                                      === preferences.second));
+        templateChoice.selectedId = preferences.layout || "";
+    }
+
+    function stageSelection() {
+        if (!liveMode || !opened || !sessionController)
+            return;
+        if (!selected.length || pairingError) {
+            sessionController.clearPreview();
+            return;
+        }
+        sessionController.previewScripture(pairedSelection.verses || [], templateChoice.definition,
+                                           lines.value);
+    }
+
+    function presentSelection() {
+        stageSelection();
+        if (sessionController.presentScripture()) {
+            liveFirstAnchor = verses[selected[0]] || ({});
+            liveAnchor = verses[selected[selected.length - 1]] || ({});
+        }
+    }
+
+    // Traverse the installed chapter/book data, including sparse translations.
+    function continueReading(delta) {
+        if (sessionController.advanceScripture(delta))
+            return;
+        const anchor = delta < 0 ? liveFirstAnchor : liveAnchor;
+        if (!anchor.book)
+            return;
+        navigatePassage(anchor, delta, true);
+    }
+
+    function handleNavigationKey(event) {
+        if (!keyboardNavigationAllowed || event.modifiers !== Qt.NoModifier)
+            return;
+        if (event.key === Qt.Key_Up || event.key === Qt.Key_Left) {
+            navigateSelection(-1);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {
+            navigateSelection(1);
+            event.accepted = true;
+        }
+    }
+
+    function navigateSelection(delta) {
+        if (!verses.length)
+            return;
+        const index = selected.length ? selected[delta < 0 ? 0 : selected.length - 1] + delta : (
+                                            delta > 0 ? 0 : verses.length - 1);
+        if (index >= 0 && index < verses.length) {
+            selected = [index];
+            syncSidebar(verses[index]);
+            verseView.currentIndex = index;
+            verseView.positionViewAtIndex(index, ListView.Contain);
+            return;
+        }
+        if (!searchMode || referenceResolution.code)
+            navigatePassage(verses[delta > 0 ? verses.length - 1 : 0], delta, false);
+    }
+
+    // Arrow keys browse; only explicit presentation controls set takeLive.
+    function navigatePassage(anchor, delta, takeLive) {
+        const books = library.books(version.id);
+        let b = books.findIndex(row => row.code === anchor.book);
+        while (b >= 0 && b < books.length) {
+            const chapters = library.chapters(version.id, books[b].code);
+            let c = books[b].code === anchor.book ? chapters.findIndex(row => row.chapter
+                                                                              === anchor.chapter) : (
+                                                        delta > 0 ? 0 : chapters.length - 1);
+            while (c >= 0 && c < chapters.length) {
+                const ch = chapters[c];
+                const rows = library.passage(version.id, books[b].code, ch.chapter, ch.first,
+                                             ch.last);
+
+
+                const candidates = rows.filter(row => row.book !== anchor.book || row.chapter
+                                                      !== anchor.chapter || (delta > 0 ? row.verse
+                                                                                         > anchor.verse :
+                                                                                         row.verse
+                                                                                         < anchor.verse));
+                if (candidates.length) {
+                    const row = candidates[delta > 0 ? 0 : candidates.length - 1];
+                    takePending = takeLive;
+                    openPassage(version.id, row.book, row.chapter, row.verse, row.verse);
+                    return;
+                }
+                c += delta;
+            }
+            b += delta;
+        }
+        message = "No further verses in this Bible.";
+    }
 
     function addToTarget(programId = "") {
         if (pairingError) {
@@ -67,13 +194,36 @@ Popup {
         debounce.stop();
         selected = [];
         message = "";
-        verses = searchMode ? library.searchVerses(version.id || "", search.text) : chapterVerses;
+        const resolution = searchMode ? library.resolveReference(version.id || "", search.text) : (
+                                            {});
+        referenceResolution = resolution;
+        referenceChoices = resolution.choices || [];
+        message = resolution.error || "";
+        verses = message ? [] : searchMode ? library.searchVerses(version.id || "", search.text) :
+                                             chapterVerses;
         highlightedVerse = -1;
         verseView.positionViewAtBeginning();
     }
 
     function schedule() {
         debounce.restart();
+    }
+
+    function syncSidebar(verse) {
+        if (!verse) {
+            highlightedVerse = -1;
+            return;
+        }
+        const bookIndex = bookList.findIndex(row => row.code === verse.book);
+        if (bookIndex < 0)
+            return;
+        // Programmatic selection preserves the active search and its result indices.
+        bookPicker.currentIndex = bookIndex;
+        const nextChapter = chapterList.findIndex(row => row.chapter === verse.chapter);
+        if (nextChapter < 0)
+            return;
+        chapterIndex = nextChapter;
+        highlightedVerse = verse.verse;
     }
 
     function choose(index) {
@@ -85,6 +235,8 @@ Popup {
             rows.push(index);
         rows.sort((a, b) => a - b);
         selected = rows;
+        syncSidebar(at < 0 ? verses[index] : rows.length ? verses[rows[rows.length - 1]] : null);
+        scriptureContent.forceActiveFocus();
     }
 
     function jumpToVerse(number) {
@@ -97,6 +249,7 @@ Popup {
         const index = verses.findIndex(verse => verse.verse === number);
         if (index < 0)
             return;
+        scriptureContent.forceActiveFocus();
         highlightedVerse = number;
         selected = [index];
         verseView.forceLayout();
@@ -131,6 +284,10 @@ Popup {
                                                                 <= last ? index : -1).filter(index
                                                                                              => index
                                                                                                 >= 0);
+            if (panel.takePending) {
+                panel.takePending = false;
+                panel.presentSelection();
+            }
         });
     }
 
@@ -143,13 +300,16 @@ Popup {
     focus: true
     padding: LibraryStyle.pagePadding
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.width: panel.workspaceMode ? 0 : 1
         border.color: LibraryStyle.tone("#3B3B3B")
         radius: panel.workspaceMode ? 0 : 12
     }
 
+    onPairedSelectionChanged: if (liveMode)
+                                  Qt.callLater(stageSelection)
+    onSelectedChanged: Qt.callLater(stageSelection)
     onOpened: refresh()
 
     Connections {
@@ -187,8 +347,13 @@ Popup {
     }
 
     ColumnLayout {
+        id: scriptureContent
+
+        focus: true
         anchors.fill: parent
         spacing: 16
+
+        Keys.onPressed: event => panel.handleNavigationKey(event)
 
         RowLayout {
             Column {
@@ -196,7 +361,7 @@ Popup {
 
                 Text {
                     font.family: LibraryStyle.fontFamily
-                    text: "Bible"
+                    text: panel.liveMode ? "Scripture" : "Bible"
                     color: LibraryStyle.tone("#EEEEEE")
                     font.pixelSize: 22
                     font.weight: Font.Medium
@@ -204,7 +369,9 @@ Popup {
 
                 Text {
                     font.family: LibraryStyle.fontFamily
-                    text: "Find a passage. Bring the Word to the screen."
+                    text: panel.liveMode
+                          ? "Arrow keys browse verses. Only Present changes the live slide." :
+                            "Find a passage. Bring the Word to the screen."
                     color: LibraryStyle.tone("#929292")
                     font.pixelSize: 12
                 }
@@ -217,6 +384,7 @@ Popup {
             LibraryButton {
                 text: panel.library.busy ? (panel.library.bibleImportPhase === "downloading"
                                             ? "Downloading…" : "Importing…") : "Import translation"
+                visible: !panel.liveMode
                 enabled: !panel.library.busy
 
                 onClicked: importDialog.open()
@@ -224,10 +392,10 @@ Popup {
 
             LibraryButton {
                 text: "Close"
-                visible: !panel.workspaceMode
+                visible: !panel.workspaceMode || panel.liveMode
                 quiet: true
 
-                onClicked: panel.close()
+                onClicked: panel.liveMode ? panel.sessionClosed() : panel.close()
             }
         }
 
@@ -260,6 +428,7 @@ Popup {
                     Accessible.name: "Bible translation"
 
                     onActivated: {
+                        panel.liveAnchor = ({});
                         secondaryPicker.currentIndex = 0;
                         bookPicker.currentIndex = 0;
                         panel.chapterIndex = 0;
@@ -366,6 +535,24 @@ Popup {
                     onTextChanged: panel.schedule()
                 }
 
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: panel.referenceChoices.length > 0
+
+                    Repeater {
+                        model: panel.referenceChoices
+
+                        LibraryButton {
+                            required property var modelData
+
+                            text: modelData.name + " · " + modelData.query
+
+                            onClicked: search.text = modelData.query
+                        }
+                    }
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
 
@@ -400,10 +587,28 @@ Popup {
                     }
                 }
 
+                LibraryCaption {
+                    visible: panel.liveMode
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: panel.outputs ? "Live: " + (panel.outputs.liveTitle || "No slide") + (
+                                              panel.outputs.audienceEnabled ? " · Audience on" :
+                                                                              " · Audience off") :
+                                          ""
+                }
+
+                ScriptureSessionPreview {
+                    visible: panel.liveMode
+                    controller: panel.sessionController
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: panel.liveMode ? Math.min(220, width * 9 / 16) : 0
+                }
+
                 ListView {
                     id: verseView
 
                     objectName: "scriptureVerseList"
+                    keyNavigationEnabled: false
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
@@ -432,8 +637,9 @@ Popup {
                         width: ListView.view.width - 12
                         height: verseColumn.implicitHeight + 32
                         padding: 16
+                        objectName: "bibleVerseCard_" + index
 
-                        background: Rectangle {
+                        background: SquircleSurface {
                             color: verseItem.located ? (LibraryStyle.dark ? "#36303E" : "#EEE7F6") :
                                                        verseItem.chosen ? LibraryStyle.tone(
                                                                               "#2D2D2D") :
@@ -479,9 +685,9 @@ Popup {
                             Text {
                                 visible: !!panel.secondaryId
                                 width: parent.width
-                                text: (verseItem.secondaryVerse.reference || "Verse unavailable")
-                                      + " · " + (verseItem.secondaryVerse.abbreviation
-                                                 || "Second Bible")
+                                text: verseItem.secondaryVerse.abbreviation || (
+                                          panel.secondaryVersions[secondaryPicker.currentIndex]
+                                          || {}).title || "Second Bible"
                                 color: LibraryStyle.muted
                                 font.family: LibraryStyle.fontFamily
                                 font.pixelSize: 11
@@ -502,8 +708,11 @@ Popup {
                             }
                         }
 
+                        Keys.onPressed: event => panel.handleNavigationKey(event)
                         onClicked: panel.choose(index)
                     }
+
+                    Keys.onPressed: event => panel.handleNavigationKey(event)
 
                     Text {
                         font.family: LibraryStyle.fontFamily
@@ -532,6 +741,8 @@ Popup {
                 kind: "scripture"
                 dualScripture: !!panel.secondaryId
                 Layout.fillWidth: true
+
+                onSelectedIdChanged: Qt.callLater(panel.stageSelection)
             }
         }
 
@@ -542,6 +753,8 @@ Popup {
         }
 
         RowLayout {
+            visible: !panel.liveMode
+
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
@@ -615,6 +828,54 @@ Popup {
                 enabled: panel.verses.length > 0 && !panel.pairingError
 
                 onClicked: panel.addToTarget()
+            }
+        }
+
+        RowLayout {
+            visible: panel.liveMode
+            Layout.fillWidth: true
+
+            LibraryButton {
+                text: "Previous"
+                iconName: "chevron-left"
+                hint: "Present previous verse or slide"
+                enabled: !!panel.liveAnchor.book
+
+                onClicked: panel.continueReading(-1)
+            }
+
+            LibraryButton {
+                text: "Next verse"
+                iconName: "chevron-right"
+                hint: "Present next verse or the next slide of a split passage"
+                enabled: !!panel.liveAnchor.book
+
+                onClicked: panel.continueReading(1)
+            }
+
+            LibraryCaption {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: panel.message || panel.pairingError || (panel.sessionController
+                                                              ? panel.sessionController.status : "")
+            }
+
+            LibraryButton {
+                text: "Resume program"
+                visible: !!panel.outputs && panel.outputs.canResumeProgram
+
+                onClicked: panel.outputs.resumeProgram()
+            }
+
+            LibraryButton {
+                objectName: "scripturePresentSelection"
+                text: panel.selected.length > 1 ? "Present passage" : "Present verse"
+                iconName: "play"
+                accented: true
+                enabled: panel.selected.length > 0 && !panel.pairingError && !
+                         !panel.sessionController && panel.sessionController.slides.length > 0
+
+                onClicked: panel.presentSelection()
             }
         }
     }

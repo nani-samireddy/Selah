@@ -225,7 +225,7 @@ Popup {
     focus: true
     padding: LibraryStyle.pagePadding
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.width: panel.workspaceMode ? 0 : 1
         border.color: LibraryStyle.tone("#3B3B3B")
@@ -279,8 +279,8 @@ Popup {
     FileDialog {
         id: importDialog
 
-        title: "Import Selah song"
-        nameFilters: ["Selah songs (*.json)"]
+        title: "Import song or ChordPro"
+        nameFilters: ["Songs (*.json *.cho *.chopro *.chordpro *.pro)"]
 
         onAccepted: {
             panel.library.importSong(selectedFile);
@@ -312,7 +312,7 @@ Popup {
         width: 340
         standardButtons: Dialog.Ok | Dialog.Cancel
 
-        background: Rectangle {
+        background: SquircleSurface {
             color: LibraryStyle.tone("#252525")
             border.color: LibraryStyle.tone("#444444")
             radius: 8
@@ -460,7 +460,7 @@ Popup {
                         height: panel.library.parseSongTags(modelData.tags || "").length ? 82 : 64
                         padding: 12
 
-                        background: Rectangle {
+                        background: SquircleSurface {
                             border.width: 1
                             border.color: panel.draft.id === songItem.modelData.id
                                           ? LibraryStyle.tone("#505050") : "transparent"
@@ -715,9 +715,40 @@ Popup {
                         }
                     }
 
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        LibraryButton {
+                            id: chordsToggle
+
+                            text: "Chords & cues"
+                            selected: false
+
+                            onClicked: selected = !selected
+                        }
+
+                        LibraryField {
+                            visible: chordsToggle.selected
+                            Layout.preferredWidth: 100
+                            placeholderText: "Song key"
+                            text: panel.draft.songKey || ""
+
+                            onTextEdited: {
+                                panel.draft.songKey = text;
+                                panel.changed();
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                    }
+
                     SongSectionsEditor {
                         id: sectionCards
 
+                        library: panel.library
+                        chordsMode: chordsToggle.selected
                         objectName: "songSectionsEditor"
                         Layout.fillWidth: true
                         sections: panel.sections

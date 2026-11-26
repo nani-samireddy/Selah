@@ -64,53 +64,29 @@ ColumnLayout {
         }
 
         StudioButton {
+            id: addButton
+
+            objectName: "programAddItemButton"
             text: "Add item"
             iconName: "plus"
             enabled: orderPane.programView.store.id.length > 0
 
             onClicked: {
                 orderPane.programView.flushItem();
-                addMenu.popup();
+                addMenu.popup(addButton, addButton.width - addMenu.width, addButton.height + 6);
             }
         }
 
-        Menu {
+        ProgramAddMenu {
             id: addMenu
 
-            MenuItem {
-                text: "Song from library"
-
-                onTriggered: orderPane.programView.songsRequested()
-            }
-
-            MenuItem {
-                text: "Bible passage"
-
-                onTriggered: orderPane.programView.bibleRequested()
-            }
-
-            MenuItem {
-                text: "Image or video"
-
-                onTriggered: orderPane.programView.mediaRequested()
-            }
-
-            MenuSeparator {
-            }
-
-            MenuItem {
-                text: "Current editor presentation"
-
-                onTriggered: orderPane.programView.store.addPresentation(
-                                 orderPane.programView.document.slides, "Presentation")
-            }
-
-            MenuItem {
-                text: "Presentation file…"
-
-                onTriggered: orderPane.programView.choosePresentationFile()
-            }
+            programView: orderPane.programView
         }
+    }
+
+    ProgramSections {
+        Layout.fillWidth: true
+        programView: orderPane.programView
     }
 
     Item {
@@ -134,6 +110,12 @@ ColumnLayout {
 
                 required property var modelData
                 required property int index
+                readonly property string sectionName: modelData.section || ""
+                readonly property bool startsSection: sectionName.length > 0 && (index === 0 || (
+                                                                                     orderPane.programView.store.items[index
+                                                                                                                       - 1].section
+                                                                                     || "")
+                                                                                 !== sectionName)
                 property bool isLive: modelData.id === orderPane.programView.store.liveItemId
 
                 width: ListView.view.width - 8
@@ -141,12 +123,14 @@ ColumnLayout {
                 height: Math.max(48, itemCopy.implicitHeight + topPadding + bottomPadding)
                 leftPadding: 12
                 rightPadding: 12
-                topPadding: 8
+                topPadding: startsSection ? 34 : 8
                 bottomPadding: 8
                 opacity: orderDrag.dragging && orderDrag.sourceId === modelData.id ? 0.35 : 1
                 Accessible.name: (orderItem.index + 1) + ". " + orderItem.modelData.title
 
-                background: Rectangle {
+                background: SquircleSurface {
+                    y: orderItem.startsSection ? 26 : 0
+                    height: orderItem.height - y
                     color: orderItem.index === orderPane.programView.store.selected
                            ? LibraryStyle.tone("#303030") : orderItem.hovered ? LibraryStyle.tone(
                                                                                     "#242424") :
@@ -235,6 +219,18 @@ ColumnLayout {
                 }
 
                 onClicked: orderPane.programView.select(index)
+
+                Text {
+                    visible: orderItem.startsSection
+                    x: 8
+                    y: 5
+                    text: orderItem.sectionName
+                    color: LibraryStyle.muted
+                    font.pixelSize: 11
+                    font.weight: Font.Medium
+                    width: parent.width - 16
+                    elide: Text.ElideRight
+                }
             }
 
             Text {

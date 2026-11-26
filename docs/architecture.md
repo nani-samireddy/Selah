@@ -24,6 +24,7 @@ Preserve these boundaries when adding features. Do not bind audience output dire
 
 | Module | Responsibility |
 | --- | --- |
+| `ai` | Optional isolated Cactus process, strict search proposals and read-only library resolution; disabled until explicitly configured. See [AI foundation](../src/ai/README.md). |
 | `document` | Draft editing; `DocumentPersistence` validates/serializes; `DocumentMedia` manages asynchronous insertion; `DocumentElements` constructs stable element identities. |
 | `content` | SQLite song/Bible catalog; `ScriptureImporter` owns worker-thread import transactions; `SlideFactory` shapes and splits content. |
 | `media` | Managed asset catalog, discovery, missing-file detection and thumbnail scheduling. |

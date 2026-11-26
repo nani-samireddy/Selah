@@ -15,6 +15,11 @@ TextEdit {
     property int selectionTo: 0
     property var style: ({})
     readonly property bool sessionOpen: host.editingId.length > 0
+    readonly property real fitScale: textElement.textSizing === "shrink" ? (TextFormatting.display(
+                                                                                textElement).fontSize
+                                                                            || 36) / (
+                                                                               textElement.fontSize
+                                                                               || 36) : 1
 
     function begin(index) {
         finish();
@@ -83,10 +88,11 @@ TextEdit {
     }
 
     objectName: "richTextEditor"
-    x: textElement.x || 0
-    y: textElement.y || 0
-    width: textElement.width || 400
-    height: textElement.height || 200
+    x: (textElement.x || 0) - (width - (textElement.width || 400)) / 2
+    y: (textElement.y || 0) - (height - (textElement.height || 200)) / 2
+    width: (textElement.width || 400) / fitScale
+    height: (textElement.height || 200) / fitScale
+    scale: fitScale
     rotation: textElement.rotation || 0
     opacity: textElement.opacity === undefined ? 1 : textElement.opacity
     visible: sessionOpen

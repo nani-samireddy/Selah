@@ -13,6 +13,11 @@ void ApplicationSetup::configure(QGuiApplication &app) {
     // Keep the established storage/settings namespace across the Selah rename.
     app.setApplicationName("Church Deck");
     app.setApplicationDisplayName("Selah");
+    app.setApplicationVersion(SELAH_VERSION);
+    if (app.arguments().contains("--standby-smoke")) {
+        app.setApplicationName("Selah Standby Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
     if (app.arguments().contains("--screenshot")) {
         app.setApplicationName("Church Deck Capture");
     }
@@ -43,6 +48,22 @@ void ApplicationSetup::configure(QGuiApplication &app) {
     }
     if (app.arguments().contains("--background-smoke")) {
         app.setApplicationName("Church Deck Background Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--update-setup-smoke")) {
+        app.setApplicationName("Church Deck Update Setup Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--ai-smoke")) {
+        app.setApplicationName("Church Deck AI Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--quick-add-smoke")) {
+        app.setApplicationName("Church Deck Quick Add Verification");
+        QStandardPaths::setTestModeEnabled(true);
+    }
+    if (app.arguments().contains("--text-fit-smoke")) {
+        app.setApplicationName("Church Deck Text Fit Verification");
         QStandardPaths::setTestModeEnabled(true);
     }
     if (app.arguments().contains("--resize-smoke")) {

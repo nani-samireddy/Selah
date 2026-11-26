@@ -13,3 +13,23 @@ live snapshot still describe the underlying program for stage notes and navigati
 only emits state changes; showing/resuming emits live changes without changing the snapshot ID.
 Blackout remains independent and takes priority over standby. Do not implement standby by taking
 a one-slide replacement snapshot: that would discard service navigation and remote continuity.
+
+## Spontaneous additions
+
+`QuickAddController` stages previews using the existing content factories, saved
+libraries and installed Bibles. It never receives an editor or ProgramStore.
+Search, draft editing and previews cannot replace the live snapshot. Quick Song
+and text drafts, plus translation choices, are bounded and stored in profile
+preferences; saving to a library requires a separate operator action.
+
+`OutputManager::addQuickSlides` inserts a distinct, labeled group into the loaded
+session. Queue insertion preserves the current index, playback, blackout and
+clear-text state, and does not prepare a transition. Present now navigates to the
+new group and keeps a return index. Resume restores that position; for queued
+content reached by normal navigation it goes to the next original item. Loading
+a program replaces this session queue. Additions are not written to saved
+programs or restored as active output on relaunch.
+
+Unit checks cover insertion boundaries/order, resume, exact scripture, draft
+splitting and explicit library saving. `--quick-add-smoke <folder>` checks the QML
+preview/present/resume/queue flow and captures the compact editor strip.

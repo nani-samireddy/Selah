@@ -1,17 +1,32 @@
 #include "OutputManager.h"
 #include "DefaultImage.h"
+#include "LiveAudio.h"
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QFileInfo>
+#include <QFutureWatcher>
 #include <QGuiApplication>
 #include <QSettings>
+#include <QtConcurrentRun>
 #include <QUuid>
 
 OutputManager::OutputManager(QObject *parent)
     : QObject(parent) {
     initializeTransitions();
+    auto audio = new LiveAudio(this);
+    auto syncAudio = [this, audio] {
+        audio->sync(
+            defaultImageShowing() ? QVariantList {} : liveElements(), m_playing, m_audioEnabled);
+    };
+    connect(this, &OutputManager::liveChanged, audio, syncAudio);
+    connect(this, &OutputManager::stateChanged, audio, syncAudio);
+    connect(audio, &LiveAudio::problem, this, [this](const QString &message) {
+        m_status = message;
+        emit stateChanged();
+    });
     QSettings settings;
     m_audienceDisplay = settings.value("outputs/audience").toString();
+    m_musicianView = settings.value("outputs/musicianView", false).toBool();
     m_stageDisplay = settings.value("outputs/stage").toString();
     m_defaultImageSource = settings.value("outputs/defaultImage").toString();
     m_defaultImageName = settings.value("outputs/defaultImageName").toString();
@@ -71,6 +86,34 @@ void OutputManager::bindWindows(QWindow *a, QWindow *s, QWindow *editor) {
     }
     if (s) {
         s->setTransientParent(nullptr);
+    }
+    for (const auto &role : QStringList { "audience", "stage" }) {
+        auto window = role == "audience" ? a : s;
+        if (!window) {
+            continue;
+        }
+        connect(window, &QWindow::visibilityChanged, this,
+            [this, window, role](QWindow::Visibility visibility) {
+                if (window != (role == "audience" ? m_audience : m_stage)) {
+                    return;
+                }
+                const bool enabled = role == "audience" ? m_audienceEnabled : m_stageEnabled;
+                if (enabled && visibility == QWindow::FullScreen) {
+                    m_fullscreenRoles.insert(role);
+                } else if (enabled && visibility == QWindow::Windowed) {
+                    m_fullscreenRoles.remove(role);
+                }
+                emit stateChanged();
+            });
+        connect(window, &QObject::destroyed, this, [this, role] {
+            if (role == "audience" && m_audience.isNull()) {
+                m_audienceEnabled = false;
+            }
+            if (role == "stage" && m_stage.isNull()) {
+                m_stageEnabled = false;
+            }
+            emit stateChanged();
+        });
     }
     if (editor) {
         connect(editor, &QWindow::screenChanged, this, [this] { emit displaysChanged(); });
@@ -171,6 +214,11 @@ bool OutputManager::route(const QString &role, const QString &id) {
     }
     const auto token = ++m_routeTokens[role];
     m_fullscreenRoles.insert(role);
+    if (role == "audience") {
+        m_audienceEnabled = false;
+    } else {
+        m_stageEnabled = false;
+    }
     window->hide();
     window->setScreen(target);
     window->setGeometry(target->geometry());
@@ -265,7 +313,9 @@ void OutputManager::stopPresentation() {
     stop("stage");
     m_playing = false;
     m_timer.stop();
+    clearCueOverlay();
     m_status = "Presentation stopped";
+    emit sessionEnded();
     // Keep the prepared snapshot and position available for the next session.
     emit stateChanged();
 }
@@ -293,6 +343,9 @@ void OutputManager::takeLive(const QVariantList &slides, int index, const QStrin
         return;
     }
     prepareTransition(slides[index].toMap());
+    m_resumeIndex = -1;
+    m_cueTransition.clear();
+    m_cueOverlay.clear();
     m_snapshotId = QUuid::createUuid().toString(QUuid::WithoutBraces);
     m_liveSource = source;
     m_liveSlides = slides;
@@ -304,6 +357,88 @@ void OutputManager::takeLive(const QVariantList &slides, int index, const QStrin
     emit stateChanged();
 }
 
+bool OutputManager::addQuickSlides(
+    const QVariantList &slides, const QString &title, bool now, const QString &scriptureKey) {
+    if (!scriptureKey.isEmpty()) {
+        for (int i = 0; i < m_liveSlides.size(); ++i) {
+            if (m_liveSlides[i].toMap()["scriptureKey"].toString() == scriptureKey) {
+                if (m_resumeIndex < 0 && m_index >= 0 && !liveSlide()["quickAddition"].toBool()) {
+                    m_resumeIndex = m_index;
+                    emit snapshotChanged();
+                }
+                advance(i - m_index);
+                return true;
+            }
+        }
+    }
+    if ((!now && m_index < 0) || slides.isEmpty() || slides.size() > 500
+        || m_liveSlides.size() + slides.size() > 5000) {
+        return false;
+    }
+    for (const auto &value : slides) {
+        if (!value.toMap().contains("elements")) {
+            return false;
+        }
+    }
+    int insertion = m_index + 1;
+    // Queue after the complete service item, not between its lyric slides.
+    const auto item = liveProgramItemId();
+    if (!item.isEmpty()) {
+        while (insertion < m_liveSlides.size()
+            && m_liveSlides[insertion].toMap()["programItemId"].toString() == item) {
+            ++insertion;
+        }
+    }
+    if (!now) {
+        while (insertion < m_liveSlides.size()
+            && m_liveSlides[insertion].toMap()["quickAddition"].toBool()) {
+            ++insertion;
+        }
+    }
+    if (now && m_resumeIndex < 0 && m_index >= 0 && !liveSlide()["quickAddition"].toBool()) {
+        m_resumeIndex = m_index;
+    }
+    if (m_resumeIndex >= insertion) {
+        m_resumeIndex += slides.size();
+    }
+    const auto group = scriptureKey.isEmpty()
+        ? "quick-" + QUuid::createUuid().toString(QUuid::WithoutBraces)
+        : QStringLiteral("scripture-session");
+    const auto programTitle = liveProgramTitle();
+    for (int i = 0; i < slides.size(); ++i) {
+        auto slide = slides[i].toMap();
+        slide["programItemId"] = group;
+        slide["programItemTitle"] = title;
+        slide["programTitle"] = programTitle;
+        slide["quickAddition"] = true;
+        if (!scriptureKey.isEmpty()) {
+            slide["scriptureKey"] = scriptureKey;
+        }
+        m_liveSlides.insert(insertion + i, slide);
+    }
+    m_snapshotId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    emit snapshotChanged();
+    if (now || m_index < 0) {
+        advance(insertion - m_index);
+    } else {
+        emit liveChanged();
+    }
+    m_status = now ? "Quick addition is live" : "Quick addition queued after this item";
+    emit stateChanged();
+    return true;
+}
+
+bool OutputManager::resumeProgram() {
+    if (m_resumeIndex < 0 || m_resumeIndex >= m_liveSlides.size()) {
+        return false;
+    }
+    const int index = m_resumeIndex;
+    m_resumeIndex = -1;
+    advance(index - m_index);
+    emit snapshotChanged();
+    return true;
+}
+
 void OutputManager::advance(int delta) {
     int next = m_index + delta;
     if (next < 0 || next >= m_liveSlides.size()) {
@@ -311,6 +446,23 @@ void OutputManager::advance(int delta) {
     }
     if (next == m_index && !defaultImageShowing()) {
         return;
+    }
+    if (m_liveSlides[next].toMap()["quickAddition"].toBool()) {
+        if (m_resumeIndex < 0 && m_index >= 0) {
+            int resume = next + 1;
+            while (resume < m_liveSlides.size()
+                && m_liveSlides[resume].toMap()["quickAddition"].toBool()) {
+                ++resume;
+            }
+            if (resume < m_liveSlides.size()
+                || !m_liveSlides[m_index].toMap()["quickAddition"].toBool()) {
+                m_resumeIndex = resume < m_liveSlides.size() ? resume : m_index;
+                emit snapshotChanged();
+            }
+        }
+    } else if (m_resumeIndex >= 0) {
+        m_resumeIndex = -1;
+        emit snapshotChanged();
     }
     prepareTransition(m_liveSlides[next].toMap());
     m_index = next;
@@ -331,12 +483,13 @@ bool OutputManager::setDefaultImage(const QUrl &source) {
         emit stateChanged();
         return false;
     }
+    ++m_standbyGeneration;
     m_defaultImageSource = imported;
     m_defaultImageName = QFileInfo(source.toLocalFile()).fileName();
     QSettings settings;
     settings.setValue("outputs/defaultImage", imported);
     settings.setValue("outputs/defaultImageName", m_defaultImageName);
-    m_status = "Default image saved · choose Show default image to display it";
+    m_status = "Standby media saved · choose Show standby media to display it";
     emit stateChanged();
     return true;
 }
@@ -351,18 +504,19 @@ void OutputManager::setDefaultImageFit(const QString &fit) {
 }
 
 void OutputManager::removeDefaultImage() {
+    ++m_standbyGeneration;
     m_defaultImageSource.clear();
     m_defaultImageName.clear();
     QSettings settings;
     settings.remove("outputs/defaultImage");
     settings.remove("outputs/defaultImageName");
-    m_status = "Default image removed";
+    m_status = "Standby media removed";
     emit stateChanged();
 }
 
 bool OutputManager::showDefaultImage(bool showing) {
     if (showing && !defaultImageAvailable()) {
-        m_status = "Choose a default image first; the saved image may be missing";
+        m_status = "Choose standby media first; the saved file may be missing";
         emit stateChanged();
         return false;
     }
@@ -371,8 +525,8 @@ bool OutputManager::showDefaultImage(bool showing) {
     m_defaultImageLive = showing
         ? QVariantList { DefaultImage::layer(m_defaultImageSource, m_defaultImageFit) }
         : QVariantList();
-    m_status = showing ? (m_audienceBlack ? "Default image selected · audience is blacked out"
-                                          : "Default image is showing")
+    m_status = showing ? (m_audienceBlack ? "Standby media selected · audience is blacked out"
+                                          : "Standby media is showing")
                        : "Presentation restored";
     emit liveChanged();
     emit stateChanged();
@@ -380,7 +534,18 @@ bool OutputManager::showDefaultImage(bool showing) {
 }
 
 QVariantList OutputManager::audienceElements() const {
-    return defaultImageShowing() ? m_defaultImageLive : liveElements();
+    auto elements = defaultImageShowing() ? m_defaultImageLive : liveElements();
+    bool audioOnly = !elements.isEmpty();
+    for (const auto &value : elements) {
+        audioOnly &= value.toMap()["kind"] == "audio";
+    }
+    if (audioOnly && defaultImageAvailable()) {
+        elements.prepend(DefaultImage::layer(m_defaultImageSource, m_defaultImageFit));
+    }
+    if (!m_cueOverlay.isEmpty()) {
+        elements.append(m_cueOverlay);
+    }
+    return elements;
 }
 
 QString OutputManager::audienceBackground() const {
@@ -392,7 +557,7 @@ double OutputManager::audienceAmbientOpacity() const {
 }
 
 QString OutputManager::audienceTitle() const {
-    return defaultImageShowing() ? "Default image" : liveTitle();
+    return defaultImageShowing() ? "Standby media" : liveTitle();
 }
 
 QVariantMap OutputManager::liveSlide(int offset) const {
@@ -491,8 +656,95 @@ QVariantList OutputManager::liveOrder() const {
     for (int index = 0; index < m_liveSlides.size(); ++index) {
         const auto slide = m_liveSlides[index].toMap();
         result.append(QVariantMap { { "index", index }, { "title", slide.value("name") },
+            { "quickAddition", slide.value("quickAddition", false) },
             { "itemId", slide.value("programItemId") },
-            { "itemTitle", slide.value("programItemTitle") } });
+            { "itemTitle", slide.value("programItemTitle") },
+            { "section", slide.value("programSection") } });
     }
     return result;
+}
+
+void OutputManager::setMusicianView(bool value) {
+    m_musicianView = value;
+    QSettings().setValue("outputs/musicianView", value);
+    emit stateChanged();
+}
+
+QVariantMap OutputManager::stageCurrent() const {
+    return { { "text", liveText() },
+        { "chords",
+            liveSlide().value("stageLyrics").toString() == liveText()
+                ? liveSlide().value("stageChords")
+                : QVariant() } };
+}
+
+QVariantMap OutputManager::stageNext() const {
+    return { { "text", nextText() },
+        { "chords",
+            liveSlide(1).value("stageLyrics").toString() == nextText()
+                ? liveSlide(1).value("stageChords")
+                : QVariant() } };
+}
+
+bool OutputManager::setCueOverlay(const QUrl &source) {
+    if (!source.isLocalFile() || !QFileInfo(source.toLocalFile()).isFile()) {
+        return false;
+    }
+    finishTransition();
+    m_cueOverlay = DefaultImage::layer(source.toString(), "contain");
+    m_cueOverlay["uid"] = "cue-overlay";
+    m_cueOverlay["name"] = "Cue overlay";
+    emit liveChanged();
+    return true;
+}
+
+void OutputManager::clearCueOverlay() {
+    if (m_cueOverlay.isEmpty()) {
+        return;
+    }
+    finishTransition();
+    m_cueOverlay.clear();
+    emit liveChanged();
+}
+
+QString OutputManager::standbyMediaKind() const {
+    return DefaultImage::kind(defaultImageSource());
+}
+
+void OutputManager::importStandbyMedia(const QUrl &source) {
+    if (m_importingStandbyMedia) {
+        return;
+    }
+    m_importingStandbyMedia = true;
+    const int generation = ++m_standbyGeneration;
+    m_status = "Importing standby media…";
+    emit stateChanged();
+    auto watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(
+        watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, source, generation] {
+            const auto result = watcher->result();
+            watcher->deleteLater();
+            m_importingStandbyMedia = false;
+            if (generation != m_standbyGeneration) {
+                emit stateChanged();
+                return;
+            }
+            if (!result["error"].toString().isEmpty()) {
+                m_status = result["error"].toString();
+                emit stateChanged();
+                return;
+            }
+            m_defaultImageSource = result["source"].toString();
+            m_defaultImageName = QFileInfo(source.toLocalFile()).fileName();
+            QSettings settings;
+            settings.setValue("outputs/defaultImage", m_defaultImageSource);
+            settings.setValue("outputs/defaultImageName", m_defaultImageName);
+            m_status = "Standby media saved · choose Show standby media to display it";
+            emit stateChanged();
+        });
+    watcher->setFuture(QtConcurrent::run([source] {
+        QString error;
+        const auto imported = DefaultImage::prepare(source, &error);
+        return QVariantMap { { "source", imported }, { "error", error } };
+    }));
 }

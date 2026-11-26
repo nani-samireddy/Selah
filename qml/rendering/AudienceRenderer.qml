@@ -8,7 +8,7 @@ Item {
 
     required property var controller
     property bool active: true
-    property bool playing: controller.playing
+    property bool playing: controller.defaultImageShowing || controller.playing
     property bool audible: false
     property bool videoEnabled: true
     property bool transparentBackground: false
@@ -53,6 +53,7 @@ Item {
         playing: audience.active && audience.playing
         audible: audience.active && audience.audible
         videoEnabled: audience.videoEnabled
+        decodeAudio: false
         showErrors: false
     }
 

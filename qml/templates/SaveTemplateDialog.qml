@@ -27,7 +27,7 @@ Dialog {
     width: 420
     anchors.centerIn: parent
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.tone("#252525")
         border.color: LibraryStyle.tone("#444444")
         radius: 8

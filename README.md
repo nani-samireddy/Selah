@@ -104,3 +104,5 @@ The pinned Nayuki QR encoder retains its MIT notice under `third_party/qrcodegen
 No application license has been selected. Qt, third-party dependencies, fonts and content each retain their own distribution requirements.
 
 User help: [Getting started and operator guides](docs/user-guide/README.md), also available offline from the book icon in the toolbar.
+
+Release preparation: [macOS and Windows v1 checklist](docs/launch-checklist-v1.md).

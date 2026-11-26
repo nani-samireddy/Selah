@@ -3,11 +3,12 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Dialogs
 
-Rectangle {
+SquircleSurface {
     id: panel
 
     required property var controller
     property string feedback: ""
+    property bool wasImporting: false
 
     color: LibraryStyle.panel
     radius: 10
@@ -17,11 +18,24 @@ Rectangle {
     FileDialog {
         id: chooseImage
 
-        title: "Choose default image"
-        nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.svg)"]
+        title: "Choose standby media"
+        nameFilters:
+            ["Images and videos (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.svg *.mp4 *.mov *.m4v *.webm *.mkv *.avi)"]
 
-        onAccepted: panel.feedback = panel.controller.setDefaultImage(selectedFile) ? "" :
-                                                                                      panel.controller.status
+        onAccepted: {
+            panel.feedback = "";
+            panel.controller.importStandbyMedia(selectedFile);
+        }
+    }
+
+    Connections {
+        function onStateChanged() {
+            if (panel.wasImporting && !panel.controller.importingStandbyMedia)
+                panel.feedback = panel.controller.status;
+            panel.wasImporting = panel.controller.importingStandbyMedia;
+        }
+
+        target: panel.controller
     }
 
     ColumnLayout {
@@ -39,7 +53,7 @@ Rectangle {
             }
 
             Text {
-                text: "Default image"
+                text: "Standby media"
                 color: LibraryStyle.text
                 font.family: LibraryStyle.fontFamily
                 font.pixelSize: 12
@@ -48,7 +62,8 @@ Rectangle {
 
             StudioButton {
                 iconName: "trash-2"
-                hint: "Remove default image preference"
+                hint: "Remove standby media preference"
+                enabled: !panel.controller.importingStandbyMedia
                 quiet: true
                 visible: panel.controller.defaultImageSource.toString().length > 0
 
@@ -65,15 +80,17 @@ Rectangle {
             radius: 5
             clip: true
 
-            Image {
+            MediaLayer {
                 anchors.fill: parent
-                source: panel.controller.defaultImageSource
-                fillMode: panel.controller.defaultImageFit === "cover" ? Image.PreserveAspectCrop :
-                                                                         Image.PreserveAspectFit
-                asynchronous: true
-                autoTransform: true
-                sourceSize.width: 640
-                sourceSize.height: 360
+                sourceUrl: panel.controller.defaultImageSource
+                kind: panel.controller.standbyMediaKind
+                fit: panel.controller.defaultImageFit
+                playing: panel.visible
+                audible: false
+                looping: true
+                videoEnabled: panel.visible && panel.controller.defaultImageAvailable
+
+                onMediaProblem: message => panel.feedback = message
             }
 
             Text {
@@ -81,7 +98,7 @@ Rectangle {
                 width: parent.width - 24
                 visible: !panel.controller.defaultImageAvailable
                 text: panel.controller.defaultImageSource.toString().length
-                      ? "Saved image is missing" : "Church logo or welcome image"
+                      ? "Saved media is missing" : "Church logo, welcome image or looping video"
                 color: "#969696"
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignHCenter
@@ -99,7 +116,10 @@ Rectangle {
 
         RowLayout {
             StudioButton {
-                text: panel.controller.defaultImageAvailable ? "Change" : "Choose image"
+                text: panel.controller.importingStandbyMedia ? "Importing…" :
+                                                               panel.controller.defaultImageAvailable
+                                                               ? "Change" : "Choose media"
+                enabled: !panel.controller.importingStandbyMedia
                 iconName: "upload"
                 Layout.fillWidth: true
 
@@ -109,7 +129,7 @@ Rectangle {
             StudioButton {
                 text: "Fit"
                 checked: panel.controller.defaultImageFit === "contain"
-                hint: "Fit the whole image"
+                hint: "Fit the whole image or video"
                 enabled: panel.controller.defaultImageAvailable
 
                 onClicked: panel.controller.defaultImageFit = "contain"
@@ -129,8 +149,8 @@ Rectangle {
             objectName: "showDefaultImageButton"
             text: panel.controller.defaultImageShowing ? (panel.controller.liveCount
                                                           ? "Resume presentation" :
-                                                            "Hide default image") :
-                                                         "Show default image"
+                                                            "Hide standby media") :
+                                                         "Show standby media"
             iconName: panel.controller.defaultImageShowing ? "play" : "image"
             checked: panel.controller.defaultImageShowing
             accented: !panel.controller.defaultImageShowing
@@ -143,7 +163,10 @@ Rectangle {
 
         Text {
             visible: panel.feedback.length > 0 || panel.controller.defaultImageShowing
-            text: panel.feedback || "Image changes apply the next time you show it."
+                     || panel.controller.importingStandbyMedia
+            text: panel.feedback || (panel.controller.importingStandbyMedia
+                                     ? panel.controller.status :
+                                       "Changes apply the next time you show standby media. Videos loop silently.")
             color: panel.feedback ? (LibraryStyle.dark ? "#D4B993" : "#7D572A") : LibraryStyle.muted
             font.pixelSize: 10
             wrapMode: Text.Wrap

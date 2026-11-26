@@ -34,7 +34,7 @@ Dialog {
     height: Math.min(640, parent.height - 48)
     padding: 20
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.color: LibraryStyle.border
         radius: 10

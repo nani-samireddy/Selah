@@ -17,6 +17,27 @@ ColumnLayout {
         font.pixelSize: 12
     }
 
+    RowLayout {
+        Text {
+            text: "Stage view"
+            color: LibraryStyle.text
+        }
+
+        LibraryButton {
+            text: "Speaker"
+            selected: !speaker.controller.musicianView
+
+            onClicked: speaker.controller.musicianView = false
+        }
+
+        LibraryButton {
+            text: "Musician"
+            selected: speaker.controller.musicianView
+
+            onClicked: speaker.controller.musicianView = true
+        }
+    }
+
     OutputGroup {
         RowLayout {
             Layout.fillWidth: true
@@ -30,11 +51,13 @@ ColumnLayout {
             }
 
             LibraryButton {
-                text: "Stage preview"
+                text: speaker.controller.stagePreviewOpen ? "Close stage preview" : "Stage preview"
+                selected: speaker.controller.stagePreviewOpen
                 iconName: "monitor-play"
-                enabled: speaker.controller.liveCount > 0
+                enabled: speaker.controller.stagePreviewOpen || speaker.controller.liveCount > 0
 
-                onClicked: speaker.controller.preview("stage")
+                onClicked: speaker.controller.stagePreviewOpen ? speaker.controller.stop("stage") :
+                                                                 speaker.controller.preview("stage")
             }
         }
 

@@ -3,7 +3,7 @@ import QtQuick
 
 import QtQuick.Effects
 
-Rectangle {
+SquircleSurface {
     id: panel
 
     property var backdropSource: null
@@ -42,7 +42,7 @@ Rectangle {
         property color tint: Qt.rgba(panel.surfaceColor.r, panel.surfaceColor.g,
                                      panel.surfaceColor.b, panel.surfaceOpacity)
         property real saturation: panel.backdropSaturation
-        property real cornerRadius: Math.max(0, panel.radius - 1)
+        property real cornerRadius: Math.max(0, panel.corner - 1)
 
         anchors.fill: parent
         anchors.margins: 1

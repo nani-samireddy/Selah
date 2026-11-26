@@ -70,12 +70,8 @@ StudioPanel {
                 implicitHeight: 26
                 hint: inspector.collapsed ? "Expand Properties" : "Collapse Properties"
                 Accessible.name: hint
-                feedbackEnabled: false
 
-                onClicked: {
-                    inspector.collapsed = !inspector.collapsed;
-                    InteractionFeedback.play(inspector.collapsed ? "close" : "open");
-                }
+                onClicked: inspector.collapsed = !inspector.collapsed
             }
         }
 
@@ -119,6 +115,7 @@ StudioPanel {
             ScrollView {
                 id: inspectorScroll
 
+                objectName: "inspectorPropertyScroll"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -336,7 +333,8 @@ StudioPanel {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            visible: inspector.host.selectedValue("kind", "") === "video"
+                            visible: ["video", "audio"].includes(inspector.host.selectedValue("kind",
+                                                                                              ""))
 
                             StudioButton {
                                 text: "Loop"
@@ -361,7 +359,8 @@ StudioPanel {
 
                         Text {
                             text: "Editor playback is always muted.\nEnable preview audio separately."
-                            visible: inspector.host.selectedValue("kind", "") === "video"
+                            visible: ["video", "audio"].includes(inspector.host.selectedValue("kind",
+                                                                                              ""))
                             color: LibraryStyle.tone("#888888")
                             font.pixelSize: 10
                             Layout.fillWidth: true

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 
 ItemDelegate {
     id: card
@@ -19,13 +20,18 @@ ItemDelegate {
     ToolTip.text: record.title
     ToolTip.delay: 700
 
-    background: Rectangle {
+    background: SquircleSurface {
         radius: 12
         border.color: card.visualFocus ? LibraryStyle.focus : card.engaged ? LibraryStyle.tone(
                                                                                  "#606060") :
                                                                              LibraryStyle.border
 
-        gradient: Gradient {
+        fillGradient: LinearGradient {
+            x1: 0
+            y1: 0
+            x2: 0
+            y2: card.height
+
             GradientStop {
                 position: 0
                 color: card.down ? LibraryStyle.hover : card.engaged ? LibraryStyle.hover :

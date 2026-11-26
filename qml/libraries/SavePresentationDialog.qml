@@ -41,7 +41,7 @@ Dialog {
     width: 400
     padding: 20
 
-    background: Rectangle {
+    background: SquircleSurface {
         radius: 10
         color: LibraryStyle.panel
         border.color: LibraryStyle.border

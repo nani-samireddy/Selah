@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-Rectangle {
+SquircleSurface {
     id: transport
 
     required property var controller
@@ -57,8 +57,19 @@ Rectangle {
         }
 
         StudioButton {
+            objectName: "resumeProgramButton"
+            text: "Resume program"
+            iconName: "undo-2"
+            visible: transport.controller.canResumeProgram
+            accented: true
+
+            onClicked: transport.controller.resumeProgram()
+        }
+
+        StudioButton {
             objectName: "outputPlayButton"
             iconName: transport.controller.playing ? "pause" : "play"
+            checked: transport.controller.playing && transport.controller.liveCount > 0
             hint: transport.controller.playing ? "Pause media" : "Play media"
             enabled: transport.controller.liveCount > 0 && !transport.controller.defaultImageShowing
 

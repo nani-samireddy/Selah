@@ -53,7 +53,7 @@ Popup {
     focus: true
     padding: LibraryStyle.pagePadding
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.width: panel.workspaceMode ? 0 : 1
         border.color: LibraryStyle.tone("#3B3B3B")
@@ -106,7 +106,7 @@ Popup {
         anchors.centerIn: parent
         width: 360
 
-        background: Rectangle {
+        background: SquircleSurface {
             color: LibraryStyle.tone("#252525")
             border.color: LibraryStyle.tone("#444444")
             radius: 8
@@ -350,7 +350,7 @@ Popup {
                             focusPolicy: Qt.StrongFocus
                             Accessible.name: modelData.name + ", " + modelData.kind
 
-                            background: Rectangle {
+                            background: SquircleSurface {
                                 radius: 7
                                 color: card.hovered ? LibraryStyle.hover : LibraryStyle.field
                                 border.color: panel.selectedId === card.modelData.id

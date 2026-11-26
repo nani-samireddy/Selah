@@ -1,11 +1,14 @@
 #include "ContentLibrary.h"
 #include "BibleRepository.h"
+#include "BookMatcher.h"
 #include "ScriptureImporter.h"
+#include "SongChords.h"
 #include <algorithm>
 #include <QDebug>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QFutureWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -216,7 +219,7 @@ QString ContentLibrary::saveSong(const QVariantMap &input) {
         const auto secondary = section["secondary"].toString();
         if (!QRegularExpression("^[a-z][a-z0-9_-]{0,31}$").match(key).hasMatch()
             || keys.contains(key) || primary.trimmed().isEmpty() || primary.size() > 30000
-            || secondary.size() > 30000) {
+            || secondary.size() > 30000 || section["stageCue"].toString().size() > 1000) {
             setStatus("Each section needs a unique key and primary lyrics");
             return {};
         }
@@ -227,7 +230,7 @@ QString ContentLibrary::saveSong(const QVariantMap &input) {
             return {};
         }
         keys.insert(key);
-        searchable += " " + primary + " " + secondary;
+        searchable += " " + SongChords::parse(primary)["text"].toString() + " " + secondary;
     }
     auto arrangement = data["arrangement"].toList();
     if (arrangement.isEmpty()) {
@@ -298,10 +301,22 @@ QString ContentLibrary::saveSong(const QVariantMap &input) {
 bool ContentLibrary::importSong(const QUrl &url) {
     QFile f(url.toLocalFile());
     if (!url.isLocalFile() || !f.open(QIODevice::ReadOnly) || f.size() > 2 * 1024 * 1024) {
-        setStatus("Choose a local song JSON file under 2 MB");
+        setStatus("Choose a local song JSON or ChordPro file under 2 MB");
         return false;
     }
-    auto root = QJsonDocument::fromJson(f.readAll()).object();
+    const auto bytes = f.readAll();
+    const auto extension = QFileInfo(f.fileName()).suffix().toLower();
+    if (QStringList { "cho", "chopro", "chordpro", "pro" }.contains(extension)) {
+        QString error;
+        auto song = SongChords::importChordPro(
+            QString::fromUtf8(bytes), QFileInfo(f.fileName()).completeBaseName(), &error);
+        if (!error.isEmpty()) {
+            setStatus(error);
+            return false;
+        }
+        return !saveSong(song).isEmpty();
+    }
+    auto root = QJsonDocument::fromJson(bytes).object();
     if (root["format"] != "churchdeck-song-1") {
         setStatus("Invalid Selah song format");
         return false;
@@ -404,27 +419,42 @@ QVariantList ContentLibrary::passage(
     return result;
 }
 
+QVariantMap ContentLibrary::resolveReference(
+    const QString &translation, const QString &query) const {
+    QVariantList known;
+    QSqlQuery statement(m_db);
+    if (statement.exec("SELECT DISTINCT code,name FROM books")) {
+        while (statement.next()) {
+            known.append(
+                QVariantMap { { "code", statement.value(0) }, { "name", statement.value(1) } });
+        }
+    }
+    const auto result = BookMatcher::resolve(query, known, books(translation));
+    return { { "handled", result.handled }, { "query", result.query }, { "code", result.code },
+        { "error", result.error }, { "choices", result.choices } };
+}
+
 QVariantList ContentLibrary::searchVerses(const QString &translation, const QString &query) const {
     QVariantList result;
+    const auto resolved = resolveReference(translation, query);
+    if (resolved["handled"].toBool()) {
+        if (!resolved["error"].toString().isEmpty()) {
+            return {};
+        }
+        const auto reference = resolved["query"].toString();
+        const auto ref = QRegularExpression("^([A-Z0-9]+) ([0-9]+)(?::([0-9]+)(?:-([0-9]+))?)?$")
+                             .match(reference);
+        if (!ref.hasMatch()) {
+            return {};
+        }
+        return passage(translation, ref.captured(1), ref.captured(2).toInt(),
+            ref.captured(3).isEmpty() ? 0 : ref.captured(3).toInt(),
+            ref.captured(4).isEmpty() ? (ref.captured(3).isEmpty() ? 200 : ref.captured(3).toInt())
+                                      : ref.captured(4).toInt());
+    }
     const auto terms = normalized(query).trimmed();
     if (terms.size() < 2) {
         return result;
-    }
-    const auto ref
-        = QRegularExpression("^(.+?)\\s+(\\d+)(?::(\\d+)(?:[-–](\\d+))?)?$").match(terms);
-    if (ref.hasMatch()) {
-        for (const auto &value : books(translation)) {
-            const auto b = value.toMap();
-            if (b["name"].toString().compare(ref.captured(1), Qt::CaseInsensitive) == 0
-                || b["code"].toString().compare(ref.captured(1), Qt::CaseInsensitive) == 0) {
-                return passage(translation, b["code"].toString(), ref.captured(2).toInt(),
-                    ref.captured(3).isEmpty() ? 0 : ref.captured(3).toInt(),
-                    ref.captured(4).isEmpty()
-                        ? (ref.captured(3).isEmpty() ? 200 : ref.captured(3).toInt())
-                        : ref.captured(4).toInt());
-            }
-        }
-        return {};
     }
     QSqlQuery statement(m_db);
     QString escaped = terms;

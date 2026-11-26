@@ -20,8 +20,13 @@ class OutputManager final : public QObject {
     Q_PROPERTY(double transitionProgress READ transitionProgress NOTIFY transitionChanged)
     Q_PROPERTY(QVariantList liveOrder READ liveOrder NOTIFY snapshotChanged)
     Q_PROPERTY(QString snapshotId READ snapshotId NOTIFY snapshotChanged)
+    Q_PROPERTY(bool canResumeProgram READ canResumeProgram NOTIFY snapshotChanged)
     Q_PROPERTY(QVariantList displays READ displays NOTIFY displaysChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
+    Q_PROPERTY(bool audiencePreviewOpen READ audiencePreviewOpen NOTIFY stateChanged)
+    Q_PROPERTY(bool stagePreviewOpen READ stagePreviewOpen NOTIFY stateChanged)
+    Q_PROPERTY(bool audienceFullscreen READ audienceFullscreen NOTIFY stateChanged)
+    Q_PROPERTY(bool stageFullscreen READ stageFullscreen NOTIFY stateChanged)
     Q_PROPERTY(bool audienceEnabled READ audienceEnabled NOTIFY stateChanged)
     Q_PROPERTY(bool stageEnabled READ stageEnabled NOTIFY stateChanged)
     Q_PROPERTY(QString audienceDisplay READ audienceDisplay NOTIFY stateChanged)
@@ -41,6 +46,12 @@ class OutputManager final : public QObject {
     Q_PROPERTY(QString liveTitle READ liveTitle NOTIFY liveChanged)
     Q_PROPERTY(QString liveProgramTitle READ liveProgramTitle NOTIFY snapshotChanged)
     Q_PROPERTY(QString nextTitle READ nextTitle NOTIFY liveChanged)
+    Q_PROPERTY(bool musicianView READ musicianView WRITE setMusicianView NOTIFY stateChanged)
+    Q_PROPERTY(QVariantMap stageCurrent READ stageCurrent NOTIFY liveChanged)
+    Q_PROPERTY(QVariantMap stageNext READ stageNext NOTIFY liveChanged)
+    Q_PROPERTY(QString stageCue READ stageCue NOTIFY liveChanged)
+    Q_PROPERTY(QString stageSection READ stageSection NOTIFY liveChanged)
+    Q_PROPERTY(QString songKey READ songKey NOTIFY liveChanged)
     Q_PROPERTY(QString liveNotes READ liveNotes NOTIFY liveChanged)
     Q_PROPERTY(QString liveText READ liveText NOTIFY liveChanged)
     Q_PROPERTY(QString nextText READ nextText NOTIFY liveChanged)
@@ -49,6 +60,8 @@ class OutputManager final : public QObject {
     Q_PROPERTY(int liveCount READ liveCount NOTIFY liveChanged)
     Q_PROPERTY(QString stageMessage READ stageMessage WRITE setStageMessage NOTIFY stateChanged)
     Q_PROPERTY(QString countdown READ countdown NOTIFY stateChanged)
+    Q_PROPERTY(QString standbyMediaKind READ standbyMediaKind NOTIFY stateChanged)
+    Q_PROPERTY(bool importingStandbyMedia READ importingStandbyMedia NOTIFY stateChanged)
     Q_PROPERTY(QUrl defaultImageSource READ defaultImageSource NOTIFY stateChanged)
     Q_PROPERTY(QString defaultImageName READ defaultImageName NOTIFY stateChanged)
     Q_PROPERTY(
@@ -78,6 +91,16 @@ public:
     double transitionProgress() const { return m_transitionProgress; }
 
     QString status() const { return m_status; }
+
+    bool audienceFullscreen() const {
+        return m_audienceEnabled && m_fullscreenRoles.contains("audience");
+    }
+
+    bool stageFullscreen() const { return m_stageEnabled && m_fullscreenRoles.contains("stage"); }
+
+    bool audiencePreviewOpen() const { return m_audienceEnabled && !audienceFullscreen(); }
+
+    bool stagePreviewOpen() const { return m_stageEnabled && !stageFullscreen(); }
 
     bool audienceEnabled() const { return m_audienceEnabled; }
 
@@ -112,6 +135,8 @@ public:
 
     QString snapshotId() const { return m_snapshotId; }
 
+    bool canResumeProgram() const { return m_resumeIndex >= 0; }
+
     QVariantList liveSlides() const { return m_liveSlides; }
 
     QString liveSource() const { return m_liveSource; }
@@ -125,6 +150,19 @@ public:
     }
 
     QString nextTitle() const;
+
+    bool musicianView() const { return m_musicianView; }
+
+    void setMusicianView(bool value);
+    QVariantMap stageCurrent() const;
+    QVariantMap stageNext() const;
+
+    QString stageCue() const { return liveSlide().value("stageCue").toString(); }
+
+    QString stageSection() const { return liveSlide().value("stageSection").toString(); }
+
+    QString songKey() const { return liveSlide().value("songKey").toString(); }
+
     QString liveNotes() const;
     QString liveText() const;
     QString nextText() const;
@@ -159,6 +197,12 @@ public:
 
     QString countdown() const;
 
+    QString standbyMediaKind() const;
+
+    bool importingStandbyMedia() const { return m_importingStandbyMedia; }
+
+    Q_INVOKABLE void importStandbyMedia(const QUrl &source);
+
     QUrl defaultImageSource() const { return QUrl(m_defaultImageSource); }
 
     QString defaultImageName() const { return m_defaultImageName; }
@@ -189,10 +233,26 @@ public:
     Q_INVOKABLE void takeLive(
         const QVariantList &slides, int index, const QString &source = QString());
     Q_INVOKABLE void advance(int delta);
+    Q_INVOKABLE bool addQuickSlides(const QVariantList &slides, const QString &title, bool now,
+        const QString &scriptureKey = QString());
+    Q_INVOKABLE bool resumeProgram();
     Q_INVOKABLE void startCountdown(int minutes);
     Q_INVOKABLE void stopCountdown();
+
+    bool cueFullscreen(const QString &role) const { return m_fullscreenRoles.contains(role); }
+
+    bool hasCueWindow(const QString &role) const {
+        return role == "audience" ? !m_audience.isNull() : !m_stage.isNull();
+    }
+
+    void setCueTransition(const QString &effect, int durationMs);
+    bool setCueOverlay(const QUrl &source);
+    void clearCueOverlay();
+    QVariantMap sessionSnapshot() const;
+    bool restoreSession(const QVariantMap &snapshot);
     static int selfTest();
 signals:
+    void sessionEnded();
     void transitionStarting();
     void transitionChanged();
     void displaysChanged();
@@ -211,15 +271,20 @@ private:
     void screenRemoved(QScreen *screen);
     QPointer<QWindow> m_audience, m_stage, m_editor;
     QString m_audienceDisplay, m_stageDisplay, m_status = "Outputs stopped";
+    bool m_musicianView = false;
     bool m_audienceEnabled = false, m_stageEnabled = false, m_audienceBlack = false,
          m_stageBlack = false, m_textCleared = false, m_playing = true, m_audioEnabled = false;
     QSet<QString> m_reconnect;
     QSet<QScreen *> m_observed;
     QHash<QString, quint64> m_routeTokens;
     QSet<QString> m_fullscreenRoles;
+    QVariantMap m_cueTransition, m_cueOverlay;
     QVariantList m_liveSlides;
     int m_index = -1, m_remaining = 0;
+    int m_resumeIndex = -1;
     QString m_stageMessage, m_liveSource, m_snapshotId;
+    bool m_importingStandbyMedia = false;
+    int m_standbyGeneration = 0;
     QString m_defaultImageSource, m_defaultImageName, m_defaultImageFit = "contain";
     QVariantList m_defaultImageLive;
     QTimer m_timer, m_transitionTimer;

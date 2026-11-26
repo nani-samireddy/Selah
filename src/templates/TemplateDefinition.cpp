@@ -12,6 +12,10 @@ QVariantMap textBox(
     auto element = DocumentElements::text(name, text, 160, y, 1600, height, size, "Arial");
     element["alignment"] = "center";
     element["binding"] = binding;
+    if (binding == "Scripture text" || binding == "Secondary scripture text") {
+        element["textSizing"] = "shrink";
+        element["minFontSize"] = qMax(8, size / 2);
+    }
     return element;
 }
 }
@@ -168,7 +172,8 @@ QStringList TemplateDefinition::missingMedia(const QVariantMap &definition) {
     }
     for (const auto &value : definition["slide"].toMap()["elements"].toList()) {
         const auto element = value.toMap();
-        if (element["kind"] == "image" || element["kind"] == "video") {
+        if (element["kind"] == "image" || element["kind"] == "video"
+            || element["kind"] == "audio") {
             const auto path = QUrl(element["source"].toString()).toLocalFile();
             if (!QFileInfo::exists(path)) {
                 missing.insert(QFileInfo(path).fileName());

@@ -9,13 +9,16 @@ Item {
     property bool playing: false
     property bool audible: false
     property bool videoEnabled: true
+    property bool decodeAudio: true
     property bool showErrors: true
     property bool suppressed: false
     readonly property string instanceToken: Math.random().toString(36).slice(2)
     readonly property var loadedContent: content.item
-    readonly property real playbackPosition: loadedContent && layerData.kind === "video"
+    readonly property real playbackPosition: loadedContent && (layerData.kind === "video"
+                                                               || layerData.kind === "audio")
                                              ? loadedContent.playbackPosition : 0
-    readonly property int decodedFrames: loadedContent && layerData.kind === "video"
+    readonly property int decodedFrames: loadedContent && (layerData.kind === "video"
+                                                           || layerData.kind === "audio")
                                          ? loadedContent.decodedFrames : 0
     readonly property string mediaError: loadedContent && layerData.kind !== "text"
                                          ? loadedContent.problem : ""
@@ -35,7 +38,7 @@ Item {
 
         anchors.fill: parent
         sourceComponent: visualLayer.layerData.kind === "image" || visualLayer.layerData.kind
-                         === "video" ? media : text
+                         === "video" || visualLayer.layerData.kind === "audio" ? media : text
     }
 
     Component {
@@ -55,7 +58,7 @@ Item {
             text: TextFormatting.html(displayData)
             color: visualLayer.layerData.color || "#FFFFFF"
             font.family: visualLayer.layerData.fontFamily || "Arial"
-            font.pixelSize: visualLayer.layerData.fontSize || 36
+            font.pixelSize: displayData.fontSize || 36
             readOnly: true
             activeFocusOnPress: false
             selectByMouse: false
@@ -92,6 +95,7 @@ Item {
             playing: visualLayer.playing && visualLayer.visible
             audible: visualLayer.audible && !visualLayer.layerData.muted
             looping: visualLayer.layerData.loop !== false
+            decodeAudio: visualLayer.decodeAudio
             videoEnabled: visualLayer.videoEnabled
             showErrors: visualLayer.showErrors
 

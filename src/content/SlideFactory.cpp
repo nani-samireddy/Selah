@@ -1,4 +1,5 @@
 #include "SlideFactory.h"
+#include "SongChords.h"
 #include "TemplateComposer.h"
 #include "TemplateDefinition.h"
 #include <QDebug>
@@ -82,7 +83,7 @@ QString SlideFactory::fontFor(const QString &text) {
     return "Arial";
 }
 
-QVariantList SlideFactory::songSlides(
+static QVariantList generateSongSlides(
     const QVariantMap &song, int maxLines, QString *error, const QVariantMap &definition) {
     if (!definition.isEmpty()) {
         return TemplateComposer::songSlides(song, maxLines, definition, error);
@@ -181,40 +182,27 @@ QVariantList SlideFactory::scriptureSlides(
                 verses, maxLines, TemplateDefinition::dualScripture(), error);
         }
     }
-    QVariantList result;
-    maxLines = qBound(1, maxLines, 6);
-    if (verses.isEmpty() || verses.size() > 200) {
-        *error = "Choose between 1 and 200 verses";
-        return {};
+    // Automatic and saved layouts share fitting, logical breaks and source metadata.
+    auto automatic = TemplateDefinition::starter("scripture");
+    auto slide = automatic["slide"].toMap();
+    auto elements = slide["elements"].toList();
+    const auto first = verses.value(0).toMap();
+    for (auto &value : elements) {
+        auto box = value.toMap();
+        box["fontFamily"]
+            = fontFor(box["binding"] == "Scripture text" ? first["text"].toString()
+                                                         : first["reference"].toString());
+        value = box;
     }
-    for (const auto &value : verses) {
-        auto verse = value.toMap();
-        auto body = verse["text"].toString();
-        if (body.trimmed().isEmpty()) {
-            *error = "A selected verse has no text";
-            return {};
-        }
-        const auto lines = wrap(body, 96);
-        const auto cap = capacity(body, 96, 650, maxLines);
-        const int count = (lines.size() + cap - 1) / cap;
-        for (int start = 0; start < lines.size(); start += cap) {
-            const auto reference = verse["reference"].toString();
-            auto page = makeSlide(reference
-                    + (count > 1 ? " · " + QString::number(start / cap + 1) + "/"
-                                + QString::number(count)
-                                 : ""),
-                lines.mid(start, cap).join('\n'), "",
-                reference + " · " + verse["abbreviation"].toString(), "scripture",
-                verse["translation"].toString());
-            page["sourceReference"] = reference;
-            page["sourceCopyright"] = verse["copyright"];
-            page["sourceLicense"] = verse["license"];
-            result << page;
-        }
-    }
-    if (result.size() > 500) {
-        *error = "This passage would exceed 500 slides";
-        return {};
-    }
-    return result;
+    slide["elements"] = elements;
+    automatic["slide"] = slide;
+    return TemplateComposer::scriptureSlides(verses, maxLines, automatic, error);
+}
+
+QVariantList SlideFactory::songSlides(
+    const QVariantMap &song, int maxLines, QString *error, const QVariantMap &definition) {
+    error->clear();
+    auto slides = generateSongSlides(SongChords::cleanSong(song), maxLines, error, definition);
+    SongChords::annotate(slides, song);
+    return slides;
 }

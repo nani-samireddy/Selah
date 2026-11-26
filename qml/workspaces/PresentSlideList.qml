@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Rectangle {
+SquircleSurface {
     id: rail
 
     required property var controller
@@ -16,7 +16,9 @@ Rectangle {
             if (!group || group.id !== key) {
                 group = {
                     id: key,
+                    section: slide.section || "",
                     title: slide.itemTitle || "Presentation",
+                    quickAddition: !!slide.quickAddition,
                     slides: []
                 };
                 result.push(group);
@@ -52,7 +54,11 @@ Rectangle {
             return;
         const childIndex = groups[groupIndex].slides.findIndex(slide => slide.index
                                                                         === controller.liveIndex);
-        const top = row.y + 49 + childIndex * 43;
+        const hasSection = groups[groupIndex].section.length > 0 && (groupIndex === 0
+                                                                     || groups[groupIndex
+                                                                               - 1].section
+                                                                     !== groups[groupIndex].section);
+        const top = row.y + (hasSection ? 32 : 0) + 49 + childIndex * 43;
         if (top < order.contentY)
             order.contentY = top;
         else if (top + 40 > order.contentY + order.height)
@@ -105,6 +111,11 @@ Rectangle {
                 id: groupRow
 
                 required property var modelData
+                required property int index
+                readonly property bool startsSection: modelData.section.length > 0 && (index === 0
+                                                                                       || rail.groups[index
+                                                                                                      - 1].section
+                                                                                       !== modelData.section)
                 readonly property bool opened: !!rail.expanded[modelData.id]
                 readonly property bool containsLive: modelData.slides.some(slide => slide.index
                                                                                     === rail.controller.liveIndex)
@@ -112,6 +123,18 @@ Rectangle {
                 objectName: "liveServiceGroup_" + modelData.id
                 width: order.width - 6
                 spacing: 3
+
+                Text {
+                    visible: groupRow.startsSection
+                    text: groupRow.modelData.section
+                    color: LibraryStyle.muted
+                    font.pixelSize: 11
+                    font.weight: Font.Medium
+                    width: parent.width
+                    elide: Text.ElideRight
+                    topPadding: 6
+                    bottomPadding: 6
+                }
 
                 ItemDelegate {
                     objectName: "liveServiceToggle_" + groupRow.modelData.id
@@ -141,7 +164,8 @@ Rectangle {
                         }
 
                         Text {
-                            text: groupRow.modelData.slides.length
+                            text: (groupRow.modelData.quickAddition ? "Quick · " : "")
+                                  + groupRow.modelData.slides.length
                             color: LibraryStyle.muted
                             font.pixelSize: 10
                         }

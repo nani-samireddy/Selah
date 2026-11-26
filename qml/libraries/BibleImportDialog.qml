@@ -21,7 +21,7 @@ Dialog {
     anchors.centerIn: parent
     padding: 20
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.color: LibraryStyle.border
         radius: 12

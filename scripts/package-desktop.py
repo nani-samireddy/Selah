@@ -15,6 +15,8 @@ import time
 from datetime import datetime, timezone
 
 from build import ROOT, build_lock
+import windows_signing
+import windows_installer
 
 
 def run(command, **kwargs):
@@ -145,16 +147,38 @@ def smoke(stage, output):
     return {"startupPassed": True, "startupMode": "headless-software", "isolatedProfile": True}
 
 
+def file_digest(path):
+    with Path(path).open("rb") as source:
+        return hashlib.file_digest(source, "sha256").hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--windows-sign", action="store_true",
+                        help="Require Authenticode signing using the configured certificate-store key")
+    parser.add_argument("--windows-installer", action="store_true",
+                        help="Also create a per-user Windows x64 Setup.exe with Inno Setup 6")
+    parser.add_argument("--windows-publisher", default="",
+                        help="Publisher display name for the installer (required with --windows-installer)")
     args = parser.parse_args()
     system = platform.system()
     if system not in ("Linux", "Windows"):
         parser.error("Use package-macos.py on macOS")
+    signing_config = None
+    if args.windows_sign:
+        if system != "Windows":
+            parser.error("--windows-sign requires Windows")
+        signing_config = windows_signing.configuration()
     arch = {"AMD64": "x64", "x86_64": "x64", "aarch64": "arm64", "arm64": "arm64"}.get(platform.machine(), platform.machine())
+    installer_compiler = None
+    if args.windows_installer:
+        if system != "Windows" or arch != "x64":
+            parser.error("--windows-installer currently requires Windows x64")
+        windows_installer.validate_metadata("0.0.0", args.windows_publisher)
+        installer_compiler = windows_installer.compiler()
     output = (args.output_dir or ROOT / "dist" / (system.lower() + "-" + arch)).resolve()
     output.mkdir(parents=True, exist_ok=True)
     build = ROOT / "build-release"
@@ -182,19 +206,28 @@ def main():
                 launcher.chmod(0o755)
                 audit = audit_linux(stage)
             notices(stage)
+            signing = {"signing": "unsigned", "signatureVerified": False, "archiveSigned": False}
+            if signing_config:
+                signing = windows_signing.sign_executable(stage / "bin/Selah.exe", signing_config)
             validation = smoke(stage, output)
             config = json.loads((build / "release-config.json").read_text())
             manifest = {"product": "Selah", **config, "platform": system, "architecture": arch,
-                        "buildType": "Release", "developerDiagnostics": False, "signing": "unsigned",
+                        "buildType": "Release", "developerDiagnostics": False, **signing,
                         "sqliteDriverBundled": True,
                         "createdUTC": datetime.now(timezone.utc).isoformat(), **audit, **validation}
             if system == "Linux":
                 manifest["buildDistribution"] = platform.freedesktop_os_release().get("PRETTY_NAME", "Linux")
                 manifest["glibc"] = platform.libc_ver()[1]
+            if installer_compiler:
+                manifest["installer"] = {"type": "Inno Setup", "scope": "current-user",
+                                         "publisher": args.windows_publisher,
+                                         "signed": bool(signing_config), "installedWorkflowTested": False}
             (stage / "release-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
             (stage / "README-release.txt").write_text(
-                "Selah native Release\nRun Selah.cmd on Windows or ./Selah on Linux.\n"
-                "Unsigned package. See release-manifest.json for the build platform and limits.\n"
+                "Selah native Release\nRun Selah.cmd on Windows or ./Selah on Linux.\n" +
+                ("Selah.exe is Authenticode signed; the ZIP itself is not signed.\n"
+                 if signing_config else "Unsigned testing package; not approved for public release.\n") +
+                "See release-manifest.json for the build platform and limits.\n"
                 "Physical display and hardware media behavior need verification on your target system.\n"
                 "NDI sending requires an SDK-enabled build; check ndiSenderCompiled.\n")
             name = f"Selah-{config['version']}-{system}-{arch}"
@@ -204,7 +237,20 @@ def main():
                 archive = output / (name + ".tar.gz")
                 with tarfile.open(archive, "w:gz") as target:
                     target.add(stage, arcname="Selah")
-            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            if installer_compiler:
+                # Compile/sign in the private staging directory. Never expose a new
+                # unsigned or unverified installer at the final artifact path.
+                installer = windows_installer.build(stage, Path(temp) / "installer",
+                    config["version"], args.windows_publisher, installer_compiler, signing_config)
+                installer_digest = file_digest(installer)
+                destination = output / installer.name
+                os.replace(installer, destination)
+                (output / (destination.name + ".sha256")).write_text(
+                    installer_digest + "  " + destination.name + "\n")
+                manifest["installerArtifact"] = {"file": destination.name,
+                    "bytes": destination.stat().st_size, "sha256": installer_digest,
+                    "signatureVerified": bool(signing_config)}
+            digest = file_digest(archive)
             (output / (archive.name + ".sha256")).write_text(digest + "  " + archive.name + "\n")
             manifest["artifact"] = {"file": archive.name, "bytes": archive.stat().st_size, "sha256": digest}
             (output / "release-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

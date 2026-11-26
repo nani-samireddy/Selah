@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// A frozen GPU texture bends into the toolbar; editor controls remain real QML items.
+// Compress the expanded panel into its thumbnail strip, crossfading at the end.
 Item {
     id: genie
 
     required property Item panel
-    property point targetPoint
+    property rect targetRect
     property bool expanded: true
     property bool motionEnabled: true
     property real progress: 0
@@ -26,7 +26,7 @@ Item {
             frozenPanel.scheduleUpdate();
         motion.from = progress;
         motion.to = destination;
-        motion.duration = Math.max(90, Math.round(440 * Math.abs(destination - progress)));
+        motion.duration = Math.max(90, Math.round(320 * Math.abs(destination - progress)));
         motion.start();
     }
 
@@ -45,28 +45,16 @@ Item {
     ShaderEffectSource {
         id: frozenPanel
 
-        anchors.fill: parent
+        x: genie.targetRect.x * genie.progress
+        y: genie.targetRect.y * genie.progress
+        width: genie.width + (genie.targetRect.width - genie.width) * genie.progress
+        height: genie.height + (genie.targetRect.height - genie.height) * genie.progress
         sourceItem: genie.supported ? genie.panel : null
         live: false
         hideSource: genie.animating
-        visible: false
-    }
-
-    ShaderEffect {
-        property var source: frozenPanel
-        property real progress: genie.progress
-        property vector2d panelSize: Qt.vector2d(width, height)
-        property vector2d targetPoint: Qt.vector2d(genie.targetPoint.x, genie.targetPoint.y)
-
-        objectName: "slidesPanelGenieEffect"
-        anchors.fill: parent
         visible: genie.animating && genie.supported
-        vertexShader: "qrc:/shaders/panel-genie.vert.qsb"
-        fragmentShader: "qrc:/shaders/panel-genie.frag.qsb"
-
-        mesh: GridMesh {
-            resolution: Qt.size(32, 24)
-        }
+        opacity: 1 - genie.progress
+        smooth: true
     }
 
     MouseArea {

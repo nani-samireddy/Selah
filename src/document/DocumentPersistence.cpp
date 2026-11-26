@@ -47,7 +47,7 @@ bool EditorDocument::restore(const QJsonObject &obj) {
         for (auto &e : normalized) {
             auto el = e.toMap();
             const auto kind = el.value("kind", "text").toString();
-            if (!QStringList { "text", "image", "video" }.contains(kind)) {
+            if (!QStringList { "text", "image", "video", "audio" }.contains(kind)) {
                 return false;
             }
             for (const auto &key :

@@ -22,7 +22,8 @@ class LocalDocument : public QTextDocument {
 
 QFont baseFont(const QVariantMap &e) {
     QFont font(e.value("fontFamily", "Arial").toString());
-    font.setPixelSize(qRound(e.value("fontSize", 36).toDouble()));
+    const double size = e.value("fontSize", 36).toDouble();
+    font.setPixelSize(std::isfinite(size) ? qRound(std::clamp(size, 8.0, 400.0)) : 36);
     font.setWeight(QFont::Weight(e.value("fontWeight", 400).toInt()));
     font.setItalic(e.value("italic", false).toBool());
     font.setUnderline(e.value("underline", false).toBool());
@@ -208,7 +209,7 @@ void restoreRuns(QTextDocument &document, const QVariantMap &element) {
 
 void resizeText(QVariantMap &e, LocalDocument &document) {
     const auto mode = e.value("textSizing", "fixed").toString();
-    if (mode == "fixed") {
+    if (mode == "fixed" || mode == "shrink") {
         return;
     }
     document.setTextWidth(mode == "autoWidth" ? -1 : e.value("width", 400).toDouble());
@@ -225,10 +226,10 @@ QVariantMap TextFormatting::defaults() {
         { "italic", false }, { "underline", false }, { "strikethrough", false },
         { "letterSpacing", 0.0 }, { "lineHeight", 1.0 }, { "lineHeightUnit", "percent" },
         { "paragraphSpacing", 0.0 }, { "paragraphIndent", 0.0 }, { "textCase", "original" },
-        { "verticalAlignment", "top" }, { "textSizing", "fixed" }, { "wrap", true },
-        { "clipText", true }, { "maxLines", 0 }, { "ellipsis", true }, { "baseline", "normal" },
-        { "listStyle", "none" }, { "listIndent", 1 }, { "fontFeatures", QVariantMap() },
-        { "fontAxes", QVariantMap() } };
+        { "verticalAlignment", "top" }, { "textSizing", "fixed" }, { "minFontSize", 32.0 },
+        { "wrap", true }, { "clipText", true }, { "maxLines", 0 }, { "ellipsis", true },
+        { "baseline", "normal" }, { "listStyle", "none" }, { "listIndent", 1 },
+        { "fontFeatures", QVariantMap() }, { "fontAxes", QVariantMap() } };
 }
 
 bool TextFormatting::isStyle(const QString &key) {
@@ -242,6 +243,7 @@ QVariantMap TextFormatting::normalize(const QVariantMap &input) {
         e[i.key()] = i.value();
     }
     const QVariantMap bounds { { "fontWeight", QVariantList { 1.0, 1000.0 } },
+        { "minFontSize", QVariantList { 8.0, 400.0 } },
         { "letterSpacing", QVariantList { -100.0, 500.0 } },
         { "lineHeight", QVariantList { 0.1, 1000.0 } },
         { "paragraphSpacing", QVariantList { 0.0, 1080.0 } },
@@ -263,7 +265,7 @@ QVariantMap TextFormatting::normalize(const QVariantMap &input) {
     const QMap<QString, QStringList> choices {
         { "textCase", { "original", "upper", "lower", "title", "smallCaps" } },
         { "verticalAlignment", { "top", "center", "bottom" } },
-        { "textSizing", { "fixed", "autoWidth", "autoHeight" } },
+        { "textSizing", { "fixed", "autoWidth", "autoHeight", "shrink" } },
         { "baseline", { "normal", "super", "sub" } },
         { "listStyle", { "none", "bullet", "number" } }, { "lineHeightUnit", { "percent", "px" } }
     };
@@ -323,8 +325,8 @@ QVariantMap TextFormatting::apply(
         e = normalize(e);
     }
     // Box layout stays editable when the user has selected a word or paragraph.
-    for (const auto &key :
-        { "verticalAlignment", "textSizing", "wrap", "clipText", "maxLines", "ellipsis" }) {
+    for (const auto &key : { "verticalAlignment", "textSizing", "minFontSize", "wrap", "clipText",
+             "maxLines", "ellipsis" }) {
         if (patch.contains(key)) {
             e[key] = patch[key];
         }
@@ -525,8 +527,111 @@ QVariantMap TextFormatting::captureDocument(
     return capture(e, document->textDocument()->toHtml());
 }
 
+QVariantMap TextFormatting::fitted(const QVariantMap &element, int maximumLines) {
+    const auto source = normalize(element);
+    if (source["textSizing"] != "shrink" || source["text"].toString().isEmpty()) {
+        return source;
+    }
+    const double authored = std::max(8.0, source.value("fontSize", 36).toDouble());
+    const int maximum = int(std::floor(authored));
+    const int minimum = int(std::ceil(qMin(authored, source["minFontSize"].toDouble())));
+    const double width = std::max(1.0, source["width"].toDouble() - 8);
+    const double height = std::max(1.0, source["height"].toDouble() - 8);
+    const int limit = source["maxLines"].toInt();
+    if (limit > 0) {
+        maximumLines = qMin(maximumLines, limit);
+    }
+    auto fits = [&](const QVariantMap &data) {
+        const auto size = TextLayoutMetrics::measure(data["text"].toString(), data, width);
+        return size.width <= width + 0.5 && size.height <= height && size.lines <= maximumLines;
+    };
+    if (fits(source)) {
+        return source;
+    }
+    if (minimum > maximum) {
+        auto overflow = source;
+        overflow["_fitOverflow"] = true;
+        return overflow;
+    }
+    auto scaled = [&](int pixels) {
+        auto data = source;
+        const double factor = pixels / authored;
+        data["fontSize"] = pixels;
+        for (const auto &key : { "letterSpacing", "paragraphSpacing", "paragraphIndent" }) {
+            data[key] = source[key].toDouble() * factor;
+        }
+        if (source["lineHeightUnit"] == "px") {
+            data["lineHeight"] = source["lineHeight"].toDouble() * factor;
+        }
+        if (!source["richText"].toString().isEmpty()) {
+            LocalDocument document;
+            load(document, source);
+            // Scale each run independently so selected-word sizes, weight and color survive.
+            struct Run {
+                int start, length;
+                QTextCharFormat format;
+            };
+            QList<Run> runs;
+            for (auto block = document.begin(); block.isValid(); block = block.next()) {
+                for (auto it = block.begin(); !it.atEnd(); ++it) {
+                    const auto fragment = it.fragment();
+                    auto format = fragment.charFormat();
+                    auto font = format.font();
+                    if (font.pixelSize() > 0) {
+                        font.setPixelSize(qMax(1, qRound(font.pixelSize() * factor)));
+                    } else if (font.pointSizeF() > 0) {
+                        font.setPointSizeF(font.pointSizeF() * factor);
+                    }
+                    if (font.letterSpacingType() == QFont::AbsoluteSpacing) {
+                        font.setLetterSpacing(
+                            QFont::AbsoluteSpacing, font.letterSpacing() * factor);
+                    }
+                    format.setFont(font);
+                    runs.append({ fragment.position(), fragment.length(), format });
+                }
+            }
+            for (const auto &run : runs) {
+                QTextCursor cursor(&document);
+                cursor.setPosition(run.start);
+                cursor.setPosition(run.start + run.length, QTextCursor::KeepAnchor);
+                cursor.mergeCharFormat(run.format);
+            }
+            for (auto block = document.begin(); block.isValid(); block = block.next()) {
+                QTextCursor cursor(block);
+                auto format = block.blockFormat();
+                format.setBottomMargin(format.bottomMargin() * factor);
+                format.setTextIndent(format.textIndent() * factor);
+                if (format.lineHeightType() == QTextBlockFormat::FixedHeight) {
+                    format.setLineHeight(
+                        format.lineHeight() * factor, QTextBlockFormat::FixedHeight);
+                }
+                cursor.setBlockFormat(format);
+            }
+            data["richText"] = document.toHtml();
+        }
+        return data;
+    };
+    auto best = scaled(minimum);
+    int low = minimum, high = maximum;
+    while (low <= high) {
+        const int middle = (low + high) / 2;
+        const auto candidate = scaled(middle);
+        if (fits(candidate)) {
+            best = candidate;
+            low = middle + 1;
+        } else {
+            high = middle - 1;
+        }
+    }
+    best["_fitOverflow"] = !fits(best);
+    return best;
+}
+
 QVariantMap TextFormatting::display(const QVariantMap &element) const {
     auto e = normalize(element);
+    if (e["textSizing"] == "shrink") {
+        return fitted(e);
+    }
     const int limit = e.value("maxLines").toInt();
     if (limit <= 0) {
         return e;

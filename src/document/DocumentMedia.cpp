@@ -12,7 +12,7 @@
 
 QVariantMap EditorDocument::prepareMedia(const QUrl &url) {
     if (!url.isLocalFile()) {
-        return { { "importError", "Choose an image or video on this computer" } };
+        return { { "importError", "Choose an image, video or audio file on this computer" } };
     }
     const QFileInfo info(url.toLocalFile());
     if (!info.isFile() || !info.isReadable()) {
@@ -21,8 +21,11 @@ QVariantMap EditorDocument::prepareMedia(const QUrl &url) {
     QImageReader reader(info.absoluteFilePath());
     const bool image = reader.canRead();
     const auto mime = QMimeDatabase().mimeTypeForFile(info).name();
-    if (!image && !mime.startsWith("video/")) {
-        return { { "importError", "Choose a supported image or video file" } };
+    const bool audio = mime.startsWith("audio/")
+        || QStringList { "mp3", "wav", "m4a", "aac", "flac", "ogg", "aiff", "aif", "opus" }
+               .contains(info.suffix().toLower());
+    if (!image && !audio && !mime.startsWith("video/")) {
+        return { { "importError", "Choose a supported image, video or audio file" } };
     }
     QFile input(info.absoluteFilePath());
     if (!input.open(QIODevice::ReadOnly)) {
@@ -43,11 +46,17 @@ QVariantMap EditorDocument::prepareMedia(const QUrl &url) {
         return { { "importError", "Could not copy media into the library" } };
     }
     auto el = DocumentElements::text(info.fileName(), "", 0, 0, 1920, 1080, 36, "Arial");
-    el["kind"] = image ? "image" : "video";
+    el["kind"] = image ? "image" : audio ? "audio" : "video";
     el["source"] = QUrl::fromLocalFile(destination).toString();
     el["fit"] = "contain";
-    el["loop"] = true;
-    el["muted"] = true;
+    el["loop"] = el["kind"] != "audio";
+    el["muted"] = el["kind"] != "audio";
+    if (audio) {
+        el["x"] = 80;
+        el["y"] = 900;
+        el["width"] = 400;
+        el["height"] = 80;
+    }
     return el;
 }
 
@@ -123,10 +132,16 @@ bool EditorDocument::useMedia(const QVariantMap &asset) {
     el["kind"] = asset["kind"];
     el["source"] = source.toString();
     el["fit"] = "contain";
-    el["loop"] = true;
-    el["muted"] = true;
-    if (el["kind"] != "image" && el["kind"] != "video") {
+    el["loop"] = el["kind"] != "audio";
+    el["muted"] = el["kind"] != "audio";
+    if (el["kind"] != "image" && el["kind"] != "video" && el["kind"] != "audio") {
         return false;
+    }
+    if (el["kind"] == "audio") {
+        el["x"] = 80;
+        el["y"] = 900;
+        el["width"] = 400;
+        el["height"] = 80;
     }
     return insertMedia(el, m_current);
 }

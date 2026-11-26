@@ -13,12 +13,62 @@
 #include "TemplateStore.h"
 #include "TextFormatting.h"
 #include <QDebug>
+int runProgramSectionChecks();
+int runAudioLibraryChecks();
+int runServiceCueChecks();
+int runBackupChecks();
+int runServiceToolsChecks();
 int runDefaultImageChecks();
+int runAiAssistantChecks();
+int runUpdateChecks();
+int runBookMatcherChecks();
+int runQuickAddChecks();
+int runTextLayoutChecks();
 int runTransitionChecks();
 int runDualScriptureChecks();
 int runBibleXmlChecks(const QString &realFile = QString());
 
 int runModelChecks() {
+    if (auto result = runProgramSectionChecks()) {
+        qCritical() << "Program sections failed:" << result;
+        return 900 + result;
+    }
+    if (auto result = runAudioLibraryChecks()) {
+        qCritical() << "Audio checks failed:" << result;
+        return 850 + result;
+    }
+    if (auto result = runServiceCueChecks()) {
+        qCritical() << "Custom cue checks failed:" << result;
+        return 800 + result;
+    }
+    if (auto result = runBackupChecks()) {
+        qCritical() << "Backup checks failed:" << result;
+        return 750 + result;
+    }
+    if (auto result = runServiceToolsChecks()) {
+        qCritical() << "Service tools failed:" << result;
+        return 700 + result;
+    }
+    if (auto result = runBookMatcherChecks()) {
+        qCritical() << "Multilingual book matching failed:" << result;
+        return 600 + result;
+    }
+    if (auto result = runUpdateChecks()) {
+        qCritical() << "Update checks failed:" << result;
+        return 550 + result;
+    }
+    if (auto result = runTextLayoutChecks()) {
+        qCritical() << "Text fitting and logical split check failed:" << result;
+        return 490 + result;
+    }
+    if (auto result = runQuickAddChecks()) {
+        qCritical() << "Quick Add check failed:" << result;
+        return 450 + result;
+    }
+    if (auto result = runAiAssistantChecks()) {
+        qCritical() << "AI foundation check failed:" << result;
+        return 400 + result;
+    }
     if (auto result = runTransitionChecks()) {
         qCritical() << "Transition check failed:" << result;
         return 360 + result;
@@ -31,6 +81,7 @@ int runModelChecks() {
         return 300 + result;
     }
     if (auto result = runDefaultImageChecks()) {
+        qCritical() << "Standby media checks failed:" << result;
         return 280 + result;
     }
     if (auto result = TemplatePresets::selfTest()) {

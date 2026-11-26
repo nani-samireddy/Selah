@@ -1,48 +1,58 @@
-# End-user updates (proposed)
+# End-user updates
 
-Selah currently produces unsigned desktop archives through `scripts/package-desktop.py`.
-The desktop workflow uploads temporary GitHub Actions artifacts; these are testing
-packages, not a permanent update feed. Automatic updates are not implemented yet.
+Selah v1 implements explicit checks and verified downloads from the stable GitHub
+release in `nani-samireddy/Selah`. Open **Help → Check for updates**. The dialog
+shows the installed version and platform, release notes, download progress,
+cancellation and connection errors. No checks or downloads run automatically.
 
-## User experience
+No stable release currently exists in that repository (checked 25 November 2026).
+The app reports that condition explicitly. GitHub Actions artifacts are temporary
+build outputs and are not an update feed.
 
-- **Help → Check for updates** performs an explicit check and reports the installed
-  version, available version, release notes, download progress or an actionable error.
-- Optional background checks run at most daily and quietly tolerate offline use.
-- Offer **Download update**, **Later**, and **Install and restart**. Defer installation
-  until audience, stage and NDI outputs are stopped; preserve pending work first.
-- Keep stable and preview channels separate. Match operating system, architecture
-  and minimum supported OS version. Never propose a version older than installed.
+## Current installation flow
 
-## Platform adapters
+1. Select **Download update** when a newer matching package is available.
+2. Selah streams it into Downloads and verifies its SHA-256 against GitHub's asset
+   digest before exposing the completed file. Cancelled, truncated and mismatched
+   files do not replace a previous download. Reopening the folder verifies it again.
+3. Stop audience, stage and NDI outputs. The dialog enables **Open download folder**.
+4. On macOS, open the DMG or ZIP, quit Selah and replace the app in Applications.
+   On Windows, extract the ZIP into a new folder, quit the old app and start the
+   new folder's `Selah.cmd`. Keep the previous app copy until the new one works.
+5. Reopen Selah. The existing ChurchDeck storage/settings namespace is preserved.
+   Quit through the app normally so drafts and the current program are saved.
 
-Use a small C++ `UpdateManager` to expose state and commands to QML, with native
-installation adapters rather than implementing an executable replacer in QML.
+The app does not replace itself, run an unsigned installer, quit automatically or
+restart itself. Current packages are unsigned archives; their checksum is an
+integrity check, not code-signing identity verification. Review the release notes
+for OS requirements before replacing an installation. Older versions and preview
+releases are not offered through the stable updater.
 
-- **macOS:** Sparkle 2, bundled with Selah. Developer ID signing/notarization for
-  the app, and EdDSA signatures on update archives. Configure a public verification
-  key and HTTPS appcast URL in the bundle.
-- **Windows:** WinSparkle with an appcast and signed update payloads. Produce a
-  versioned installer rather than assuming an unpacked portable archive has an
-  install location. Code-sign the installer for distribution.
-- **Linux:** Initially offer the matching package download. Add an updater only
-  after choosing a distribution format; package-manager installations should
-  continue to use their package manager.
+## Publishing compatible assets
 
-## Release pipeline
+The release tag must be a strict version such as `v0.2.0`. Publish archives from the
+release commit with their exact packaging names:
 
-1. Give each release a version and increasing build number; trigger release builds
-   from a version tag after tests pass.
-2. Build, sign and package each supported architecture. Keep signing private keys
-   in CI secrets; distribute only verification keys with the app.
-3. Publish immutable packages and release notes to GitHub Releases. Publish the
-   appcast only after every referenced package is available.
-4. Validate signatures and perform a complete update from the previous production
-   version on each supported OS before announcing the release.
+- `Selah-0.2.0-macOS-arm64.dmg` (or `.zip`)
+- `Selah-0.2.0-macOS-x86_64.dmg` (or `.zip`, only if independently built/tested)
+- `Selah-0.2.0-Windows-x64.zip`
+- `Selah-0.2.0-Linux-x64.tar.gz`
 
-The remaining setup is release signing credentials, permanent feed URLs, a Windows
-installer choice and platform update-adapter integration. Ordinary local builds
-must remain usable without signing secrets.
+GitHub's release asset API must report `state: uploaded`, a positive size and a
+`sha256:…` digest. Without a matching verified asset, Selah displays the new version
+and notes but disables Download. Source-code archives are never selected. Include
+OS requirements and known issues in the release notes. Publish permanent immutable
+assets and checksums; do not silently replace a version's binaries.
 
-References: [Sparkle publishing](https://sparkle-project.org/documentation/publishing/),
+## Future automatic installation
+
+An automatic **Install and restart** flow still requires native adapters and signed
+release packages. Use Sparkle 2 on macOS (Developer ID/notarization plus EdDSA-signed
+update archives) and WinSparkle with a signed Windows installer. These are not
+bundled yet. Installation must wait for outputs to stop and work to be saved.
+Validate an actual upgrade on clean machines before advertising automatic updates.
+
+References: [GitHub releases](https://docs.github.com/en/rest/releases/releases),
+[release asset digest](https://docs.github.com/en/rest/releases/assets),
+[Sparkle publishing](https://sparkle-project.org/documentation/publishing/),
 [WinSparkle](https://winsparkle.org/).
