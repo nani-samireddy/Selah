@@ -26,7 +26,7 @@ Item {
     Text {
         x: 70
         y: 45
-        text: "STAGE  /  " + (stage.controller.defaultImageShowing ? "DEFAULT IMAGE  ·  " : "") + (
+        text: "STAGE  /  " + (stage.controller.defaultImageShowing ? "STANDBY MEDIA  ·  " : "") + (
                   stage.controller.liveTitle || "Ready")
         width: 1400
         elide: Text.ElideRight
@@ -59,7 +59,10 @@ Item {
     Text {
         x: 70
         y: 170
-        text: "CURRENT"
+        text: "CURRENT" + (stage.controller.musicianView ? " / " + stage.controller.stageSection + (
+                                                               stage.controller.songKey ? " · Key "
+                                                                                          + stage.controller.songKey :
+                                                                                          "") : "")
         color: "#A5ADBA"
         font.pixelSize: 24
         font.letterSpacing: 3
@@ -70,6 +73,7 @@ Item {
         y: 225
         width: 1070
         height: 530
+        visible: !stage.controller.musicianView
         text: stage.controller.liveText || "Waiting for live content"
         color: "#F3F3F5"
         font.pixelSize: 100
@@ -93,6 +97,7 @@ Item {
         y: 225
         width: 600
         height: 250
+        visible: !stage.controller.musicianView
         text: stage.controller.nextText || "—"
         color: "#BCC4CF"
         font.pixelSize: 54
@@ -100,6 +105,27 @@ Item {
         minimumPixelSize: 28
         wrapMode: Text.Wrap
         clip: true
+    }
+
+    ChordLyricsItem {
+        x: 70
+        y: 225
+        width: 1070
+        height: 530
+        visible: stage.controller.musicianView
+        content: stage.controller.stageCurrent
+        pixelSize: 84
+    }
+
+    ChordLyricsItem {
+        x: 1240
+        y: 225
+        width: 600
+        height: 250
+        visible: stage.controller.musicianView
+        content: stage.controller.stageNext
+        pixelSize: 48
+        color: "#BCC4CF"
     }
 
     Text {
@@ -131,7 +157,7 @@ Item {
     Text {
         x: 70
         y: 825
-        text: "SPEAKER NOTES"
+        text: stage.controller.musicianView ? "MUSICIAN CUES" : "SPEAKER NOTES"
         color: "#929BAA"
         font.pixelSize: 23
         font.letterSpacing: 2
@@ -142,7 +168,8 @@ Item {
         y: 870
         width: 1720
         height: 90
-        text: stage.controller.liveNotes || "No notes for this slide"
+        text: (stage.controller.musicianView ? stage.controller.stageCue : "")
+              || stage.controller.liveNotes || "No notes for this slide"
         color: "#C3CAD4"
         font.pixelSize: 35
         wrapMode: Text.Wrap

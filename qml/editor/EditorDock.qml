@@ -7,9 +7,6 @@ StudioPanel {
 
     required property var host
     property bool slidesPanelVisible: true
-    readonly property point slidesButtonCenter: Qt.point(dockRow.x + slidesToggle.x
-                                                         + slidesToggle.width / 2, dockRow.y
-                                                         + slidesToggle.y + slidesToggle.height / 2)
 
     signal slidesPanelToggleRequested
 
@@ -86,12 +83,8 @@ StudioPanel {
             hint: dock.slidesPanelVisible ? "Minimize slides and speaker notes" :
                                             "Expand slides and speaker notes"
             Accessible.name: "Toggle slides and speaker notes"
-            feedbackEnabled: false
 
-            onClicked: {
-                InteractionFeedback.play(dock.slidesPanelVisible ? "close" : "open");
-                dock.slidesPanelToggleRequested();
-            }
+            onClicked: dock.slidesPanelToggleRequested()
         }
 
         StudioButton {
@@ -106,6 +99,37 @@ StudioPanel {
             width: 1
             height: 20
             color: LibraryStyle.tone("#383838")
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        StudioButton {
+            objectName: "editorUndoButton"
+            iconName: "undo-2"
+            quiet: true
+            implicitWidth: 30
+            enabled: dock.host.doc.canUndo
+            hint: Qt.platform.os === "osx" ? "Undo (⌘Z)" : "Undo (Ctrl+Z)"
+            Accessible.name: "Undo"
+
+            onClicked: dock.host.undoEditor()
+        }
+
+        StudioButton {
+            objectName: "editorRedoButton"
+            iconName: "redo-2"
+            quiet: true
+            implicitWidth: 30
+            enabled: dock.host.doc.canRedo
+            hint: Qt.platform.os === "osx" ? "Redo (⇧⌘Z)" : "Redo (Ctrl+Y)"
+            Accessible.name: "Redo"
+
+            onClicked: dock.host.redoEditor()
+        }
+
+        Rectangle {
+            width: 1
+            height: 20
+            color: LibraryStyle.divider
             anchors.verticalCenter: parent.verticalCenter
         }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "SongChords.h"
 #include <QObject>
 #include <QSqlDatabase>
 #include <QUrl>
@@ -43,6 +44,11 @@ public:
     Q_INVOKABLE QString saveSong(const QVariantMap &song);
     Q_INVOKABLE QString createQuickSong(const QString &title, const QString &lyrics,
         const QVariant &tags, const QString &language = QStringLiteral("English"));
+
+    Q_INVOKABLE QVariantMap chordPreview(const QString &text) const {
+        return SongChords::parse(text);
+    }
+
     Q_INVOKABLE bool importSong(const QUrl &url);
     Q_INVOKABLE bool exportSong(const QString &id, const QUrl &url);
     Q_INVOKABLE QVariantList books(const QString &translation) const;
@@ -51,6 +57,8 @@ public:
         const QString &translation, const QString &book, int chapter, int first, int last) const;
     Q_INVOKABLE QVariantMap pairScripture(
         const QVariantList &verses, const QString &secondaryTranslation) const;
+    Q_INVOKABLE QVariantMap resolveReference(
+        const QString &translation, const QString &query) const;
     Q_INVOKABLE QVariantList searchVerses(const QString &translation, const QString &query) const;
     Q_INVOKABLE void importBible(const QUrl &url);
     static int selfTest();

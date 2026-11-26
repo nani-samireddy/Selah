@@ -54,7 +54,7 @@ Popup {
     focus: true
     padding: LibraryStyle.pagePadding
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         border.width: panel.workspaceMode ? 0 : 1
         border.color: LibraryStyle.tone("#3B3B3B")
@@ -141,6 +141,10 @@ Popup {
                     {
                         text: "Videos",
                         value: "video"
+                    },
+                    {
+                        text: "Audio",
+                        value: "audio"
                     }
                 ]
                 currentValue: panel.kindFilter
@@ -222,7 +226,10 @@ Popup {
                                 StudioIcon {
                                     visible: !asset.modelData.thumbnail
                                     anchors.centerIn: parent
-                                    name: asset.modelData.kind === "video" ? "play" : "image"
+                                    name: asset.modelData.kind === "audio" ? "music" :
+                                                                             asset.modelData.kind
+                                                                             === "video" ? "play" :
+                                                                                           "image"
                                     width: 24
                                     height: 24
                                 }
@@ -247,7 +254,10 @@ Popup {
                                         text: !asset.modelData.available ? "Missing" :
                                                                            asset.modelData.kind
                                                                            === "video" ? "Video" :
-                                                                                         "Image"
+                                                                                         asset.modelData.kind
+                                                                                         === "audio"
+                                                                                         ? "Audio" :
+                                                                                           "Image"
                                         font.pixelSize: 10
                                         color: LibraryStyle.tone("#DDDDDD")
                                     }
@@ -305,7 +315,7 @@ Popup {
                 visible: panel.filteredAssets.length === 0
                 title: search.text.length ? "No matching media" : "Your media starts here"
                 description: search.text.length ? "Try another name or change the media filter." :
-                                                  "Import images and videos to reuse across songs, slides, and service programs."
+                                                  "Import images, videos and audio to reuse across songs, slides, and service programs."
                 iconName: search.text.length ? "search" : "image"
             }
         }

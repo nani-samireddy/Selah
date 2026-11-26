@@ -27,7 +27,8 @@ void OutputManager::finishTransition() {
 void OutputManager::prepareTransition(const QVariantMap &target) {
     const bool interrupted = transitioning();
     finishTransition();
-    const auto transition = SlideTransition::resolve(target);
+    const auto transition
+        = m_cueTransition.isEmpty() ? SlideTransition::resolve(target) : m_cueTransition;
     // Rapid navigation takes the latest requested slide immediately. It must not
     // queue fades or revive an older frozen frame. Safety/standby actions also cut.
     if (interrupted || !hasAudienceContent() || m_audienceBlack || defaultImageShowing()
@@ -41,4 +42,13 @@ void OutputManager::prepareTransition(const QVariantMap &target) {
     m_transitionClock.start();
     m_transitionTimer.start();
     emit transitionChanged();
+}
+
+void OutputManager::setCueTransition(const QString &effect, int durationMs) {
+    const QVariantMap transition { { "type", effect }, { "durationMs", durationMs } };
+    if (effect != "authored" && !SlideTransition::valid(transition)) {
+        return;
+    }
+    m_cueTransition = effect == "authored" ? QVariantMap {} : transition;
+    emit stateChanged();
 }

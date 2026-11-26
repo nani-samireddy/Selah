@@ -12,6 +12,7 @@ Item {
     property bool playing: false
     property bool audible: false
     property bool videoEnabled: true
+    property bool decodeAudio: true
     property bool showErrors: true
     property bool clearText: false
     property bool transparentBackground: false
@@ -138,6 +139,7 @@ Item {
                 z: index
                 playing: renderer.playing
                 audible: renderer.audible
+                decodeAudio: renderer.decodeAudio
                 videoEnabled: renderer.videoEnabled && !renderer.textOnly
                 showErrors: renderer.showErrors
                 suppressed: layerData.uid === renderer.suppressedId || (renderer.clearText

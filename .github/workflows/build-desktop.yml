@@ -21,7 +21,7 @@ jobs:
             platform: Linux-x64
             qt_arch: linux_gcc_64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -57,9 +57,46 @@ jobs:
           modules: 'qtmultimedia qtshadertools qtquicktimeline qtquick3d'
           setup-python: false
           cache: true
-      - name: Build and package Release
+      - name: Run native Windows model checks
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/build.py --configure --jobs 4 --target church-deck-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force dist/windows-x64 | Out-Null
+          ctest --test-dir build --output-on-failure --output-log dist/windows-x64/model-checks.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $testRunner = Get-ChildItem build -Filter church-deck-tests.exe -Recurse | Select-Object -First 1
+          if (-not $testRunner) { throw "Standalone test runner missing" }
+          & $testRunner.FullName --bundle-exchange-import tests/fixtures/macos-service.selahbundle dist/windows-x64/bundle-exchange
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Locate Windows installer compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe"
+          if (-not (Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if (-not (Test-Path $compiler)) { throw "Inno Setup compiler not found" }
+          "SELAH_ISCC=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Build Windows ZIP and testing installer
+        if: runner.os == 'Windows'
+        run: python scripts/package-desktop.py --jobs 4 --windows-installer --windows-publisher "Selah (testing build)"
+      - name: Build Linux package
+        if: runner.os == 'Linux'
         run: python scripts/package-desktop.py --jobs 4
+      - name: Rehearse Windows testing installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/windows-x64/*-Setup.exe | Select-Object -First 1
+          if (-not $installer) { throw "Installer artifact missing" }
+          python scripts/verify-windows-installer.py $installer.FullName --output dist/windows-x64/installer-checks
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload package and validation
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Selah-${{ matrix.platform }}

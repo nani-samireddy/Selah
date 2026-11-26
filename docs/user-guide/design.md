@@ -42,13 +42,36 @@ It is not sent to displays or NDI. Returning to Color restores the previous fill
 Save/update the template to keep the setting; prepared program snapshots change
 only when you explicitly reapply the updated template.
 
+## Fit text to its box
+
+Click **%** or **px** inside the Line height input to change its unit; the value
+converts without changing the intended spacing. Case, list style and baseline
+use button groups with tooltips and a visible selected state. Paragraph gap and
+first-line indentation remain numeric inputs.
+
+The top bar groups Open and Export under **File**, with separate **Save to library**,
+Preview and Present actions. Editing history lives in the floating dock.
+
+Select a text layer, then choose **Shrink to fit** under text resizing in the
+inspector. The font size remains your maximum; **Minimum font size** controls how
+far it may shrink. The box stays the same size, and selected-word formatting is
+preserved in the editor, previews and output. Shorter text returns to the authored
+size automatically. If the minimum still cannot fit the content, the inspector
+shows an overflow message; enlarge the box or lower the minimum.
+
+Automatic scripture layouts and newly created scripture templates use shrinking.
+Existing templates keep their saved settings; choose Shrink to fit in each Bible
+text box if you want it enabled there. Generated passages honor both the box and
+the selected line limit.
+
 ## Undo, redo and compact slides
 
-Undo and Redo are in the top editor toolbar. Use Cmd+Z / Shift+Cmd+Z on macOS,
+Undo and Redo are in the floating editor dock. Use Cmd+Z / Shift+Cmd+Z on macOS,
 or Ctrl+Z / Ctrl+Y on Windows. Select a canvas object or empty canvas to return
 keyboard focus from a property field to the canvas. Text fields keep their own
 editing history while focused.
 
 The Slides button in the floating toolbar minimizes the large slide and notes
-panel into a short thumbnail strip beside the toolbar. Click a compact thumbnail
+panel into a short thumbnail strip below the toolbar with a smooth compress/fade
+animation. Click a compact thumbnail
 to switch slides. Expand it again to add slides or edit speaker notes.

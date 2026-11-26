@@ -1,0 +1,240 @@
+[
+  {
+    "case": "telugu-song",
+    "scope": "songs",
+    "prompt": "కృప గురించి పాటలను వెతుకు",
+    "seconds": 0.9,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [],
+      "suppressed_calls": [
+        {
+          "name": "search_songs",
+          "arguments": {
+            "query": "కృప గురించి పాటలను వెతుకు"
+          }
+        }
+      ],
+      "reasoning": "Query asks for a specific song title and lyrics. search_songs tool with query 'కృప గురించి పాటలను వెతుకు' from query.",
+      "confidence": 0.0395,
+      "prefill_tps": 1120.1,
+      "decode_tps": 336.4,
+      "peak_ram_mb": 93.4,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "mixed-song",
+    "scope": "songs",
+    "prompt": "కృప songs చూపించు",
+    "seconds": 0.49,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [
+        {
+          "name": "search_songs",
+          "arguments": {
+            "query": "కృప"
+          }
+        },
+        {
+          "name": "search_songs",
+          "arguments": {
+            "query": "చూపించు"
+          }
+        }
+      ],
+      "suppressed_calls": [],
+      "reasoning": "query 'కృప' -> query 'కృప'; query 'చూపించు' -> query 'చూపించు'",
+      "confidence": 0.1077,
+      "prefill_tps": 1114.2,
+      "decode_tps": 455.2,
+      "peak_ram_mb": 93.0,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "telugu-reference",
+    "scope": "scripture",
+    "prompt": "యోహాను 3:16 చూపించు",
+    "seconds": 0.68,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [],
+      "suppressed_calls": [
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "యోహాను 3:16"
+          }
+        },
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "యోహాను 3:16}}]}}]}}]}}]required. Two distinct searches. First: యోహాను 3:16 చూపించు"
+          }
+        }
+      ],
+      "reasoning": "query 'యోహాను 3:16' -> search_scripture query 'యోహాను 3:16'; query 'చూపించు' -> search_scripture query 'యోహాను 3:16'",
+      "confidence": 0.0417,
+      "prefill_tps": 1145.0,
+      "decode_tps": 498.9,
+      "peak_ram_mb": 93.6,
+      "validation": {
+        "ungrounded": [
+          "search_scripture.query"
+        ],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "mixed-reference",
+    "scope": "scripture",
+    "prompt": "show ఆదికాండము 1:1",
+    "seconds": 0.36,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "ఆదికాండము 1"
+          }
+        }
+      ],
+      "suppressed_calls": [],
+      "reasoning": "Query asks for a specific Bible reference. search_scripture with query 'ఆదికాండము 1'.",
+      "confidence": 0.1373,
+      "prefill_tps": 1052.3,
+      "decode_tps": 531.1,
+      "peak_ram_mb": 92.9,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "missing-book",
+    "scope": "scripture",
+    "prompt": "show 3:16",
+    "seconds": 0.25,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "3:16"
+          }
+        }
+      ],
+      "suppressed_calls": [],
+      "reasoning": "query 'show 3:16' -> search_scripture query '3:16'",
+      "confidence": 0.226,
+      "prefill_tps": 863.8,
+      "decode_tps": 491.8,
+      "peak_ram_mb": 92.3,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "ambiguous",
+    "scope": "scripture",
+    "prompt": "John or James 3:16",
+    "seconds": 0.29,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "John or James 3:16"
+          }
+        }
+      ],
+      "suppressed_calls": [],
+      "reasoning": "query 'John or James 3:16' -> search_scripture query 'John or James 3:16'",
+      "confidence": 0.2152,
+      "prefill_tps": 1055.9,
+      "decode_tps": 439.0,
+      "peak_ram_mb": 92.5,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  },
+  {
+    "case": "english-typo",
+    "scope": "scripture",
+    "prompt": "genesis 1:1",
+    "seconds": 0.27,
+    "exitCode": 0,
+    "response": {
+      "type": "call",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "reason": null,
+      "function_calls": [
+        {
+          "name": "search_scripture",
+          "arguments": {
+            "query": "genesis 1:1"
+          }
+        }
+      ],
+      "suppressed_calls": [],
+      "reasoning": "query 'genesis 1:1' -> search_scripture query 'genesis 1:1'.",
+      "confidence": 0.2074,
+      "prefill_tps": 1050.6,
+      "decode_tps": 476.3,
+      "peak_ram_mb": 92.2,
+      "validation": {
+        "ungrounded": [],
+        "negation": false
+      }
+    }
+  }
+]

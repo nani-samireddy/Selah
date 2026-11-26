@@ -157,7 +157,7 @@ int EditorDocument::selfTest() {
     const auto initial = loaded.slides();
     if (!check(
             loaded.addScriptureSlides(
-                { QVariantMap { { "text", QString("తెలుగు వాక్యం ").repeated(50) },
+                { QVariantMap { { "text", QString("తెలుగు వాక్యం. ").repeated(50) },
                     { "reference", "Test 1:1" }, { "translation", "test" }, { "abbreviation", "T" },
                     { "copyright", "Test copyright" }, { "license", "CC0" } } },
                 3),

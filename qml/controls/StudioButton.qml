@@ -118,8 +118,8 @@ Button {
     Connections {
         function onClicked() {
             if (control.feedbackEnabled)
-                InteractionFeedback.play(control.checkable ? "toggle" : control.selected ? "select" :
-                                                                                           "click");
+                InteractionFeedback.play(control.checkable || control.selected ? "select" :
+                                                                                 "click");
         }
 
         target: control

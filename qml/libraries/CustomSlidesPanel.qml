@@ -102,7 +102,7 @@ Popup {
 
             ScrollBar.vertical: ScrollBar {
             }
-            delegate: Rectangle {
+            delegate: SquircleSurface {
                 id: card
 
                 required property var modelData

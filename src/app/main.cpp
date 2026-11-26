@@ -1,25 +1,39 @@
+#include "AiAssistant.h"
+#include "AppBackup.h"
 #include "ApplicationSetup.h"
 #include "ContentLibrary.h"
 #include "EditorDocument.h"
 #include "FontLibrary.h"
+#include "LiveSessionStore.h"
 #include "MediaLibrary.h"
+#include "ModelInstaller.h"
 #include "NdiController.h"
 #include "OutputManager.h"
 #include "PresentationLibrary.h"
 #include "ProgramStore.h"
+#include "QuickAddController.h"
 #include "RemoteController.h"
+#include "ServiceCues.h"
 #include "TemplatePresets.h"
 #include "TemplateStore.h"
 #include "TextFormatting.h"
+#include "UpdateManager.h"
+#include <QDir>
+#include <QFileInfo>
 #include <QFont>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QLockFile>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QtQml/QQmlExtensionPlugin>
 Q_IMPORT_QML_PLUGIN(ChurchDeckFormattingPlugin)
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QWindow>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 #ifdef Q_OS_MACOS
 #include "WindowChrome.h"
 #endif
@@ -29,6 +43,13 @@ Q_IMPORT_QML_PLUGIN(ChurchDeckFormattingPlugin)
 #endif
 
 int main(int argc, char *argv[]) {
+#ifdef Q_OS_WIN
+    // Inno Setup checks this marker before install/uninstall. Retain the handle
+    // until process exit so setup never automatically closes a live service.
+    if (!CreateMutexW(nullptr, FALSE, L"Selah.Desktop.Running")) {
+        return 1;
+    }
+#endif
     ApplicationSetup::prepareGraphicsEnvironment();
     QGuiApplication app(argc, argv);
     ApplicationSetup::configure(app);
@@ -42,7 +63,19 @@ int main(int argc, char *argv[]) {
         return runModelChecks();
     }
 #endif
+    const auto profileRoot = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(QFileInfo(profileRoot).absolutePath());
+    QLockFile profileLock(profileRoot + ".running.lock");
+    if (!profileLock.tryLock(10000)) {
+        qWarning() << "Selah is already running for this profile";
+        return 0;
+    }
+    if (const auto error = AppBackup::applyPendingRestore(profileRoot); !error.isEmpty()) {
+        qCritical().noquote() << error;
+        return 1;
+    }
     QQuickStyle::setStyle("Basic");
+    AppBackup backup;
     FontLibrary fonts;
     EditorDocument document(nullptr, !app.arguments().contains("--fresh"));
     MediaLibrary library;
@@ -50,20 +83,44 @@ int main(int argc, char *argv[]) {
     QTemporaryDir bibleImportDirectory;
     ContentLibrary content(nullptr,
         app.arguments().contains("--bible-import-smoke") ? bibleImportDirectory.path() : QString());
+    AiAssistant assistant(&content);
+    ModelInstaller modelInstaller;
+    UpdateManager updater;
+    QObject::connect(&modelInstaller, &ModelInstaller::installed, &assistant, [&] {
+        const auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+            + "/ai/cactus-4.0.0/";
+#ifdef Q_OS_WIN
+        const auto runtime = path + "cactus.exe";
+#else
+        const auto runtime = path + "cactus";
+#endif
+        assistant.configure(
+            QUrl::fromLocalFile(runtime), QUrl::fromLocalFile(path + "needle3.cact"));
+    });
+    if (app.arguments().contains("--enable-ai")) {
+        assistant.useManagedModel();
+    }
     TemplateStore templates;
     if (const auto error = TemplatePresets::install(templates, &library); !error.isEmpty()) {
         qWarning().noquote() << error;
     }
     PresentationLibrary presentations;
     OutputManager outputs;
+    LiveSessionStore recovery(&outputs);
+    ServiceCues serviceCues(&outputs);
+    QObject::connect(
+        &app, &QGuiApplication::aboutToQuit, &recovery, &LiveSessionStore::finishCleanly);
+    QuickAddController quickAdd(&content, &presentations, &library, &outputs);
     QTemporaryDir browserDirectory;
     ProgramStore programs(&outputs, nullptr,
         app.arguments().contains("--program-browser-smoke") ? browserDirectory.path() : QString());
     NdiController ndi(&outputs);
     RemoteController remote(&outputs, &library);
+    QObject::connect(&recovery, &LiveSessionStore::restoring, &ndi, &NdiController::stop);
     // These controllers live on the C++ stack, including when wrapped by diagnostics.
     for (QObject *controller : QList<QObject *> { &document, &library, &content, &outputs,
-             &programs, &ndi, &templates, &presentations, &remote, &fonts }) {
+             &programs, &ndi, &templates, &presentations, &remote, &fonts, &assistant, &quickAdd,
+             &modelInstaller, &updater, &recovery, &serviceCues, &backup }) {
         QQmlEngine::setObjectOwnership(controller, QQmlEngine::CppOwnership);
     }
     QObject::connect(
@@ -84,18 +141,24 @@ int main(int argc, char *argv[]) {
     }
 #endif
     // Required QML properties make the composition root's dependencies explicit.
-    engine.setInitialProperties(
-        { { "presentations", QVariant::fromValue<QObject *>(&presentations) },
-            { "startupWorkspace", startupWorkspace },
-            { "doc", QVariant::fromValue<QObject *>(&document) },
-            { "library", QVariant::fromValue<QObject *>(&library) },
-            { "content", QVariant::fromValue<QObject *>(&content) },
-            { "programs", QVariant::fromValue<QObject *>(&programs) },
-            { "outputs", QVariant::fromValue<QObject *>(&outputs) },
-            { "ndi", QVariant::fromValue<QObject *>(&ndi) },
-            { "remote", QVariant::fromValue<QObject *>(&remote) },
-            { "fonts", QVariant::fromValue<QObject *>(&fonts) },
-            { "templates", QVariant::fromValue<QObject *>(&templates) } });
+    engine.setInitialProperties({ { "assistant", QVariant::fromValue<QObject *>(&assistant) },
+        { "quickAdd", QVariant::fromValue<QObject *>(&quickAdd) },
+        { "recovery", QVariant::fromValue<QObject *>(&recovery) },
+        { "backup", QVariant::fromValue<QObject *>(&backup) },
+        { "serviceCues", QVariant::fromValue<QObject *>(&serviceCues) },
+        { "updater", QVariant::fromValue<QObject *>(&updater) },
+        { "modelInstaller", QVariant::fromValue<QObject *>(&modelInstaller) },
+        { "presentations", QVariant::fromValue<QObject *>(&presentations) },
+        { "startupWorkspace", startupWorkspace },
+        { "doc", QVariant::fromValue<QObject *>(&document) },
+        { "library", QVariant::fromValue<QObject *>(&library) },
+        { "content", QVariant::fromValue<QObject *>(&content) },
+        { "programs", QVariant::fromValue<QObject *>(&programs) },
+        { "outputs", QVariant::fromValue<QObject *>(&outputs) },
+        { "ndi", QVariant::fromValue<QObject *>(&ndi) },
+        { "remote", QVariant::fromValue<QObject *>(&remote) },
+        { "fonts", QVariant::fromValue<QObject *>(&fonts) },
+        { "templates", QVariant::fromValue<QObject *>(&templates) } });
     ndi.setEngine(&engine);
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &remote, &RemoteController::stop);
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &ndi, &NdiController::stop);
@@ -103,6 +166,10 @@ int main(int argc, char *argv[]) {
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.loadFromModule("ChurchDeck", "Main");
+    if (app.arguments().contains("--enable-ai") && !engine.rootObjects().isEmpty()) {
+        QMetaObject::invokeMethod(
+            engine.rootObjects().first(), "showAiAssistant", Qt::QueuedConnection);
+    }
 #ifdef Q_OS_MACOS
     if (!engine.rootObjects().isEmpty()) {
         WindowChrome::configure(qobject_cast<QWindow *>(engine.rootObjects().first()));

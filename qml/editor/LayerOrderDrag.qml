@@ -81,7 +81,7 @@ Item {
         const visualFrom = count - 1 - from;
         const visualTo = target > visualFrom ? target - 1 : target;
         if (host.doc.moveElementTo(from, count - 1 - visualTo))
-            InteractionFeedback.play("drop");
+            InteractionFeedback.play("select");
         view.forceActiveFocus();
     }
 

@@ -156,7 +156,7 @@ ScrollView {
 
         StudioButton {
             text: liveControls.programView.controller.defaultImageShowing ? "Resume presentation" :
-                                                                            "Show default image"
+                                                                            "Show standby media"
             iconName: "image"
             visible: liveControls.programView.controller.defaultImageAvailable
                      || liveControls.programView.controller.defaultImageShowing
@@ -168,19 +168,29 @@ ScrollView {
         }
 
         StudioButton {
-            text: "Audience preview"
+            text: liveControls.programView.controller.audiencePreviewOpen
+                  ? "Close audience preview" : "Audience preview"
+            selected: liveControls.programView.controller.audiencePreviewOpen
             Layout.fillWidth: true
-            enabled: liveControls.programView.controller.hasAudienceContent
+            enabled: liveControls.programView.controller.audiencePreviewOpen
+                     || liveControls.programView.controller.hasAudienceContent
 
-            onClicked: liveControls.programView.controller.preview("audience")
+            onClicked: liveControls.programView.controller.audiencePreviewOpen
+                       ? liveControls.programView.controller.stop("audience") :
+                         liveControls.programView.controller.preview("audience")
         }
 
         StudioButton {
-            text: "Stage preview"
+            text: liveControls.programView.controller.stagePreviewOpen ? "Close stage preview" :
+                                                                         "Stage preview"
+            selected: liveControls.programView.controller.stagePreviewOpen
             Layout.fillWidth: true
-            enabled: liveControls.programView.controller.liveCount > 0
+            enabled: liveControls.programView.controller.stagePreviewOpen
+                     || liveControls.programView.controller.liveCount > 0
 
-            onClicked: liveControls.programView.controller.preview("stage")
+            onClicked: liveControls.programView.controller.stagePreviewOpen
+                       ? liveControls.programView.controller.stop("stage") :
+                         liveControls.programView.controller.preview("stage")
         }
 
         StudioButton {

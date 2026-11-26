@@ -1,4 +1,5 @@
 #include "DiagnosticRunner.h"
+#include "AiChecks.h"
 #include "BackgroundChecks.h"
 #include "BibleImportChecks.h"
 #include "ContentLibrary.h"
@@ -16,14 +17,18 @@
 #include "ProgramChecks.h"
 #include "ProgramStore.h"
 #include "PrototypeChecks.h"
+#include "QuickAddChecks.h"
 #include "RemoteChecks.h"
 #include "RemoteController.h"
 #include "ResizeChecks.h"
 #include "SlideFactory.h"
+#include "StandbyChecks.h"
 #include "TemplateChecks.h"
 #include "TemplatePresetChecks.h"
 #include "TemplateStore.h"
+#include "TextFitChecks.h"
 #include "TransitionChecks.h"
+#include "UpdateSetupChecks.h"
 #include "WorkspaceChecks.h"
 #include <QDebug>
 #include <QDir>
@@ -40,6 +45,35 @@
 int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, MediaLibrary &library,
     ContentLibrary &content, OutputManager &outputs, NdiController &ndi, ProgramStore &programs,
     QQmlApplicationEngine &engine) {
+    const int standbyIndex = app.arguments().indexOf("--standby-smoke");
+    if (standbyIndex >= 0) {
+        if (standbyIndex + 2 >= app.arguments().size()) {
+            return 870;
+        }
+        runStandbyChecks(
+            outputs, engine, app.arguments()[standbyIndex + 1], app.arguments()[standbyIndex + 2]);
+    }
+    const int setupIndex = app.arguments().indexOf("--update-setup-smoke");
+    if (setupIndex >= 0) {
+        if (setupIndex + 1 >= app.arguments().size()) {
+            return 580;
+        }
+        runUpdateSetupChecks(engine, app.arguments()[setupIndex + 1]);
+    }
+    const int fitIndex = app.arguments().indexOf("--text-fit-smoke");
+    if (fitIndex >= 0) {
+        if (fitIndex + 1 >= app.arguments().size()) {
+            return 500;
+        }
+        runTextFitChecks(document, outputs, engine, app.arguments()[fitIndex + 1]);
+    }
+    const int quickIndex = app.arguments().indexOf("--quick-add-smoke");
+    if (quickIndex >= 0) {
+        if (quickIndex + 1 >= app.arguments().size()) {
+            return 470;
+        }
+        runQuickAddUiChecks(engine, app.arguments()[quickIndex + 1]);
+    }
     if (app.arguments().contains("--compact") && !engine.rootObjects().isEmpty()) {
         auto window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
         if (window) {
@@ -68,6 +102,17 @@ int runRequestedDiagnostics(QGuiApplication &app, EditorDocument &document, Medi
         }
         runBackgroundChecks(
             document, *templates, outputs, ndi, engine, app.arguments()[backgroundIndex + 1]);
+    }
+    const int aiIndex = app.arguments().indexOf("--ai-smoke");
+    if (aiIndex >= 0) {
+        const auto args = app.arguments();
+        const auto runtimeIndex = args.indexOf("--ai-runtime");
+        const auto modelIndex = args.indexOf("--ai-model");
+        if (aiIndex + 1 >= args.size() || runtimeIndex < 0 || modelIndex < 0) {
+            return 420;
+        }
+        runAiChecks(document, content, outputs, engine, args[aiIndex + 1],
+            args.value(runtimeIndex + 1), args.value(modelIndex + 1));
     }
     const int resizeIndex = app.arguments().indexOf("--resize-smoke");
     if (resizeIndex >= 0) {

@@ -152,6 +152,28 @@ Rectangle {
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
                 font.letterSpacing: 0.8
+
+                SequentialAnimation on opacity {
+                    running: liveLabel.visible && navigation.host.onAir &&
+                             !navigation.host.liveBlackout && !InteractionFeedback.reducedMotion
+                    loops: Animation.Infinite
+
+                    onStopped: liveLabel.opacity = 1
+
+                    NumberAnimation {
+                        from: 1
+                        to: 0.55
+                        duration: 1200
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        from: 0.55
+                        to: 1
+                        duration: 1200
+                        easing.type: Easing.InOutSine
+                    }
+                }
             }
         }
 
@@ -165,6 +187,16 @@ Rectangle {
             Accessible.name: "Open user guide"
 
             onClicked: navigation.host.showUserGuide()
+        }
+
+        LibraryButton {
+            objectName: "aiAssistantButton"
+            text: "Luma"
+            selected: navigation.host.assistant.enabled
+            quiet: !selected
+            hint: "Open Luma, your local assistant"
+
+            onClicked: navigation.host.showAiAssistant()
         }
 
         FeedbackButton {

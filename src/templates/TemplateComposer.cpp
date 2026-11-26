@@ -1,6 +1,7 @@
 #include "TemplateComposer.h"
 #include "TemplateDefinition.h"
 #include "TemplateTextLayout.h"
+#include "TextFormatting.h"
 #include <algorithm>
 #include <QMap>
 #include <QSet>
@@ -8,7 +9,7 @@
 
 namespace {
 QVariantMap populate(const QVariantMap &definition, const QVariantMap &context, const QString &name,
-    QString *error) {
+    QString *error, int maximumLines) {
     auto slide = definition["slide"].toMap();
     auto elements = slide["elements"].toList();
     for (auto &value : elements) {
@@ -27,7 +28,10 @@ QVariantMap populate(const QVariantMap &definition, const QVariantMap &context, 
             box.remove("textRuns");
             const bool body = binding == "Primary lyrics" || binding == "Translated lyrics"
                 || binding == "Scripture text" || binding == "Secondary scripture text";
-            // Metadata may scale down; body fonts and pagination always follow the design.
+            if (body && box["textSizing"] == "shrink") {
+                box = TextFormatting::fitted(box, maximumLines);
+            }
+            // Metadata keeps its existing fit behavior; body text respects its selected mode.
             if (!body && box.value("visible", true).toBool()) {
                 while (!TemplateTextLayout::fits(text, box) && box["fontSize"].toInt() > 8) {
                     box["fontSize"] = box["fontSize"].toInt() - 1;
@@ -42,9 +46,9 @@ QVariantMap populate(const QVariantMap &definition, const QVariantMap &context, 
     }
     slide["elements"] = elements;
     slide["name"] = name;
-    slide["layoutTemplateId"] = definition["id"];
+    slide["layoutTemplateId"] = definition.value("id", "").toString();
     slide["layoutTemplateName"] = definition["name"];
-    slide["layoutTemplateRevision"] = definition["revision"];
+    slide["layoutTemplateRevision"] = definition.value("revision", 1).toInt();
     return slide;
 }
 
@@ -128,7 +132,7 @@ QVariantList TemplateComposer::songSlides(
             const QVariantMap context { { "Title", song["title"] },
                 { "Section name", section["label"] }, { "Primary lyrics", primaryPage },
                 { "Translated lyrics", secondaryPage }, { "Credits", song["credits"] } };
-            auto page = populate(definition, context, name, error);
+            auto page = populate(definition, context, name, error, maximumLines);
             if (page.isEmpty()) {
                 return false;
             }
@@ -237,8 +241,9 @@ QVariantList TemplateComposer::scriptureSlides(
             const auto prefix = TemplateTextLayout::takePrefix(
                 remaining, "Scripture text", definition, maximumLines);
             if (prefix.isEmpty()) {
-                *error = "Enlarge the Scripture text box or reduce its font size; a text cluster "
-                         "cannot fit";
+                *error
+                    = "A complete scripture phrase cannot fit. Enlarge the Scripture text box, "
+                      "allow more lines, or enable Shrink to fit with a lower minimum font size.";
                 return {};
             }
             chunks << prefix;
@@ -251,7 +256,8 @@ QVariantList TemplateComposer::scriptureSlides(
             const auto prefix = TemplateTextLayout::takePrefix(
                 secondRemaining, "Secondary scripture text", definition, maximumLines);
             if (prefix.isEmpty()) {
-                *error = "Enlarge the Secondary scripture text box or reduce its font size";
+                *error = "A complete phrase cannot fit in the second Bible box. Enlarge it, allow "
+                         "more lines, or lower its Shrink to fit minimum font size.";
                 return {};
             }
             secondChunks << prefix;
@@ -275,7 +281,7 @@ QVariantList TemplateComposer::scriptureSlides(
                 { "Secondary credits", secondary["copyright"] },
                 { "Scripture reference", reference }, { "Version", verse["abbreviation"] },
                 { "Credits", verse["copyright"] } };
-            auto page = populate(definition, context, name, error);
+            auto page = populate(definition, context, name, error, maximumLines);
             if (page.isEmpty()) {
                 return {};
             }

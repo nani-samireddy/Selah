@@ -12,9 +12,10 @@ Item {
     property bool audible: false
     property bool looping: true
     property bool videoEnabled: true
+    property bool decodeAudio: true
     property bool showErrors: true
     property string problem: ""
-    readonly property var loadedVideo: videoLoader.item
+    readonly property var loadedVideo: media.kind === "audio" ? audioLoader.item : videoLoader.item
     readonly property real playbackPosition: loadedVideo ? loadedVideo.playbackPosition : 0
     readonly property int decodedFrames: loadedVideo ? loadedVideo.decodedFrames : 0
 
@@ -104,6 +105,64 @@ Item {
                     target: video.videoSink
                 }
             }
+        }
+    }
+
+    Loader {
+        id: audioLoader
+
+        active: media.kind === "audio" && media.decodeAudio && media.videoEnabled && (media.playing
+                                                                                      || media.audible)
+
+        sourceComponent: Component {
+            Item {
+                readonly property real playbackPosition: audioPlayer.position
+                readonly property int decodedFrames: 0
+
+                MediaPlayer {
+                    id: audioPlayer
+
+                    source: media.sourceUrl
+                    loops: media.looping ? MediaPlayer.Infinite : 1
+
+                    audioOutput: AudioOutput {
+                        muted: !media.audible
+                    }
+
+                    onMediaStatusChanged: if (mediaStatus === MediaPlayer.LoadedMedia
+                                                  && media.playing)
+                                              play()
+                    onErrorOccurred: {
+                        media.problem = "Audio unavailable: " + errorString;
+                        media.mediaProblem(media.problem);
+                    }
+                }
+
+                Connections {
+                    function onPlayingChanged() {
+                        if (media.playing)
+                            audioPlayer.play();
+                        else
+                            audioPlayer.pause();
+                    }
+
+                    target: media
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: media.kind === "audio" && media.showErrors
+        color: "#24282E"
+        radius: 8
+
+        Text {
+            anchors.centerIn: parent
+            text: "♫  AUDIO"
+            color: "#BCC4CF"
+            font.pixelSize: Math.max(16, Math.min(36, media.height / 3))
         }
     }
 

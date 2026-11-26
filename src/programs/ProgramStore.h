@@ -1,4 +1,6 @@
 #pragma once
+#include "PortableBundle.h"
+#include <QFutureWatcher>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QTimer>
@@ -14,6 +16,7 @@ class ProgramStore final : public QObject {
     Q_PROPERTY(QString title READ title NOTIFY changed)
     Q_PROPERTY(QString date READ date NOTIFY changed)
     Q_PROPERTY(QVariantList items READ items NOTIFY changed)
+    Q_PROPERTY(QStringList sections READ sections NOTIFY changed)
     Q_PROPERTY(int selected READ selected WRITE setSelected NOTIFY changed)
     Q_PROPERTY(QVariantMap selectedItem READ selectedItem NOTIFY changed)
     Q_PROPERTY(QVariantList editorSlides READ editorSlides NOTIFY changed)
@@ -24,6 +27,8 @@ class ProgramStore final : public QObject {
     Q_PROPERTY(bool dirty READ dirty NOTIFY changed)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
+    Q_PROPERTY(bool bundleBusy READ bundleBusy NOTIFY changed)
+    Q_PROPERTY(int bundleProgress READ bundleProgress NOTIFY changed)
     Q_PROPERTY(bool live READ live NOTIFY liveChanged)
     Q_PROPERTY(QString liveItemId READ liveItemId NOTIFY liveChanged)
 public:
@@ -39,6 +44,12 @@ public:
     QString date() const { return m_program["date"].toString(); }
 
     QVariantList items() const { return m_program["items"].toList(); }
+
+    QStringList sections() const;
+    Q_INVOKABLE bool addSection(const QString &name);
+    Q_INVOKABLE bool renameSection(const QString &name, const QString &replacement);
+    Q_INVOKABLE bool removeSection(const QString &name);
+    Q_INVOKABLE bool setItemSection(const QString &name);
 
     int selected() const { return m_selected; }
 
@@ -93,12 +104,30 @@ public:
     Q_INVOKABLE bool present(int localSlide = 0);
     Q_INVOKABLE bool exportProgram(const QUrl &url);
     Q_INVOKABLE bool importProgram(const QUrl &url);
+
+    bool bundleBusy() const { return m_bundleWatcher.isRunning(); }
+
+    int bundleProgress() const { return m_bundleProgress ? m_bundleProgress->percent.load() : 0; }
+
+    Q_INVOKABLE bool exportBundle(const QUrl &url);
+    Q_INVOKABLE bool importBundle(const QUrl &url);
+
+    Q_INVOKABLE void cancelBundle() {
+        if (m_bundleProgress) {
+            m_bundleProgress->cancelled = true;
+        }
+    }
+
     static int selfTest();
 signals:
     void changed();
     void liveChanged();
 
 private:
+    bool startBundle(const QUrl &url, bool importing);
+    QFutureWatcher<BundleResult> m_bundleWatcher;
+    std::shared_ptr<BundleProgress> m_bundleProgress;
+    QTimer m_bundleTimer;
     bool append(QVariantMap item, const QVariantList &slides, const QString &error = QString(),
         const QString &programId = QString());
     void replaceItem(const QVariantMap &item);

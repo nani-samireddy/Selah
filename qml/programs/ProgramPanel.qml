@@ -28,12 +28,13 @@ Popup {
         return !!f && (f.cursorPosition !== undefined || f.currentIndex !== undefined);
     }
     readonly property bool dialogOpen: newDialog.opened || importFile.visible || exportFile.visible
-                                       || editorHeader.dialogOpen
+                                       || bundleFile.visible || editorHeader.dialogOpen
 
     signal presentRequested
     signal songsRequested
     signal bibleRequested
     signal mediaRequested
+    signal presentationsRequested
     signal templatesRequested
     signal outputsRequested
     signal editRequested(var slides, string itemId)
@@ -73,6 +74,12 @@ Popup {
         flushItem();
         if (store.id.length > 0)
             exportFile.open();
+    }
+
+    function showBundleExportDialog() {
+        flushItem();
+        if (store.id.length > 0)
+            bundleFile.open();
     }
 
     function choosePresentationFile() {
@@ -227,15 +234,73 @@ Popup {
     }
 
     FileDialog {
+        id: bundleFile
+
+        title: "Export portable program with media"
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "selahbundle"
+        nameFilters: ["Portable Selah programs (*.selahbundle)"]
+
+        onAccepted: panel.store.exportBundle(selectedFile)
+    }
+
+    FileDialog {
         id: importFile
 
         title: "Import program"
-        nameFilters: ["Selah programs (*.churchprogram)"]
+        nameFilters: ["Selah programs (*.churchprogram *.selahbundle)"]
 
         onAccepted: {
             panel.flushItem();
             if (panel.store.importProgram(selectedFile))
                 panel.showEditor();
+        }
+    }
+
+    Connections {
+        function onChanged() {
+            if (panel.store.bundleBusy)
+                bundleProgress.open();
+            else
+                bundleProgress.close();
+        }
+
+        target: panel.store
+    }
+
+    Popup {
+        id: bundleProgress
+
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: 440
+        modal: true
+        closePolicy: Popup.NoAutoClose
+        padding: 24
+
+        contentItem: ColumnLayout {
+            spacing: 16
+
+            Text {
+                Layout.fillWidth: true
+                text: panel.store.status
+                color: LibraryStyle.text
+                wrapMode: Text.Wrap
+            }
+
+            ProgressBar {
+                Layout.fillWidth: true
+                from: 0
+                to: 100
+                value: panel.store.bundleProgress
+                indeterminate: value === 0
+            }
+
+            LibraryButton {
+                text: "Cancel"
+
+                onClicked: panel.store.cancelBundle()
+            }
         }
     }
 
@@ -318,40 +383,6 @@ Popup {
             Layout.fillWidth: true
             font.pixelSize: 11
             elide: Text.ElideRight
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 1
-            color: LibraryStyle.tone("#333333")
-        }
-
-        RowLayout {
-            Text {
-                text: panel.store.status
-                color: LibraryStyle.tone("#999999")
-                font.pixelSize: 11
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-
-            Text {
-                visible: panel.editorOpen
-                text: panel.store.items.length + " service items"
-                color: LibraryStyle.tone("#777777")
-                font.pixelSize: 11
-            }
-
-            StudioButton {
-                visible: panel.editorOpen
-                text: panel.store.dirty ? "Save program" : "Saved"
-                enabled: panel.store.id.length > 0
-
-                onClicked: {
-                    panel.flushItem();
-                    panel.store.save();
-                }
-            }
         }
     }
 }

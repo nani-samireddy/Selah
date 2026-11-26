@@ -17,7 +17,7 @@ Popup {
     modal: true
     focus: true
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.tone("#191919")
         radius: 12
         border.color: LibraryStyle.tone("#3B3B3B")

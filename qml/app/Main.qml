@@ -8,6 +8,13 @@ import QtCore
 ApplicationWindow {
     id: app
 
+    required property var backup
+    required property var recovery
+    required property var serviceCues
+    required property var updater
+    required property var modelInstaller
+    required property var assistant
+    required property var quickAdd
     required property var fonts
     required property var doc
     required property var library
@@ -29,7 +36,9 @@ ApplicationWindow {
     readonly property bool settingsOpen: libraryPanel.previewOpen || savePresentationDialog.opened
                                          || fontPickerOpen || ndiPanel.opened || remotePanel.opened
                                          || saveTemplateDialog.opened || userGuide.opened
-                                         || programPanel.dialogOpen
+                                         || programPanel.dialogOpen || programs.bundleBusy
+                                         || aiDialog.opened || presentWorkspace.quickAddOpen
+                                         || updateDialog.opened
     property string programEditingItem: ""
     required property var outputs
     required property var presentations
@@ -43,6 +52,7 @@ ApplicationWindow {
     property alias templateMode: customDraft.templateEditing
     property string editingId: ""
     property var activeTextEditor: null
+    readonly property bool editorPreviewOpen: outputWindow.visible
     property bool videosPlaying: false
     property bool snap: true
     property bool handTool: false
@@ -52,8 +62,9 @@ ApplicationWindow {
     property string toast: ""
     property bool libraryImportOnly: false
     readonly property bool editorShortcutsAllowed: activeWorkspace === "design" &&
-                                                   !userGuide.opened && !fontPickerOpen &&
-                                                   !programPanel.opened && !templatePanel.opened &&
+                                                   !userGuide.opened && !aiDialog.opened &&
+                                                   !fontPickerOpen && !programPanel.opened &&
+                                                   !templatePanel.opened &&
                                                    !saveTemplateDialog.opened && !songPanel.opened
                                                    && !biblePanel.opened && !libraryPanel.opened &&
                                                    !ndiPanel.opened && !remotePanel.opened
@@ -61,6 +72,10 @@ ApplicationWindow {
                                                 || ndi.busy
 
     signal canvasSettingsRequested
+
+    function closeEditorPreview() {
+        outputWindow.close();
+    }
 
     function selectCanvasSettings() {
         if (activeTextEditor)
@@ -101,11 +116,11 @@ ApplicationWindow {
                                                                  "paragraphSpacing",
                                                                  "paragraphIndent", "textCase",
                                                                  "verticalAlignment", "textSizing",
-                                                                 "wrap", "clipText", "baseline",
-                                                                 "listStyle", "listIndent",
-                                                                 "fontFeatures", "fontAxes",
-                                                                 "maxLines", "ellipsis"].includes(
-                        key)) {
+                                                                 "minFontSize", "wrap", "clipText",
+                                                                 "baseline", "listStyle",
+                                                                 "listIndent", "fontFeatures",
+                                                                 "fontAxes", "maxLines",
+                                                                 "ellipsis"].includes(key)) {
                 let style = {};
                 style[key] = value;
                 if (app.activeTextEditor)
@@ -338,6 +353,22 @@ ApplicationWindow {
         Qt.callLater(() => programPanel.showExportDialog());
     }
 
+    function showBackup() {
+        if (activeTextEditor)
+            activeTextEditor.finish();
+        programPanel.flushItem();
+        programs.save();
+        doc.saveProject();
+        backupDialog.open();
+    }
+
+    function exportPortableProgram() {
+        if (!programs.id)
+            return;
+        showProgramEditor();
+        Qt.callLater(() => programPanel.showBundleExportDialog());
+    }
+
     function newPresentation() {
         savePresentationDialog.createBlank = true;
         savePresentationDialog.open();
@@ -355,6 +386,10 @@ ApplicationWindow {
             else
                 saveCustomPresentation();
         }
+    }
+
+    function showAiAssistant() {
+        aiDialog.open();
     }
 
     function showUserGuide() {
@@ -383,6 +418,12 @@ ApplicationWindow {
         outputWindow.playing = true;
         outputWindow.show();
         outputWindow.raise();
+    }
+
+    function showUpdates() {
+        updateDialog.open();
+        if (!updater.downloadedPath && !updater.release.version)
+            updater.check();
     }
 
     width: 1440
@@ -440,7 +481,7 @@ ApplicationWindow {
             }
 
             Text {
-                text: app.outputs.defaultImageShowing ? "DEFAULT IMAGE  ·  " + app.outputs.status :
+                text: app.outputs.defaultImageShowing ? "STANDBY MEDIA  ·  " + app.outputs.status :
                                                         app.outputs.liveIndex >= 0 ? (app.onAir
                                                                                       ? "LIVE  /  " :
                                                                                         "READY  /  ")
@@ -456,7 +497,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         app.outputs.bindWindows(audienceOutput, stageOutput, app);
-        app.switchWorkspace(app.startupWorkspace);
+        app.switchWorkspace(app.recovery.available ? "present" : app.startupWorkspace);
     }
     onClosing: {
         if (app.activeTextEditor)
@@ -469,6 +510,33 @@ ApplicationWindow {
         app.outputs.stop("stage");
         app.ndi.stop();
         app.remote.stop();
+    }
+
+    AppBackupDialog {
+        id: backupDialog
+
+        controller: app.backup
+
+        onQuitRequested: {
+            if (app.close())
+                Qt.quit();
+        }
+    }
+
+    UpdateDialog {
+        id: updateDialog
+
+        parent: Overlay.overlay
+        controller: app.updater
+        presenting: app.presentationRunning
+    }
+
+    AiAssistantDialog {
+        id: aiDialog
+
+        installer: app.modelInstaller
+        controller: app.assistant
+        content: app.content
     }
 
     UserGuideDialog {
@@ -553,9 +621,9 @@ ApplicationWindow {
     FileDialog {
         id: mediaDialog
 
-        title: "Import image or video"
+        title: "Import image, video or audio"
         nameFilters:
-            ["Images and videos (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.svg *.mp4 *.mov *.m4v *.webm *.mkv)",
+            ["Images, videos and audio (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.svg *.mp4 *.mov *.m4v *.webm *.mkv *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.aiff *.aif *.opus)",
             "All files (*)"]
 
         onAccepted: {
@@ -716,6 +784,10 @@ ApplicationWindow {
         onMediaRequested: {
             libraryPanel.programTarget = app.programs;
             libraryPanel.open();
+        }
+        onPresentationsRequested: {
+            customSlidesPanel.programTarget = app.programs;
+            customSlidesPanel.open();
         }
         onOutputsRequested: app.showOutputs()
         onTemplatesRequested: app.showTemplates(app.programs)

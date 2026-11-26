@@ -86,7 +86,7 @@ QByteArray RemotePreview::render(const QVariantMap &slide, const QVariantList &a
                 QPalette::Text, QColor(element.value("color", "#FFFFFF").toString()));
             context.clip = QRectF(0, 0, width, height);
             document.documentLayout()->draw(&painter, context);
-        } else {
+        } else if (kind != "audio") {
             QUrl source(element["source"].toString());
             if (kind == "video") {
                 const auto original = source.toString();

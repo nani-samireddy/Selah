@@ -13,3 +13,6 @@ Shell helpers target Unix-like development environments. Windows builds can use 
 
 - `package-desktop.py`: native Windows/Linux Release packaging with Qt deployment, isolated startup checks, Linux dependency auditing, notices, manifests, and checksums. See [production builds](../docs/production-builds.md).
 - `build-bible-catalog.py`: regenerate the bundled GitHub Bible catalog from the repository tree, including entries beyond GitHub's directory-listing limit.
+- `windows_signing.py`: certificate-store SignTool integration used by `package-desktop.py --windows-sign`; signs and verifies the Windows executable before archiving. See [Windows release preparation](../docs/windows-release.md).
+
+- `windows_installer.py` and `packaging/windows/selah.iss`: optional Inno Setup 6 per-user x64 installer via `package-desktop.py --windows-installer --windows-publisher "Your legal name"`; use `--windows-sign` for signed setup and uninstallers.

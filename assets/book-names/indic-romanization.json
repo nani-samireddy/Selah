@@ -1,0 +1,2465 @@
+{
+  "unicodeVersion": "17.0.0",
+  "characters": {
+    "ँ": [
+      "mark",
+      "m"
+    ],
+    "ं": [
+      "mark",
+      "m"
+    ],
+    "ः": [
+      "mark",
+      "h"
+    ],
+    "अ": [
+      "vowel",
+      "a"
+    ],
+    "आ": [
+      "vowel",
+      "aa"
+    ],
+    "इ": [
+      "vowel",
+      "i"
+    ],
+    "ई": [
+      "vowel",
+      "ii"
+    ],
+    "उ": [
+      "vowel",
+      "u"
+    ],
+    "ऊ": [
+      "vowel",
+      "uu"
+    ],
+    "ऋ": [
+      "vowel",
+      "ri"
+    ],
+    "ऌ": [
+      "vowel",
+      "li"
+    ],
+    "ऍ": [
+      "vowel",
+      "e"
+    ],
+    "ऎ": [
+      "vowel",
+      "e"
+    ],
+    "ए": [
+      "vowel",
+      "e"
+    ],
+    "ऐ": [
+      "vowel",
+      "ai"
+    ],
+    "ऑ": [
+      "vowel",
+      "o"
+    ],
+    "ऒ": [
+      "vowel",
+      "o"
+    ],
+    "ओ": [
+      "vowel",
+      "o"
+    ],
+    "औ": [
+      "vowel",
+      "au"
+    ],
+    "क": [
+      "consonant",
+      "k"
+    ],
+    "ख": [
+      "consonant",
+      "kh"
+    ],
+    "ग": [
+      "consonant",
+      "g"
+    ],
+    "घ": [
+      "consonant",
+      "gh"
+    ],
+    "ङ": [
+      "consonant",
+      "ng"
+    ],
+    "च": [
+      "consonant",
+      "ch"
+    ],
+    "छ": [
+      "consonant",
+      "chh"
+    ],
+    "ज": [
+      "consonant",
+      "j"
+    ],
+    "झ": [
+      "consonant",
+      "jh"
+    ],
+    "ञ": [
+      "consonant",
+      "ny"
+    ],
+    "ट": [
+      "consonant",
+      "t"
+    ],
+    "ठ": [
+      "consonant",
+      "th"
+    ],
+    "ड": [
+      "consonant",
+      "d"
+    ],
+    "ढ": [
+      "consonant",
+      "dh"
+    ],
+    "ण": [
+      "consonant",
+      "n"
+    ],
+    "त": [
+      "consonant",
+      "t"
+    ],
+    "थ": [
+      "consonant",
+      "th"
+    ],
+    "द": [
+      "consonant",
+      "d"
+    ],
+    "ध": [
+      "consonant",
+      "dh"
+    ],
+    "न": [
+      "consonant",
+      "n"
+    ],
+    "ऩ": [
+      "consonant",
+      "n"
+    ],
+    "प": [
+      "consonant",
+      "p"
+    ],
+    "फ": [
+      "consonant",
+      "ph"
+    ],
+    "ब": [
+      "consonant",
+      "b"
+    ],
+    "भ": [
+      "consonant",
+      "bh"
+    ],
+    "म": [
+      "consonant",
+      "m"
+    ],
+    "य": [
+      "consonant",
+      "y"
+    ],
+    "र": [
+      "consonant",
+      "r"
+    ],
+    "ऱ": [
+      "consonant",
+      "r"
+    ],
+    "ल": [
+      "consonant",
+      "l"
+    ],
+    "ळ": [
+      "consonant",
+      "l"
+    ],
+    "ऴ": [
+      "consonant",
+      "l"
+    ],
+    "व": [
+      "consonant",
+      "v"
+    ],
+    "श": [
+      "consonant",
+      "sh"
+    ],
+    "ष": [
+      "consonant",
+      "sh"
+    ],
+    "स": [
+      "consonant",
+      "s"
+    ],
+    "ह": [
+      "consonant",
+      "h"
+    ],
+    "़": [
+      "nukta",
+      ""
+    ],
+    "ा": [
+      "vowelSign",
+      "aa"
+    ],
+    "ि": [
+      "vowelSign",
+      "i"
+    ],
+    "ी": [
+      "vowelSign",
+      "ii"
+    ],
+    "ु": [
+      "vowelSign",
+      "u"
+    ],
+    "ू": [
+      "vowelSign",
+      "uu"
+    ],
+    "ृ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ॄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "ॅ": [
+      "vowelSign",
+      "e"
+    ],
+    "ॆ": [
+      "vowelSign",
+      "e"
+    ],
+    "े": [
+      "vowelSign",
+      "e"
+    ],
+    "ै": [
+      "vowelSign",
+      "ai"
+    ],
+    "ॉ": [
+      "vowelSign",
+      "o"
+    ],
+    "ॊ": [
+      "vowelSign",
+      "o"
+    ],
+    "ो": [
+      "vowelSign",
+      "o"
+    ],
+    "ौ": [
+      "vowelSign",
+      "au"
+    ],
+    "्": [
+      "virama",
+      ""
+    ],
+    "क़": [
+      "consonant",
+      "q"
+    ],
+    "ख़": [
+      "consonant",
+      "kh"
+    ],
+    "ग़": [
+      "consonant",
+      "gh"
+    ],
+    "ज़": [
+      "consonant",
+      "z"
+    ],
+    "ड़": [
+      "consonant",
+      "dh"
+    ],
+    "ढ़": [
+      "consonant",
+      "rh"
+    ],
+    "फ़": [
+      "consonant",
+      "f"
+    ],
+    "य़": [
+      "consonant",
+      "y"
+    ],
+    "ॠ": [
+      "vowel",
+      "rii"
+    ],
+    "ॡ": [
+      "vowel",
+      "lii"
+    ],
+    "ॢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ॣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ঁ": [
+      "mark",
+      "m"
+    ],
+    "ং": [
+      "mark",
+      "m"
+    ],
+    "ঃ": [
+      "mark",
+      "h"
+    ],
+    "অ": [
+      "vowel",
+      "a"
+    ],
+    "আ": [
+      "vowel",
+      "aa"
+    ],
+    "ই": [
+      "vowel",
+      "i"
+    ],
+    "ঈ": [
+      "vowel",
+      "ii"
+    ],
+    "উ": [
+      "vowel",
+      "u"
+    ],
+    "ঊ": [
+      "vowel",
+      "uu"
+    ],
+    "ঋ": [
+      "vowel",
+      "ri"
+    ],
+    "ঌ": [
+      "vowel",
+      "li"
+    ],
+    "এ": [
+      "vowel",
+      "e"
+    ],
+    "ঐ": [
+      "vowel",
+      "ai"
+    ],
+    "ও": [
+      "vowel",
+      "o"
+    ],
+    "ঔ": [
+      "vowel",
+      "au"
+    ],
+    "ক": [
+      "consonant",
+      "k"
+    ],
+    "খ": [
+      "consonant",
+      "kh"
+    ],
+    "গ": [
+      "consonant",
+      "g"
+    ],
+    "ঘ": [
+      "consonant",
+      "gh"
+    ],
+    "ঙ": [
+      "consonant",
+      "ng"
+    ],
+    "চ": [
+      "consonant",
+      "ch"
+    ],
+    "ছ": [
+      "consonant",
+      "chh"
+    ],
+    "জ": [
+      "consonant",
+      "j"
+    ],
+    "ঝ": [
+      "consonant",
+      "jh"
+    ],
+    "ঞ": [
+      "consonant",
+      "ny"
+    ],
+    "ট": [
+      "consonant",
+      "t"
+    ],
+    "ঠ": [
+      "consonant",
+      "th"
+    ],
+    "ড": [
+      "consonant",
+      "d"
+    ],
+    "ঢ": [
+      "consonant",
+      "dh"
+    ],
+    "ণ": [
+      "consonant",
+      "n"
+    ],
+    "ত": [
+      "consonant",
+      "t"
+    ],
+    "থ": [
+      "consonant",
+      "th"
+    ],
+    "দ": [
+      "consonant",
+      "d"
+    ],
+    "ধ": [
+      "consonant",
+      "dh"
+    ],
+    "ন": [
+      "consonant",
+      "n"
+    ],
+    "প": [
+      "consonant",
+      "p"
+    ],
+    "ফ": [
+      "consonant",
+      "ph"
+    ],
+    "ব": [
+      "consonant",
+      "b"
+    ],
+    "ভ": [
+      "consonant",
+      "bh"
+    ],
+    "ম": [
+      "consonant",
+      "m"
+    ],
+    "য": [
+      "consonant",
+      "y"
+    ],
+    "র": [
+      "consonant",
+      "r"
+    ],
+    "ল": [
+      "consonant",
+      "l"
+    ],
+    "শ": [
+      "consonant",
+      "sh"
+    ],
+    "ষ": [
+      "consonant",
+      "sh"
+    ],
+    "স": [
+      "consonant",
+      "s"
+    ],
+    "হ": [
+      "consonant",
+      "h"
+    ],
+    "়": [
+      "nukta",
+      ""
+    ],
+    "া": [
+      "vowelSign",
+      "aa"
+    ],
+    "ি": [
+      "vowelSign",
+      "i"
+    ],
+    "ী": [
+      "vowelSign",
+      "ii"
+    ],
+    "ু": [
+      "vowelSign",
+      "u"
+    ],
+    "ূ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ৃ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ৄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "ে": [
+      "vowelSign",
+      "e"
+    ],
+    "ৈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ো": [
+      "vowelSign",
+      "o"
+    ],
+    "ৌ": [
+      "vowelSign",
+      "au"
+    ],
+    "্": [
+      "virama",
+      ""
+    ],
+    "ড়": [
+      "consonant",
+      "r"
+    ],
+    "ঢ়": [
+      "consonant",
+      "rh"
+    ],
+    "য়": [
+      "consonant",
+      "y"
+    ],
+    "ৠ": [
+      "vowel",
+      "rii"
+    ],
+    "ৡ": [
+      "vowel",
+      "lii"
+    ],
+    "ৢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ৣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ਂ": [
+      "mark",
+      "m"
+    ],
+    "ਃ": [
+      "mark",
+      "h"
+    ],
+    "ਅ": [
+      "vowel",
+      "a"
+    ],
+    "ਆ": [
+      "vowel",
+      "aa"
+    ],
+    "ਇ": [
+      "vowel",
+      "i"
+    ],
+    "ਈ": [
+      "vowel",
+      "ii"
+    ],
+    "ਉ": [
+      "vowel",
+      "u"
+    ],
+    "ਊ": [
+      "vowel",
+      "uu"
+    ],
+    "ਏ": [
+      "vowel",
+      "ee"
+    ],
+    "ਐ": [
+      "vowel",
+      "ai"
+    ],
+    "ਓ": [
+      "vowel",
+      "oo"
+    ],
+    "ਔ": [
+      "vowel",
+      "au"
+    ],
+    "ਕ": [
+      "consonant",
+      "k"
+    ],
+    "ਖ": [
+      "consonant",
+      "kh"
+    ],
+    "ਗ": [
+      "consonant",
+      "g"
+    ],
+    "ਘ": [
+      "consonant",
+      "gh"
+    ],
+    "ਙ": [
+      "consonant",
+      "ng"
+    ],
+    "ਚ": [
+      "consonant",
+      "ch"
+    ],
+    "ਛ": [
+      "consonant",
+      "chh"
+    ],
+    "ਜ": [
+      "consonant",
+      "j"
+    ],
+    "ਝ": [
+      "consonant",
+      "jh"
+    ],
+    "ਞ": [
+      "consonant",
+      "ny"
+    ],
+    "ਟ": [
+      "consonant",
+      "t"
+    ],
+    "ਠ": [
+      "consonant",
+      "th"
+    ],
+    "ਡ": [
+      "consonant",
+      "d"
+    ],
+    "ਢ": [
+      "consonant",
+      "dh"
+    ],
+    "ਣ": [
+      "consonant",
+      "n"
+    ],
+    "ਤ": [
+      "consonant",
+      "t"
+    ],
+    "ਥ": [
+      "consonant",
+      "th"
+    ],
+    "ਦ": [
+      "consonant",
+      "d"
+    ],
+    "ਧ": [
+      "consonant",
+      "dh"
+    ],
+    "ਨ": [
+      "consonant",
+      "n"
+    ],
+    "ਪ": [
+      "consonant",
+      "p"
+    ],
+    "ਫ": [
+      "consonant",
+      "ph"
+    ],
+    "ਬ": [
+      "consonant",
+      "b"
+    ],
+    "ਭ": [
+      "consonant",
+      "bh"
+    ],
+    "ਮ": [
+      "consonant",
+      "m"
+    ],
+    "ਯ": [
+      "consonant",
+      "y"
+    ],
+    "ਰ": [
+      "consonant",
+      "r"
+    ],
+    "ਲ": [
+      "consonant",
+      "l"
+    ],
+    "ਲ਼": [
+      "consonant",
+      "l"
+    ],
+    "ਵ": [
+      "consonant",
+      "v"
+    ],
+    "ਸ਼": [
+      "consonant",
+      "sh"
+    ],
+    "ਸ": [
+      "consonant",
+      "s"
+    ],
+    "ਹ": [
+      "consonant",
+      "h"
+    ],
+    "਼": [
+      "nukta",
+      ""
+    ],
+    "ਾ": [
+      "vowelSign",
+      "aa"
+    ],
+    "ਿ": [
+      "vowelSign",
+      "i"
+    ],
+    "ੀ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ੁ": [
+      "vowelSign",
+      "u"
+    ],
+    "ੂ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ੇ": [
+      "vowelSign",
+      "ee"
+    ],
+    "ੈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ੋ": [
+      "vowelSign",
+      "oo"
+    ],
+    "ੌ": [
+      "vowelSign",
+      "au"
+    ],
+    "੍": [
+      "virama",
+      ""
+    ],
+    "ਖ਼": [
+      "consonant",
+      "kh"
+    ],
+    "ਗ਼": [
+      "consonant",
+      "gh"
+    ],
+    "ਜ਼": [
+      "consonant",
+      "z"
+    ],
+    "ੜ": [
+      "consonant",
+      "r"
+    ],
+    "ਫ਼": [
+      "consonant",
+      "f"
+    ],
+    "ઁ": [
+      "mark",
+      "m"
+    ],
+    "ં": [
+      "mark",
+      "m"
+    ],
+    "ઃ": [
+      "mark",
+      "h"
+    ],
+    "અ": [
+      "vowel",
+      "a"
+    ],
+    "આ": [
+      "vowel",
+      "aa"
+    ],
+    "ઇ": [
+      "vowel",
+      "i"
+    ],
+    "ઈ": [
+      "vowel",
+      "ii"
+    ],
+    "ઉ": [
+      "vowel",
+      "u"
+    ],
+    "ઊ": [
+      "vowel",
+      "uu"
+    ],
+    "ઋ": [
+      "vowel",
+      "ri"
+    ],
+    "ઌ": [
+      "vowel",
+      "li"
+    ],
+    "એ": [
+      "vowel",
+      "e"
+    ],
+    "ઐ": [
+      "vowel",
+      "ai"
+    ],
+    "ઓ": [
+      "vowel",
+      "o"
+    ],
+    "ઔ": [
+      "vowel",
+      "au"
+    ],
+    "ક": [
+      "consonant",
+      "k"
+    ],
+    "ખ": [
+      "consonant",
+      "kh"
+    ],
+    "ગ": [
+      "consonant",
+      "g"
+    ],
+    "ઘ": [
+      "consonant",
+      "gh"
+    ],
+    "ઙ": [
+      "consonant",
+      "ng"
+    ],
+    "ચ": [
+      "consonant",
+      "ch"
+    ],
+    "છ": [
+      "consonant",
+      "chh"
+    ],
+    "જ": [
+      "consonant",
+      "j"
+    ],
+    "ઝ": [
+      "consonant",
+      "jh"
+    ],
+    "ઞ": [
+      "consonant",
+      "ny"
+    ],
+    "ટ": [
+      "consonant",
+      "t"
+    ],
+    "ઠ": [
+      "consonant",
+      "th"
+    ],
+    "ડ": [
+      "consonant",
+      "d"
+    ],
+    "ઢ": [
+      "consonant",
+      "dh"
+    ],
+    "ણ": [
+      "consonant",
+      "n"
+    ],
+    "ત": [
+      "consonant",
+      "t"
+    ],
+    "થ": [
+      "consonant",
+      "th"
+    ],
+    "દ": [
+      "consonant",
+      "d"
+    ],
+    "ધ": [
+      "consonant",
+      "dh"
+    ],
+    "ન": [
+      "consonant",
+      "n"
+    ],
+    "પ": [
+      "consonant",
+      "p"
+    ],
+    "ફ": [
+      "consonant",
+      "ph"
+    ],
+    "બ": [
+      "consonant",
+      "b"
+    ],
+    "ભ": [
+      "consonant",
+      "bh"
+    ],
+    "મ": [
+      "consonant",
+      "m"
+    ],
+    "ય": [
+      "consonant",
+      "y"
+    ],
+    "ર": [
+      "consonant",
+      "r"
+    ],
+    "લ": [
+      "consonant",
+      "l"
+    ],
+    "ળ": [
+      "consonant",
+      "l"
+    ],
+    "વ": [
+      "consonant",
+      "v"
+    ],
+    "શ": [
+      "consonant",
+      "sh"
+    ],
+    "ષ": [
+      "consonant",
+      "sh"
+    ],
+    "સ": [
+      "consonant",
+      "s"
+    ],
+    "હ": [
+      "consonant",
+      "h"
+    ],
+    "઼": [
+      "nukta",
+      ""
+    ],
+    "ા": [
+      "vowelSign",
+      "aa"
+    ],
+    "િ": [
+      "vowelSign",
+      "i"
+    ],
+    "ી": [
+      "vowelSign",
+      "ii"
+    ],
+    "ુ": [
+      "vowelSign",
+      "u"
+    ],
+    "ૂ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ૃ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ૄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "ૅ": [
+      "vowelSign",
+      "e"
+    ],
+    "ે": [
+      "vowelSign",
+      "e"
+    ],
+    "ૈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ૉ": [
+      "vowelSign",
+      "o"
+    ],
+    "ો": [
+      "vowelSign",
+      "o"
+    ],
+    "ૌ": [
+      "vowelSign",
+      "au"
+    ],
+    "્": [
+      "virama",
+      ""
+    ],
+    "ૠ": [
+      "vowel",
+      "rii"
+    ],
+    "ૡ": [
+      "vowel",
+      "lii"
+    ],
+    "ૢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ૣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ଁ": [
+      "mark",
+      "m"
+    ],
+    "ଂ": [
+      "mark",
+      "m"
+    ],
+    "ଃ": [
+      "mark",
+      "h"
+    ],
+    "ଅ": [
+      "vowel",
+      "a"
+    ],
+    "ଆ": [
+      "vowel",
+      "aa"
+    ],
+    "ଇ": [
+      "vowel",
+      "i"
+    ],
+    "ଈ": [
+      "vowel",
+      "ii"
+    ],
+    "ଉ": [
+      "vowel",
+      "u"
+    ],
+    "ଊ": [
+      "vowel",
+      "uu"
+    ],
+    "ଋ": [
+      "vowel",
+      "ri"
+    ],
+    "ଌ": [
+      "vowel",
+      "li"
+    ],
+    "ଏ": [
+      "vowel",
+      "e"
+    ],
+    "ଐ": [
+      "vowel",
+      "ai"
+    ],
+    "ଓ": [
+      "vowel",
+      "o"
+    ],
+    "ଔ": [
+      "vowel",
+      "au"
+    ],
+    "କ": [
+      "consonant",
+      "k"
+    ],
+    "ଖ": [
+      "consonant",
+      "kh"
+    ],
+    "ଗ": [
+      "consonant",
+      "g"
+    ],
+    "ଘ": [
+      "consonant",
+      "gh"
+    ],
+    "ଙ": [
+      "consonant",
+      "ng"
+    ],
+    "ଚ": [
+      "consonant",
+      "ch"
+    ],
+    "ଛ": [
+      "consonant",
+      "chh"
+    ],
+    "ଜ": [
+      "consonant",
+      "j"
+    ],
+    "ଝ": [
+      "consonant",
+      "jh"
+    ],
+    "ଞ": [
+      "consonant",
+      "ny"
+    ],
+    "ଟ": [
+      "consonant",
+      "t"
+    ],
+    "ଠ": [
+      "consonant",
+      "th"
+    ],
+    "ଡ": [
+      "consonant",
+      "d"
+    ],
+    "ଢ": [
+      "consonant",
+      "dh"
+    ],
+    "ଣ": [
+      "consonant",
+      "n"
+    ],
+    "ତ": [
+      "consonant",
+      "t"
+    ],
+    "ଥ": [
+      "consonant",
+      "th"
+    ],
+    "ଦ": [
+      "consonant",
+      "d"
+    ],
+    "ଧ": [
+      "consonant",
+      "dh"
+    ],
+    "ନ": [
+      "consonant",
+      "n"
+    ],
+    "ପ": [
+      "consonant",
+      "p"
+    ],
+    "ଫ": [
+      "consonant",
+      "ph"
+    ],
+    "ବ": [
+      "consonant",
+      "b"
+    ],
+    "ଭ": [
+      "consonant",
+      "bh"
+    ],
+    "ମ": [
+      "consonant",
+      "m"
+    ],
+    "ଯ": [
+      "consonant",
+      "y"
+    ],
+    "ର": [
+      "consonant",
+      "r"
+    ],
+    "ଲ": [
+      "consonant",
+      "l"
+    ],
+    "ଳ": [
+      "consonant",
+      "l"
+    ],
+    "ଵ": [
+      "consonant",
+      "v"
+    ],
+    "ଶ": [
+      "consonant",
+      "sh"
+    ],
+    "ଷ": [
+      "consonant",
+      "sh"
+    ],
+    "ସ": [
+      "consonant",
+      "s"
+    ],
+    "ହ": [
+      "consonant",
+      "h"
+    ],
+    "଼": [
+      "nukta",
+      ""
+    ],
+    "ା": [
+      "vowelSign",
+      "aa"
+    ],
+    "ି": [
+      "vowelSign",
+      "i"
+    ],
+    "ୀ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ୁ": [
+      "vowelSign",
+      "u"
+    ],
+    "ୂ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ୃ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ୄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "େ": [
+      "vowelSign",
+      "e"
+    ],
+    "ୈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ୋ": [
+      "vowelSign",
+      "o"
+    ],
+    "ୌ": [
+      "vowelSign",
+      "au"
+    ],
+    "୍": [
+      "virama",
+      ""
+    ],
+    "ଡ଼": [
+      "consonant",
+      "r"
+    ],
+    "ଢ଼": [
+      "consonant",
+      "rh"
+    ],
+    "ୟ": [
+      "consonant",
+      "y"
+    ],
+    "ୠ": [
+      "vowel",
+      "rii"
+    ],
+    "ୡ": [
+      "vowel",
+      "lii"
+    ],
+    "ୢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ୣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ஂ": [
+      "mark",
+      "m"
+    ],
+    "ஃ": [
+      "mark",
+      "h"
+    ],
+    "அ": [
+      "vowel",
+      "a"
+    ],
+    "ஆ": [
+      "vowel",
+      "aa"
+    ],
+    "இ": [
+      "vowel",
+      "i"
+    ],
+    "ஈ": [
+      "vowel",
+      "ii"
+    ],
+    "உ": [
+      "vowel",
+      "u"
+    ],
+    "ஊ": [
+      "vowel",
+      "uu"
+    ],
+    "எ": [
+      "vowel",
+      "e"
+    ],
+    "ஏ": [
+      "vowel",
+      "ee"
+    ],
+    "ஐ": [
+      "vowel",
+      "ai"
+    ],
+    "ஒ": [
+      "vowel",
+      "o"
+    ],
+    "ஓ": [
+      "vowel",
+      "oo"
+    ],
+    "ஔ": [
+      "vowel",
+      "au"
+    ],
+    "க": [
+      "consonant",
+      "k"
+    ],
+    "ங": [
+      "consonant",
+      "ng"
+    ],
+    "ச": [
+      "consonant",
+      "ch"
+    ],
+    "ஜ": [
+      "consonant",
+      "j"
+    ],
+    "ஞ": [
+      "consonant",
+      "ny"
+    ],
+    "ட": [
+      "consonant",
+      "t"
+    ],
+    "ண": [
+      "consonant",
+      "n"
+    ],
+    "த": [
+      "consonant",
+      "t"
+    ],
+    "ந": [
+      "consonant",
+      "n"
+    ],
+    "ன": [
+      "consonant",
+      "n"
+    ],
+    "ப": [
+      "consonant",
+      "p"
+    ],
+    "ம": [
+      "consonant",
+      "m"
+    ],
+    "ய": [
+      "consonant",
+      "y"
+    ],
+    "ர": [
+      "consonant",
+      "r"
+    ],
+    "ற": [
+      "consonant",
+      "r"
+    ],
+    "ல": [
+      "consonant",
+      "l"
+    ],
+    "ள": [
+      "consonant",
+      "l"
+    ],
+    "ழ": [
+      "consonant",
+      "l"
+    ],
+    "வ": [
+      "consonant",
+      "v"
+    ],
+    "ஶ": [
+      "consonant",
+      "sh"
+    ],
+    "ஷ": [
+      "consonant",
+      "sh"
+    ],
+    "ஸ": [
+      "consonant",
+      "s"
+    ],
+    "ஹ": [
+      "consonant",
+      "h"
+    ],
+    "ா": [
+      "vowelSign",
+      "aa"
+    ],
+    "ி": [
+      "vowelSign",
+      "i"
+    ],
+    "ீ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ு": [
+      "vowelSign",
+      "u"
+    ],
+    "ூ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ெ": [
+      "vowelSign",
+      "e"
+    ],
+    "ே": [
+      "vowelSign",
+      "ee"
+    ],
+    "ை": [
+      "vowelSign",
+      "ai"
+    ],
+    "ொ": [
+      "vowelSign",
+      "o"
+    ],
+    "ோ": [
+      "vowelSign",
+      "oo"
+    ],
+    "ௌ": [
+      "vowelSign",
+      "au"
+    ],
+    "்": [
+      "virama",
+      ""
+    ],
+    "ఁ": [
+      "mark",
+      "m"
+    ],
+    "ం": [
+      "mark",
+      "m"
+    ],
+    "ః": [
+      "mark",
+      "h"
+    ],
+    "అ": [
+      "vowel",
+      "a"
+    ],
+    "ఆ": [
+      "vowel",
+      "aa"
+    ],
+    "ఇ": [
+      "vowel",
+      "i"
+    ],
+    "ఈ": [
+      "vowel",
+      "ii"
+    ],
+    "ఉ": [
+      "vowel",
+      "u"
+    ],
+    "ఊ": [
+      "vowel",
+      "uu"
+    ],
+    "ఋ": [
+      "vowel",
+      "ri"
+    ],
+    "ఌ": [
+      "vowel",
+      "li"
+    ],
+    "ఎ": [
+      "vowel",
+      "e"
+    ],
+    "ఏ": [
+      "vowel",
+      "ee"
+    ],
+    "ఐ": [
+      "vowel",
+      "ai"
+    ],
+    "ఒ": [
+      "vowel",
+      "o"
+    ],
+    "ఓ": [
+      "vowel",
+      "oo"
+    ],
+    "ఔ": [
+      "vowel",
+      "au"
+    ],
+    "క": [
+      "consonant",
+      "k"
+    ],
+    "ఖ": [
+      "consonant",
+      "kh"
+    ],
+    "గ": [
+      "consonant",
+      "g"
+    ],
+    "ఘ": [
+      "consonant",
+      "gh"
+    ],
+    "ఙ": [
+      "consonant",
+      "ng"
+    ],
+    "చ": [
+      "consonant",
+      "ch"
+    ],
+    "ఛ": [
+      "consonant",
+      "chh"
+    ],
+    "జ": [
+      "consonant",
+      "j"
+    ],
+    "ఝ": [
+      "consonant",
+      "jh"
+    ],
+    "ఞ": [
+      "consonant",
+      "ny"
+    ],
+    "ట": [
+      "consonant",
+      "t"
+    ],
+    "ఠ": [
+      "consonant",
+      "th"
+    ],
+    "డ": [
+      "consonant",
+      "d"
+    ],
+    "ఢ": [
+      "consonant",
+      "dh"
+    ],
+    "ణ": [
+      "consonant",
+      "n"
+    ],
+    "త": [
+      "consonant",
+      "t"
+    ],
+    "థ": [
+      "consonant",
+      "th"
+    ],
+    "ద": [
+      "consonant",
+      "d"
+    ],
+    "ధ": [
+      "consonant",
+      "dh"
+    ],
+    "న": [
+      "consonant",
+      "n"
+    ],
+    "ప": [
+      "consonant",
+      "p"
+    ],
+    "ఫ": [
+      "consonant",
+      "ph"
+    ],
+    "బ": [
+      "consonant",
+      "b"
+    ],
+    "భ": [
+      "consonant",
+      "bh"
+    ],
+    "మ": [
+      "consonant",
+      "m"
+    ],
+    "య": [
+      "consonant",
+      "y"
+    ],
+    "ర": [
+      "consonant",
+      "r"
+    ],
+    "ఱ": [
+      "consonant",
+      "r"
+    ],
+    "ల": [
+      "consonant",
+      "l"
+    ],
+    "ళ": [
+      "consonant",
+      "l"
+    ],
+    "ఴ": [
+      "consonant",
+      "l"
+    ],
+    "వ": [
+      "consonant",
+      "v"
+    ],
+    "శ": [
+      "consonant",
+      "sh"
+    ],
+    "ష": [
+      "consonant",
+      "sh"
+    ],
+    "స": [
+      "consonant",
+      "s"
+    ],
+    "హ": [
+      "consonant",
+      "h"
+    ],
+    "఼": [
+      "nukta",
+      ""
+    ],
+    "ా": [
+      "vowelSign",
+      "aa"
+    ],
+    "ి": [
+      "vowelSign",
+      "i"
+    ],
+    "ీ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ు": [
+      "vowelSign",
+      "u"
+    ],
+    "ూ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ృ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ౄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "ె": [
+      "vowelSign",
+      "e"
+    ],
+    "ే": [
+      "vowelSign",
+      "ee"
+    ],
+    "ై": [
+      "vowelSign",
+      "ai"
+    ],
+    "ొ": [
+      "vowelSign",
+      "o"
+    ],
+    "ో": [
+      "vowelSign",
+      "oo"
+    ],
+    "ౌ": [
+      "vowelSign",
+      "au"
+    ],
+    "్": [
+      "virama",
+      ""
+    ],
+    "ౠ": [
+      "vowel",
+      "rii"
+    ],
+    "ౡ": [
+      "vowel",
+      "lii"
+    ],
+    "ౢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ౣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ಁ": [
+      "mark",
+      "m"
+    ],
+    "ಂ": [
+      "mark",
+      "m"
+    ],
+    "ಃ": [
+      "mark",
+      "h"
+    ],
+    "ಅ": [
+      "vowel",
+      "a"
+    ],
+    "ಆ": [
+      "vowel",
+      "aa"
+    ],
+    "ಇ": [
+      "vowel",
+      "i"
+    ],
+    "ಈ": [
+      "vowel",
+      "ii"
+    ],
+    "ಉ": [
+      "vowel",
+      "u"
+    ],
+    "ಊ": [
+      "vowel",
+      "uu"
+    ],
+    "ಋ": [
+      "vowel",
+      "ri"
+    ],
+    "ಌ": [
+      "vowel",
+      "li"
+    ],
+    "ಎ": [
+      "vowel",
+      "e"
+    ],
+    "ಏ": [
+      "vowel",
+      "ee"
+    ],
+    "ಐ": [
+      "vowel",
+      "ai"
+    ],
+    "ಒ": [
+      "vowel",
+      "o"
+    ],
+    "ಓ": [
+      "vowel",
+      "oo"
+    ],
+    "ಔ": [
+      "vowel",
+      "au"
+    ],
+    "ಕ": [
+      "consonant",
+      "k"
+    ],
+    "ಖ": [
+      "consonant",
+      "kh"
+    ],
+    "ಗ": [
+      "consonant",
+      "g"
+    ],
+    "ಘ": [
+      "consonant",
+      "gh"
+    ],
+    "ಙ": [
+      "consonant",
+      "ng"
+    ],
+    "ಚ": [
+      "consonant",
+      "ch"
+    ],
+    "ಛ": [
+      "consonant",
+      "chh"
+    ],
+    "ಜ": [
+      "consonant",
+      "j"
+    ],
+    "ಝ": [
+      "consonant",
+      "jh"
+    ],
+    "ಞ": [
+      "consonant",
+      "ny"
+    ],
+    "ಟ": [
+      "consonant",
+      "t"
+    ],
+    "ಠ": [
+      "consonant",
+      "th"
+    ],
+    "ಡ": [
+      "consonant",
+      "d"
+    ],
+    "ಢ": [
+      "consonant",
+      "dh"
+    ],
+    "ಣ": [
+      "consonant",
+      "n"
+    ],
+    "ತ": [
+      "consonant",
+      "t"
+    ],
+    "ಥ": [
+      "consonant",
+      "th"
+    ],
+    "ದ": [
+      "consonant",
+      "d"
+    ],
+    "ಧ": [
+      "consonant",
+      "dh"
+    ],
+    "ನ": [
+      "consonant",
+      "n"
+    ],
+    "ಪ": [
+      "consonant",
+      "p"
+    ],
+    "ಫ": [
+      "consonant",
+      "ph"
+    ],
+    "ಬ": [
+      "consonant",
+      "b"
+    ],
+    "ಭ": [
+      "consonant",
+      "bh"
+    ],
+    "ಮ": [
+      "consonant",
+      "m"
+    ],
+    "ಯ": [
+      "consonant",
+      "y"
+    ],
+    "ರ": [
+      "consonant",
+      "r"
+    ],
+    "ಱ": [
+      "consonant",
+      "r"
+    ],
+    "ಲ": [
+      "consonant",
+      "l"
+    ],
+    "ಳ": [
+      "consonant",
+      "l"
+    ],
+    "ವ": [
+      "consonant",
+      "v"
+    ],
+    "ಶ": [
+      "consonant",
+      "sh"
+    ],
+    "ಷ": [
+      "consonant",
+      "sh"
+    ],
+    "ಸ": [
+      "consonant",
+      "s"
+    ],
+    "ಹ": [
+      "consonant",
+      "h"
+    ],
+    "಼": [
+      "nukta",
+      ""
+    ],
+    "ಾ": [
+      "vowelSign",
+      "aa"
+    ],
+    "ಿ": [
+      "vowelSign",
+      "i"
+    ],
+    "ೀ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ು": [
+      "vowelSign",
+      "u"
+    ],
+    "ೂ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ೃ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ೄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "ೆ": [
+      "vowelSign",
+      "e"
+    ],
+    "ೇ": [
+      "vowelSign",
+      "ee"
+    ],
+    "ೈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ೊ": [
+      "vowelSign",
+      "o"
+    ],
+    "ೋ": [
+      "vowelSign",
+      "oo"
+    ],
+    "ೌ": [
+      "vowelSign",
+      "au"
+    ],
+    "್": [
+      "virama",
+      ""
+    ],
+    "ೞ": [
+      "consonant",
+      "f"
+    ],
+    "ೠ": [
+      "vowel",
+      "rii"
+    ],
+    "ೡ": [
+      "vowel",
+      "lii"
+    ],
+    "ೢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ೣ": [
+      "vowelSign",
+      "lii"
+    ],
+    "ഁ": [
+      "mark",
+      "m"
+    ],
+    "ം": [
+      "mark",
+      "m"
+    ],
+    "ഃ": [
+      "mark",
+      "h"
+    ],
+    "അ": [
+      "vowel",
+      "a"
+    ],
+    "ആ": [
+      "vowel",
+      "aa"
+    ],
+    "ഇ": [
+      "vowel",
+      "i"
+    ],
+    "ഈ": [
+      "vowel",
+      "ii"
+    ],
+    "ഉ": [
+      "vowel",
+      "u"
+    ],
+    "ഊ": [
+      "vowel",
+      "uu"
+    ],
+    "ഋ": [
+      "vowel",
+      "ri"
+    ],
+    "ഌ": [
+      "vowel",
+      "li"
+    ],
+    "എ": [
+      "vowel",
+      "e"
+    ],
+    "ഏ": [
+      "vowel",
+      "ee"
+    ],
+    "ഐ": [
+      "vowel",
+      "ai"
+    ],
+    "ഒ": [
+      "vowel",
+      "o"
+    ],
+    "ഓ": [
+      "vowel",
+      "oo"
+    ],
+    "ഔ": [
+      "vowel",
+      "au"
+    ],
+    "ക": [
+      "consonant",
+      "k"
+    ],
+    "ഖ": [
+      "consonant",
+      "kh"
+    ],
+    "ഗ": [
+      "consonant",
+      "g"
+    ],
+    "ഘ": [
+      "consonant",
+      "gh"
+    ],
+    "ങ": [
+      "consonant",
+      "ng"
+    ],
+    "ച": [
+      "consonant",
+      "ch"
+    ],
+    "ഛ": [
+      "consonant",
+      "chh"
+    ],
+    "ജ": [
+      "consonant",
+      "j"
+    ],
+    "ഝ": [
+      "consonant",
+      "jh"
+    ],
+    "ഞ": [
+      "consonant",
+      "ny"
+    ],
+    "ട": [
+      "consonant",
+      "t"
+    ],
+    "ഠ": [
+      "consonant",
+      "th"
+    ],
+    "ഡ": [
+      "consonant",
+      "d"
+    ],
+    "ഢ": [
+      "consonant",
+      "dh"
+    ],
+    "ണ": [
+      "consonant",
+      "n"
+    ],
+    "ത": [
+      "consonant",
+      "t"
+    ],
+    "ഥ": [
+      "consonant",
+      "th"
+    ],
+    "ദ": [
+      "consonant",
+      "d"
+    ],
+    "ധ": [
+      "consonant",
+      "dh"
+    ],
+    "ന": [
+      "consonant",
+      "n"
+    ],
+    "ഩ": [
+      "consonant",
+      "n"
+    ],
+    "പ": [
+      "consonant",
+      "p"
+    ],
+    "ഫ": [
+      "consonant",
+      "ph"
+    ],
+    "ബ": [
+      "consonant",
+      "b"
+    ],
+    "ഭ": [
+      "consonant",
+      "bh"
+    ],
+    "മ": [
+      "consonant",
+      "m"
+    ],
+    "യ": [
+      "consonant",
+      "y"
+    ],
+    "ര": [
+      "consonant",
+      "r"
+    ],
+    "റ": [
+      "consonant",
+      "r"
+    ],
+    "ല": [
+      "consonant",
+      "l"
+    ],
+    "ള": [
+      "consonant",
+      "l"
+    ],
+    "ഴ": [
+      "consonant",
+      "l"
+    ],
+    "വ": [
+      "consonant",
+      "v"
+    ],
+    "ശ": [
+      "consonant",
+      "sh"
+    ],
+    "ഷ": [
+      "consonant",
+      "sh"
+    ],
+    "സ": [
+      "consonant",
+      "s"
+    ],
+    "ഹ": [
+      "consonant",
+      "h"
+    ],
+    "ാ": [
+      "vowelSign",
+      "aa"
+    ],
+    "ി": [
+      "vowelSign",
+      "i"
+    ],
+    "ീ": [
+      "vowelSign",
+      "ii"
+    ],
+    "ു": [
+      "vowelSign",
+      "u"
+    ],
+    "ൂ": [
+      "vowelSign",
+      "uu"
+    ],
+    "ൃ": [
+      "vowelSign",
+      "ri"
+    ],
+    "ൄ": [
+      "vowelSign",
+      "rii"
+    ],
+    "െ": [
+      "vowelSign",
+      "e"
+    ],
+    "േ": [
+      "vowelSign",
+      "ee"
+    ],
+    "ൈ": [
+      "vowelSign",
+      "ai"
+    ],
+    "ൊ": [
+      "vowelSign",
+      "o"
+    ],
+    "ോ": [
+      "vowelSign",
+      "oo"
+    ],
+    "ൌ": [
+      "vowelSign",
+      "au"
+    ],
+    "്": [
+      "virama",
+      ""
+    ],
+    "ൠ": [
+      "vowel",
+      "rii"
+    ],
+    "ൡ": [
+      "vowel",
+      "lii"
+    ],
+    "ൢ": [
+      "vowelSign",
+      "li"
+    ],
+    "ൣ": [
+      "vowelSign",
+      "lii"
+    ]
+  }
+}

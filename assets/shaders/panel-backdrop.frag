@@ -21,7 +21,10 @@ void main() {
     // The shared blurred scene is behind the tint; controls render sharply above it.
     vec4 surface = ubuf.tint + softened * (1.0 - ubuf.tint.a);
     vec2 q = abs((qt_TexCoord0 - 0.5) * ubuf.panelSize) - ubuf.panelSize * 0.5 + ubuf.cornerRadius;
-    float distance = length(max(q, vec2(0))) + min(max(q.x, q.y), 0.0) - ubuf.cornerRadius;
+    vec2 corner = max(q, vec2(0));
+    // Match the squircle surface: fourth-power corners instead of circular arcs.
+    float distance = pow(pow(corner.x, 4.0) + pow(corner.y, 4.0), 0.25)
+        + min(max(q.x, q.y), 0.0) - ubuf.cornerRadius;
     float mask = 1.0 - smoothstep(-0.7, 0.7, distance);
     fragColor = surface * mask * ubuf.qt_Opacity;
 }

@@ -45,3 +45,17 @@ Model checks cover create/save/reopen, independent export/import, arrangements, 
 Physical three-display/hot-plug validation remains outstanding. Portable media bundles, whole-program duplication and library synchronization are not included in this implementation.
 
 `--fresh --program-browser-smoke captures/program-browser` verifies the cards-first workflow, card navigation, a single editor heading, title/date edits, search, program creation and live-snapshot isolation using a temporary program database.
+
+## Service sections
+
+Assign service items to Worship, Sermon or Closing from the Section control above
+Service order. Add custom sections with +, rename the selected section, or remove
+its heading while keeping all items. Assignment groups items in section order;
+items with no section appear first. New items inherit the selected section.
+Moving an item across a section boundary assigns it to that destination section.
+Undo/Redo includes these changes. Headings also appear in the loaded Present rail.
+
+Sections organize existing content: they add no audience slides and trigger no
+service cues. Editing sections changes the prepared program only; load/present
+explicitly to replace an already loaded live snapshot. Section metadata travels
+with program export, portable bundles and full backups.

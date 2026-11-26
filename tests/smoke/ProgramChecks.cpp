@@ -9,6 +9,7 @@
 #include <QImage>
 #include <QJSValue>
 #include <QQmlApplicationEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
 
@@ -48,14 +49,15 @@ void runProgramChecks(ProgramStore &programs, ContentLibrary &library, EditorDoc
                                { "order", QVariantList { "v1", "c1", "c1" } } },
                 QVariantMap { { "name", "Chorus only" }, { "order", QVariantList { "c1" } } } } },
         { "activeArrangement", 0 } };
-    if (!programs.addSong(song, 3)) {
+    if (!programs.addSong(song, 3) || !programs.setItemSection("Worship")) {
         qApp->exit(122);
         return;
     }
     programs.setItemDetails(song["title"].toString(),
         "Invite the congregation to stand.\nRepeat the chorus softly before the reading.");
     programs.setTemplate("midnight");
-    if (!programs.addScripture(library.passage("tel2017", "JHN", 3, 16, 18), 4)) {
+    if (!programs.addScripture(library.passage("tel2017", "JHN", 3, 16, 18), 4)
+        || !programs.setItemSection("Sermon")) {
         qApp->exit(123);
         return;
     }
@@ -64,7 +66,7 @@ void runProgramChecks(ProgramStore &programs, ContentLibrary &library, EditorDoc
     const auto imagePath = folder + "/offering-test.png";
     image.save(imagePath);
     if (!editor.addMedia(QUrl::fromLocalFile(imagePath))
-        || !programs.addMedia(editor.selectedElement())) {
+        || !programs.addMedia(editor.selectedElement()) || !programs.setItemSection("Closing")) {
         qApp->exit(124);
         return;
     }
@@ -75,7 +77,14 @@ void runProgramChecks(ProgramStore &programs, ContentLibrary &library, EditorDoc
     programs.save();
     auto panel = engine.newQObject(window->findChild<QObject *>("programPanel"));
     panel.property("open").callWithInstance(panel);
+    panel.property("showEditor").callWithInstance(panel);
     QTimer::singleShot(650, qApp, [&, window, folder, panel]() mutable {
+        const auto sectionControl = window->findChild<QQuickItem *>("programItemSection");
+        if (!sectionControl || !sectionControl->isVisible()) {
+            qCritical() << "Service section control missing from program editor";
+            qApp->exit(129);
+            return;
+        }
         if (!window->grabWindow().save(folder + "/program-prepare.png")) {
             qApp->exit(125);
             return;

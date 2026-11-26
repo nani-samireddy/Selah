@@ -25,6 +25,8 @@ public:
         const QVariantMap &element, QQuickTextDocument *document) const;
     static QVariantMap defaults();
     static QVariantMap normalize(const QVariantMap &element);
+    // Derived display data only: authored text, geometry and font size stay unchanged.
+    static QVariantMap fitted(const QVariantMap &element, int maximumLines = 10000);
     static bool isStyle(const QString &key);
     static int selfTest();
 };

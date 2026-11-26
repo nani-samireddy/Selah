@@ -93,6 +93,21 @@ MenuBar {
         }
 
         Action {
+            objectName: "menuExportPortableProgram"
+            text: qsTr("Export portable program…")
+            enabled: !!menus.host.programs.id && !menus.host.settingsOpen
+
+            onTriggered: menus.host.exportPortableProgram()
+        }
+
+        Action {
+            text: qsTr("Backup & restore…")
+            enabled: !menus.host.settingsOpen && !menus.host.programs.bundleBusy
+
+            onTriggered: menus.host.showBackup()
+        }
+
+        Action {
             text: qsTr("Export presentation…")
             shortcut: Qt.platform.os === "osx" ? "Meta+Shift+S" : "Ctrl+Shift+S"
             enabled: menus.design && !menus.host.settingsOpen
@@ -352,7 +367,7 @@ MenuBar {
         }
 
         Action {
-            text: qsTr("Show default image")
+            text: qsTr("Show standby media")
             checkable: true
             checked: menus.host.outputs.defaultImageShowing
             enabled: menus.host.outputs.defaultImageAvailable
@@ -364,6 +379,19 @@ MenuBar {
 
     Menu {
         title: qsTr("&Help")
+
+        Action {
+            objectName: "menuCheckUpdates"
+            text: qsTr("Check for updates…")
+
+            onTriggered: menus.host.showUpdates()
+        }
+
+        Action {
+            text: qsTr("Luma…")
+
+            onTriggered: menus.host.showAiAssistant()
+        }
 
         Action {
             objectName: "menuUserGuide"

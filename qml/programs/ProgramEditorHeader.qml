@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 RowLayout {
@@ -44,7 +45,9 @@ RowLayout {
         }
 
         Text {
-            text: editorBar.programView.store.date || "No service date"
+            text: (editorBar.programView.store.date || "No service date") + " · "
+                  + editorBar.programView.store.items.length + (
+                      editorBar.programView.store.items.length === 1 ? " item" : " items")
             color: LibraryStyle.muted
             font.family: LibraryStyle.fontFamily
             font.pixelSize: 12
@@ -86,9 +89,43 @@ RowLayout {
     }
 
     LibraryButton {
-        text: "Export"
+        objectName: "saveProgramButton"
+        text: editorBar.programView.store.dirty ? "Save" : "Saved"
+        quiet: !editorBar.programView.store.dirty
+        enabled: editorBar.programView.store.id.length > 0
+        hint: editorBar.programView.store.status
 
-        onClicked: editorBar.programView.showExportDialog()
+        onClicked: {
+            editorBar.programView.flushItem();
+            editorBar.programView.store.save();
+        }
+    }
+
+    LibraryButton {
+        id: exportButton
+
+        text: "Export"
+        iconName: "chevron-down"
+
+        onClicked: exportMenu.popup()
+
+        Menu {
+            id: exportMenu
+
+            y: exportButton.height
+
+            MenuItem {
+                text: "Program file…"
+
+                onTriggered: editorBar.programView.showExportDialog()
+            }
+
+            MenuItem {
+                text: "Portable bundle with media…"
+
+                onTriggered: editorBar.programView.showBundleExportDialog()
+            }
+        }
     }
 
     LibraryButton {

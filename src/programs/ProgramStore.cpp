@@ -4,6 +4,7 @@
 #include "ProgramSlides.h"
 #include "SlideFactory.h"
 #include "SlideTransition.h"
+#include <algorithm>
 #include <QDate>
 #include <QFile>
 #include <QFileInfo>
@@ -21,6 +22,107 @@ QString uid() {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
+}
+
+namespace {
+void sortSections(QVariantList &items, const QStringList &sections) {
+    std::stable_sort(items.begin(), items.end(), [&](const QVariant &a, const QVariant &b) {
+        return sections.indexOf(a.toMap()["section"].toString())
+            < sections.indexOf(b.toMap()["section"].toString());
+    });
+}
+
+bool validSection(const QString &name) {
+    return !name.trimmed().isEmpty() && name.size() <= 100 && !name.contains('\n')
+        && !name.contains('\r');
+}
+}
+
+QStringList ProgramStore::sections() const {
+    return m_program.contains("sections") ? m_program["sections"].toStringList()
+                                          : QStringList { "Worship", "Sermon", "Closing" };
+}
+
+bool ProgramStore::addSection(const QString &name) {
+    const auto text = name.trimmed();
+    auto names = sections();
+    if (id().isEmpty() || !validSection(text) || names.contains(text) || names.size() >= 40) {
+        statusMessage("Choose a unique section name of up to 100 characters (maximum 40 sections)");
+        return false;
+    }
+    checkpoint();
+    names << text;
+    m_program["sections"] = names;
+    commit();
+    return true;
+}
+
+bool ProgramStore::renameSection(const QString &name, const QString &replacement) {
+    auto names = sections();
+    const auto text = replacement.trimmed();
+    const auto index = names.indexOf(name);
+    if (id().isEmpty() || index < 0 || !validSection(text) || names.contains(text)) {
+        return false;
+    }
+    checkpoint();
+    names[index] = text;
+    auto list = items();
+    for (auto &value : list) {
+        auto item = value.toMap();
+        if (item["section"] == name) {
+            item["section"] = text;
+            value = item;
+        }
+    }
+    m_program["sections"] = names;
+    m_program["items"] = list;
+    commit();
+    return true;
+}
+
+bool ProgramStore::removeSection(const QString &name) {
+    auto names = sections();
+    if (id().isEmpty() || !names.contains(name)) {
+        return false;
+    }
+    checkpoint();
+    names.removeAll(name);
+    const auto selection = selectedItem()["id"].toString();
+    auto list = items();
+    for (auto &value : list) {
+        auto item = value.toMap();
+        if (item["section"] == name) {
+            item.remove("section");
+            value = item;
+        }
+    }
+    sortSections(list, names);
+    m_program["sections"] = names;
+    m_program["items"] = list;
+    restoreSelection(selection);
+    commit();
+    return true;
+}
+
+bool ProgramStore::setItemSection(const QString &name) {
+    if (selectedItem().isEmpty() || (!name.isEmpty() && !sections().contains(name))) {
+        return false;
+    }
+    if (selectedItem()["section"].toString() == name) {
+        return true;
+    }
+    checkpoint();
+    const auto selection = selectedItem()["id"].toString();
+    auto list = items();
+    auto item = list[m_selected].toMap();
+    item["section"] = name;
+    list[m_selected] = item;
+    sortSections(list, sections());
+    m_program["sections"] = sections();
+    m_program["items"] = list;
+    restoreSelection(selection);
+    commit();
+    return true;
 }
 
 void ProgramStore::setSelected(int index) {
@@ -143,7 +245,14 @@ bool ProgramStore::append(
     item["slides"] = ProgramSlides::cloneWithFreshIds(valid);
     item["notes"] = "";
     item["template"] = "original";
+    // Add to the selected section when editing this program; remote destinations
+    // inherit their last item's section without changing the operator's selection.
+    item["section"] = elsewhere
+        ? (list.isEmpty() ? QString() : list.last().toMap()["section"].toString())
+        : selectedItem()["section"].toString();
     list << item;
+    sortSections(
+        list, candidate.contains("sections") ? candidate["sections"].toStringList() : sections());
     candidate["items"] = list;
     if (elsewhere) {
         QSqlQuery query(m_db);
@@ -160,7 +269,7 @@ bool ProgramStore::append(
     } else {
         checkpoint();
         m_program = candidate;
-        m_selected = list.size() - 1;
+        restoreSelection(item["id"].toString());
         commit();
     }
     return true;
@@ -223,15 +332,21 @@ bool ProgramStore::addMedia(const QVariantMap &asset, const QString &programId) 
     const QUrl source(asset["source"].toString());
     const auto kind = asset["kind"].toString();
     if (!source.isLocalFile() || !QFileInfo::exists(source.toLocalFile())
-        || (kind != "image" && kind != "video")) {
-        statusMessage("Choose an available image or video from the media library");
+        || (kind != "image" && kind != "video" && kind != "audio")) {
+        statusMessage("Choose an available image, video or audio file from the media library");
         return false;
     }
     QVariantMap element { { "uid", uid() }, { "kind", kind }, { "name", asset["name"] },
-        { "source", source.toString() }, { "fit", "contain" }, { "loop", true }, { "muted", true },
-        { "x", 0 }, { "y", 0 }, { "width", 1920 }, { "height", 1080 }, { "fontSize", 36 },
-        { "color", "#FFFFFF" }, { "opacity", 1.0 }, { "rotation", 0 }, { "visible", true },
-        { "locked", false } };
+        { "source", source.toString() }, { "fit", "contain" }, { "loop", kind != "audio" },
+        { "muted", kind != "audio" }, { "x", 0 }, { "y", 0 }, { "width", 1920 }, { "height", 1080 },
+        { "fontSize", 36 }, { "color", "#FFFFFF" }, { "opacity", 1.0 }, { "rotation", 0 },
+        { "visible", true }, { "locked", false } };
+    if (kind == "audio") {
+        element["x"] = 80;
+        element["y"] = 900;
+        element["width"] = 400;
+        element["height"] = 80;
+    }
     return append({ { "kind", "media" }, { "title", asset["name"] } },
         QVariantList { QVariantMap { { "name", asset["name"] }, { "background", "#000000" },
             { "ambientOpacity", 0.0 }, { "notes", "" },
@@ -257,6 +372,9 @@ bool ProgramStore::moveItemTo(int from, int to) {
     }
     const auto selection = selectedItem().value("id").toString();
     checkpoint();
+    auto moved = list[from].toMap();
+    moved["section"] = list[to].toMap()["section"].toString();
+    list[from] = moved;
     list.move(from, to);
     m_program["items"] = list;
     restoreSelection(selection);
@@ -424,6 +542,7 @@ QVariantList ProgramStore::flatten(int *selectedStart) const {
             auto page = slide.toMap();
             page["programItemId"] = item["id"];
             page["programItemTitle"] = item["title"];
+            page["programSection"] = item.value("section", "");
             page["programTitle"] = title();
             result << page;
         }
@@ -495,7 +614,7 @@ QStringList ProgramStore::warnings() const {
             }
             for (const auto &element : slide.toMap()["elements"].toList()) {
                 const auto e = element.toMap();
-                if (e["kind"] == "image" || e["kind"] == "video") {
+                if (e["kind"] == "image" || e["kind"] == "video" || e["kind"] == "audio") {
                     const QUrl source(e["source"].toString());
                     if (!QFileInfo::exists(source.toLocalFile())) {
                         missing.insert(QFileInfo(source.toLocalFile()).fileName());

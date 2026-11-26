@@ -11,6 +11,11 @@ OutputGroup {
     property string pendingDisplayId: ""
     readonly property bool active: role === "audience" ? controller.audienceEnabled :
                                                          controller.stageEnabled
+    readonly property bool previewOpen: role === "audience" ? controller.audiencePreviewOpen :
+                                                              controller.stagePreviewOpen
+    readonly property bool fullscreen: role === "audience" ? controller.audienceFullscreen :
+                                                             controller.stageFullscreen
+    readonly property bool fullscreenHere: fullscreen && selectedDisplay.id === assignedId
     readonly property bool black: role === "audience" ? controller.audienceBlack :
                                                         controller.stageBlack
     readonly property string assignedId: role === "audience" ? controller.audienceDisplay :
@@ -44,7 +49,8 @@ OutputGroup {
                 id: stateLabel
 
                 anchors.centerIn: parent
-                text: !card.active ? "Stopped" : card.black ? "Blackout" : "Active"
+                text: !card.active ? "Stopped" : card.black ? "Blackout" : card.fullscreen
+                                                              ? "Fullscreen" : "Preview"
                 color: card.active ? (card.black ? (LibraryStyle.dark ? "#C79C67" : "#704819") : (
                                                        LibraryStyle.dark ? "#A7CFB2" : "#346F48")) :
                                      LibraryStyle.muted
@@ -110,28 +116,37 @@ OutputGroup {
 
         LibraryButton {
             objectName: card.role + "FullscreenButton"
-            text: "Fullscreen"
+            text: card.fullscreenHere ? "Stop fullscreen" : card.fullscreen ? "Move fullscreen" :
+                                                                              "Fullscreen"
+            selected: card.fullscreenHere
             Layout.fillWidth: true
             Layout.preferredWidth: 1
-            enabled: displayChoice.currentIndex >= 0 && !card.selectedDisplay.operator
-            hint: card.selectedDisplay.operator ? "Choose an external display for fullscreen" :
-                                                  "Show on the selected display"
+            enabled: card.fullscreenHere || (displayChoice.currentIndex >= 0 &&
+                                             !card.selectedDisplay.operator)
+            hint: card.fullscreenHere ? "Stop fullscreen output" : card.selectedDisplay.operator
+                                        ? "Choose an external display for fullscreen" :
+                                          "Show on the selected display"
 
             onClicked: {
-                if (card.controller.route(card.role, displayChoice.currentValue))
+                if (card.fullscreenHere)
+                    card.controller.stop(card.role);
+                else if (card.controller.route(card.role, displayChoice.currentValue))
                     card.pendingDisplayId = "";
             }
         }
 
         LibraryButton {
             objectName: card.role + "PreviewButton"
-            text: "Preview"
+            text: card.previewOpen ? "Close preview" : "Preview"
+            selected: card.previewOpen
             Layout.fillWidth: true
             Layout.preferredWidth: 1
-            enabled: card.controller.displays.length > 0
-            hint: "Open a windowed preview on the operator screen"
+            enabled: card.previewOpen || card.controller.displays.length > 0
+            hint: card.previewOpen ? "Close the windowed preview" :
+                                     "Open a windowed preview on the operator screen"
 
-            onClicked: card.controller.preview(card.role)
+            onClicked: card.previewOpen ? card.controller.stop(card.role) : card.controller.preview(
+                                              card.role)
         }
     }
 

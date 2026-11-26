@@ -36,7 +36,7 @@ Popup {
     modal: true
     focus: true
 
-    background: Rectangle {
+    background: SquircleSurface {
         color: LibraryStyle.panel
         radius: 12
         border.color: LibraryStyle.tone("#3C3C3C")

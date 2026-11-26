@@ -35,6 +35,24 @@ bool ProgramStore::validate(QVariantMap &program, bool newIds) {
     if (program["items"].metaType().id() != QMetaType::QVariantList) {
         return false;
     }
+    QStringList sections { "Worship", "Sermon", "Closing" };
+    if (program.contains("sections")) {
+        const auto value = program["sections"];
+        if (value.metaType().id() != QMetaType::QVariantList
+            && value.metaType().id() != QMetaType::QStringList) {
+            return false;
+        }
+        sections.clear();
+        for (const auto &entry : value.toList()) {
+            const auto name = entry.toString();
+            if (entry.metaType().id() != QMetaType::QString || name.trimmed().isEmpty()
+                || name != name.trimmed() || name.size() > 100 || name.contains('\n')
+                || name.contains('\r') || sections.contains(name) || sections.size() >= 40) {
+                return false;
+            }
+            sections << name;
+        }
+    }
     auto items = program["items"].toList();
     if (items.size() > 200) {
         return false;
@@ -43,6 +61,12 @@ bool ProgramStore::validate(QVariantMap &program, bool newIds) {
     QSet<QString> ids;
     for (auto &v : items) {
         auto item = v.toMap();
+        if (item.contains("section")
+            && (item["section"].metaType().id() != QMetaType::QString
+                || (!item["section"].toString().isEmpty()
+                    && !sections.contains(item["section"].toString())))) {
+            return false;
+        }
         if (item.contains("transition") && !SlideTransition::valid(item["transition"])) {
             return false;
         }
@@ -104,6 +128,9 @@ bool ProgramStore::exportProgram(const QUrl &url) {
 }
 
 bool ProgramStore::importProgram(const QUrl &url) {
+    if (url.toLocalFile().endsWith(".selahbundle", Qt::CaseInsensitive)) {
+        return importBundle(url);
+    }
     QFile file(url.toLocalFile());
     if (!url.isLocalFile() || !file.open(QIODevice::ReadOnly) || file.size() > 100 * 1024 * 1024) {
         statusMessage("Choose a local program file under 100 MB");
@@ -170,6 +197,15 @@ ProgramStore::ProgramStore(OutputManager *outputs, QObject *parent, const QStrin
 }
 
 ProgramStore::~ProgramStore() {
+    const bool pendingBundle = m_bundleTimer.isActive();
+    cancelBundle();
+    m_bundleWatcher.waitForFinished();
+    if (pendingBundle) {
+        const auto directory = m_bundleWatcher.result().directory;
+        if (!directory.isEmpty()) {
+            QDir(directory).removeRecursively();
+        }
+    }
     if (m_dirty) {
         save();
     }
@@ -243,7 +279,8 @@ bool ProgramStore::createProgram(const QString &title, const QString &date) {
     }
     const auto previous = m_program;
     m_program = { { "id", uid() }, { "title", title.trimmed() }, { "date", date },
-        { "items", QVariantList() } };
+        { "items", QVariantList() },
+        { "sections", QStringList { "Worship", "Sermon", "Closing" } } };
     m_dirty = true;
     if (!save()) {
         m_program = previous;

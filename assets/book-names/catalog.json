@@ -1,0 +1,934 @@
+{
+  "version": 1,
+  "books": [
+    {
+      "code": "GEN",
+      "language": "te",
+      "names": [
+        "ఆదికాండము",
+        "ఆదికాండం"
+      ]
+    },
+    {
+      "code": "EXO",
+      "language": "te",
+      "names": [
+        "నిర్గమకాండము",
+        "నిర్గమకాండం"
+      ]
+    },
+    {
+      "code": "LEV",
+      "language": "te",
+      "names": [
+        "లేవీయకాండము"
+      ]
+    },
+    {
+      "code": "NUM",
+      "language": "te",
+      "names": [
+        "సంఖ్యాకాండము"
+      ]
+    },
+    {
+      "code": "DEU",
+      "language": "te",
+      "names": [
+        "ద్వితీయోపదేశకాండము"
+      ]
+    },
+    {
+      "code": "JOS",
+      "language": "te",
+      "names": [
+        "యెహోషువ"
+      ]
+    },
+    {
+      "code": "JDG",
+      "language": "te",
+      "names": [
+        "న్యాయాధిపతులు"
+      ]
+    },
+    {
+      "code": "RUT",
+      "language": "te",
+      "names": [
+        "రూతు"
+      ]
+    },
+    {
+      "code": "1SA",
+      "language": "te",
+      "names": [
+        "1 సమూయేలు"
+      ]
+    },
+    {
+      "code": "2SA",
+      "language": "te",
+      "names": [
+        "2 సమూయేలు"
+      ]
+    },
+    {
+      "code": "1KI",
+      "language": "te",
+      "names": [
+        "1 రాజులు"
+      ]
+    },
+    {
+      "code": "2KI",
+      "language": "te",
+      "names": [
+        "2 రాజులు"
+      ]
+    },
+    {
+      "code": "1CH",
+      "language": "te",
+      "names": [
+        "1 దినవృత్తాంతములు"
+      ]
+    },
+    {
+      "code": "2CH",
+      "language": "te",
+      "names": [
+        "2 దినవృత్తాంతములు"
+      ]
+    },
+    {
+      "code": "EZR",
+      "language": "te",
+      "names": [
+        "ఎజ్రా"
+      ]
+    },
+    {
+      "code": "NEH",
+      "language": "te",
+      "names": [
+        "నెహెమ్యా"
+      ]
+    },
+    {
+      "code": "EST",
+      "language": "te",
+      "names": [
+        "ఎస్తేరు"
+      ]
+    },
+    {
+      "code": "JOB",
+      "language": "te",
+      "names": [
+        "యోబు"
+      ]
+    },
+    {
+      "code": "PSA",
+      "language": "te",
+      "names": [
+        "కీర్తనలు",
+        "కీర్తనల గ్రంథము"
+      ]
+    },
+    {
+      "code": "PRO",
+      "language": "te",
+      "names": [
+        "సామెతలు"
+      ]
+    },
+    {
+      "code": "ECC",
+      "language": "te",
+      "names": [
+        "ప్రసంగి"
+      ]
+    },
+    {
+      "code": "SNG",
+      "language": "te",
+      "names": [
+        "పరమగీతము"
+      ]
+    },
+    {
+      "code": "ISA",
+      "language": "te",
+      "names": [
+        "యెషయా"
+      ]
+    },
+    {
+      "code": "JER",
+      "language": "te",
+      "names": [
+        "యిర్మీయా"
+      ]
+    },
+    {
+      "code": "LAM",
+      "language": "te",
+      "names": [
+        "విలాపవాక్యములు"
+      ]
+    },
+    {
+      "code": "EZK",
+      "language": "te",
+      "names": [
+        "యెహెజ్కేలు"
+      ]
+    },
+    {
+      "code": "DAN",
+      "language": "te",
+      "names": [
+        "దానియేలు"
+      ]
+    },
+    {
+      "code": "HOS",
+      "language": "te",
+      "names": [
+        "హోషేయ"
+      ]
+    },
+    {
+      "code": "JOL",
+      "language": "te",
+      "names": [
+        "యోవేలు"
+      ]
+    },
+    {
+      "code": "AMO",
+      "language": "te",
+      "names": [
+        "ఆమోసు"
+      ]
+    },
+    {
+      "code": "OBA",
+      "language": "te",
+      "names": [
+        "ఓబద్యా"
+      ]
+    },
+    {
+      "code": "JON",
+      "language": "te",
+      "names": [
+        "యోనా"
+      ]
+    },
+    {
+      "code": "MIC",
+      "language": "te",
+      "names": [
+        "మీకా"
+      ]
+    },
+    {
+      "code": "NAM",
+      "language": "te",
+      "names": [
+        "నహూము"
+      ]
+    },
+    {
+      "code": "HAB",
+      "language": "te",
+      "names": [
+        "హబక్కూకు"
+      ]
+    },
+    {
+      "code": "ZEP",
+      "language": "te",
+      "names": [
+        "జెఫన్యా"
+      ]
+    },
+    {
+      "code": "HAG",
+      "language": "te",
+      "names": [
+        "హగ్గయి"
+      ]
+    },
+    {
+      "code": "ZEC",
+      "language": "te",
+      "names": [
+        "జెకర్యా"
+      ]
+    },
+    {
+      "code": "MAL",
+      "language": "te",
+      "names": [
+        "మలాకీ"
+      ]
+    },
+    {
+      "code": "MAT",
+      "language": "te",
+      "names": [
+        "మత్తయి"
+      ]
+    },
+    {
+      "code": "MRK",
+      "language": "te",
+      "names": [
+        "మార్కు"
+      ]
+    },
+    {
+      "code": "LUK",
+      "language": "te",
+      "names": [
+        "లూకా"
+      ]
+    },
+    {
+      "code": "JHN",
+      "language": "te",
+      "names": [
+        "యోహాను"
+      ]
+    },
+    {
+      "code": "ACT",
+      "language": "te",
+      "names": [
+        "అపొస్తలుల కార్యములు",
+        "అపోస్తలుల కార్యములు"
+      ]
+    },
+    {
+      "code": "ROM",
+      "language": "te",
+      "names": [
+        "రోమీయులకు"
+      ]
+    },
+    {
+      "code": "1CO",
+      "language": "te",
+      "names": [
+        "1 కొరింథీయులకు"
+      ]
+    },
+    {
+      "code": "2CO",
+      "language": "te",
+      "names": [
+        "2 కొరింథీయులకు"
+      ]
+    },
+    {
+      "code": "GAL",
+      "language": "te",
+      "names": [
+        "గలతీయులకు"
+      ]
+    },
+    {
+      "code": "EPH",
+      "language": "te",
+      "names": [
+        "ఎఫెసీయులకు"
+      ]
+    },
+    {
+      "code": "PHP",
+      "language": "te",
+      "names": [
+        "ఫిలిప్పీయులకు"
+      ]
+    },
+    {
+      "code": "COL",
+      "language": "te",
+      "names": [
+        "కొలొస్సయులకు"
+      ]
+    },
+    {
+      "code": "1TH",
+      "language": "te",
+      "names": [
+        "1 థెస్సలొనీకయులకు"
+      ]
+    },
+    {
+      "code": "2TH",
+      "language": "te",
+      "names": [
+        "2 థెస్సలొనీకయులకు"
+      ]
+    },
+    {
+      "code": "1TI",
+      "language": "te",
+      "names": [
+        "1 తిమోతికి"
+      ]
+    },
+    {
+      "code": "2TI",
+      "language": "te",
+      "names": [
+        "2 తిమోతికి"
+      ]
+    },
+    {
+      "code": "TIT",
+      "language": "te",
+      "names": [
+        "తీతుకు"
+      ]
+    },
+    {
+      "code": "PHM",
+      "language": "te",
+      "names": [
+        "ఫిలేమోనుకు"
+      ]
+    },
+    {
+      "code": "HEB",
+      "language": "te",
+      "names": [
+        "హెబ్రీయులకు"
+      ]
+    },
+    {
+      "code": "JAS",
+      "language": "te",
+      "names": [
+        "యాకోబు"
+      ]
+    },
+    {
+      "code": "1PE",
+      "language": "te",
+      "names": [
+        "1 పేతురు"
+      ]
+    },
+    {
+      "code": "2PE",
+      "language": "te",
+      "names": [
+        "2 పేతురు"
+      ]
+    },
+    {
+      "code": "1JN",
+      "language": "te",
+      "names": [
+        "1 యోహాను"
+      ]
+    },
+    {
+      "code": "2JN",
+      "language": "te",
+      "names": [
+        "2 యోహాను"
+      ]
+    },
+    {
+      "code": "3JN",
+      "language": "te",
+      "names": [
+        "3 యోహాను"
+      ]
+    },
+    {
+      "code": "JUD",
+      "language": "te",
+      "names": [
+        "యూదా"
+      ]
+    },
+    {
+      "code": "REV",
+      "language": "te",
+      "names": [
+        "ప్రకటన",
+        "ప్రకటన గ్రంథము"
+      ]
+    },
+    {
+      "code": "GEN",
+      "language": "hi",
+      "names": [
+        "उत्पत्ति"
+      ]
+    },
+    {
+      "code": "EXO",
+      "language": "hi",
+      "names": [
+        "निर्गमन"
+      ]
+    },
+    {
+      "code": "LEV",
+      "language": "hi",
+      "names": [
+        "लैव्यव्यवस्था"
+      ]
+    },
+    {
+      "code": "NUM",
+      "language": "hi",
+      "names": [
+        "गिनती"
+      ]
+    },
+    {
+      "code": "DEU",
+      "language": "hi",
+      "names": [
+        "व्यवस्थाविवरण"
+      ]
+    },
+    {
+      "code": "JOS",
+      "language": "hi",
+      "names": [
+        "यहोशू"
+      ]
+    },
+    {
+      "code": "JDG",
+      "language": "hi",
+      "names": [
+        "न्यायियों"
+      ]
+    },
+    {
+      "code": "RUT",
+      "language": "hi",
+      "names": [
+        "रूत"
+      ]
+    },
+    {
+      "code": "1SA",
+      "language": "hi",
+      "names": [
+        "1 शमूएल"
+      ]
+    },
+    {
+      "code": "2SA",
+      "language": "hi",
+      "names": [
+        "2 शमूएल"
+      ]
+    },
+    {
+      "code": "1KI",
+      "language": "hi",
+      "names": [
+        "1 राजाओं"
+      ]
+    },
+    {
+      "code": "2KI",
+      "language": "hi",
+      "names": [
+        "2 राजाओं"
+      ]
+    },
+    {
+      "code": "1CH",
+      "language": "hi",
+      "names": [
+        "1 इतिहास"
+      ]
+    },
+    {
+      "code": "2CH",
+      "language": "hi",
+      "names": [
+        "2 इतिहास"
+      ]
+    },
+    {
+      "code": "EZR",
+      "language": "hi",
+      "names": [
+        "एज्रा"
+      ]
+    },
+    {
+      "code": "NEH",
+      "language": "hi",
+      "names": [
+        "नहेमायाह"
+      ]
+    },
+    {
+      "code": "EST",
+      "language": "hi",
+      "names": [
+        "एस्तेर"
+      ]
+    },
+    {
+      "code": "JOB",
+      "language": "hi",
+      "names": [
+        "अय्यूब"
+      ]
+    },
+    {
+      "code": "PSA",
+      "language": "hi",
+      "names": [
+        "भजन संहिता"
+      ]
+    },
+    {
+      "code": "PRO",
+      "language": "hi",
+      "names": [
+        "नीतिवचन"
+      ]
+    },
+    {
+      "code": "ECC",
+      "language": "hi",
+      "names": [
+        "सभोपदेशक"
+      ]
+    },
+    {
+      "code": "SNG",
+      "language": "hi",
+      "names": [
+        "श्रेष्ठगीत"
+      ]
+    },
+    {
+      "code": "ISA",
+      "language": "hi",
+      "names": [
+        "यशायाह"
+      ]
+    },
+    {
+      "code": "JER",
+      "language": "hi",
+      "names": [
+        "यिर्मयाह"
+      ]
+    },
+    {
+      "code": "LAM",
+      "language": "hi",
+      "names": [
+        "विलापगीत"
+      ]
+    },
+    {
+      "code": "EZK",
+      "language": "hi",
+      "names": [
+        "यहेजकेल"
+      ]
+    },
+    {
+      "code": "DAN",
+      "language": "hi",
+      "names": [
+        "दानिय्येल"
+      ]
+    },
+    {
+      "code": "HOS",
+      "language": "hi",
+      "names": [
+        "होशे"
+      ]
+    },
+    {
+      "code": "JOL",
+      "language": "hi",
+      "names": [
+        "योएल"
+      ]
+    },
+    {
+      "code": "AMO",
+      "language": "hi",
+      "names": [
+        "आमोस"
+      ]
+    },
+    {
+      "code": "OBA",
+      "language": "hi",
+      "names": [
+        "ओबद्याह"
+      ]
+    },
+    {
+      "code": "JON",
+      "language": "hi",
+      "names": [
+        "योना"
+      ]
+    },
+    {
+      "code": "MIC",
+      "language": "hi",
+      "names": [
+        "मीका"
+      ]
+    },
+    {
+      "code": "NAM",
+      "language": "hi",
+      "names": [
+        "नहूम"
+      ]
+    },
+    {
+      "code": "HAB",
+      "language": "hi",
+      "names": [
+        "हबक्कूक"
+      ]
+    },
+    {
+      "code": "ZEP",
+      "language": "hi",
+      "names": [
+        "सपन्याह"
+      ]
+    },
+    {
+      "code": "HAG",
+      "language": "hi",
+      "names": [
+        "हाग्गै"
+      ]
+    },
+    {
+      "code": "ZEC",
+      "language": "hi",
+      "names": [
+        "जकर्याह"
+      ]
+    },
+    {
+      "code": "MAL",
+      "language": "hi",
+      "names": [
+        "मलाकी"
+      ]
+    },
+    {
+      "code": "MAT",
+      "language": "hi",
+      "names": [
+        "मत्ती"
+      ]
+    },
+    {
+      "code": "MRK",
+      "language": "hi",
+      "names": [
+        "मरकुस"
+      ]
+    },
+    {
+      "code": "LUK",
+      "language": "hi",
+      "names": [
+        "लूका"
+      ]
+    },
+    {
+      "code": "JHN",
+      "language": "hi",
+      "names": [
+        "यूहन्ना"
+      ]
+    },
+    {
+      "code": "ACT",
+      "language": "hi",
+      "names": [
+        "प्रेरितों के काम"
+      ]
+    },
+    {
+      "code": "ROM",
+      "language": "hi",
+      "names": [
+        "रोमियों"
+      ]
+    },
+    {
+      "code": "1CO",
+      "language": "hi",
+      "names": [
+        "1 कुरिन्थियों"
+      ]
+    },
+    {
+      "code": "2CO",
+      "language": "hi",
+      "names": [
+        "2 कुरिन्थियों"
+      ]
+    },
+    {
+      "code": "GAL",
+      "language": "hi",
+      "names": [
+        "गलातियों"
+      ]
+    },
+    {
+      "code": "EPH",
+      "language": "hi",
+      "names": [
+        "इफिसियों"
+      ]
+    },
+    {
+      "code": "PHP",
+      "language": "hi",
+      "names": [
+        "फिलिप्पियों"
+      ]
+    },
+    {
+      "code": "COL",
+      "language": "hi",
+      "names": [
+        "कुलुस्सियों"
+      ]
+    },
+    {
+      "code": "1TH",
+      "language": "hi",
+      "names": [
+        "1 थिस्सलुनीकियों"
+      ]
+    },
+    {
+      "code": "2TH",
+      "language": "hi",
+      "names": [
+        "2 थिस्सलुनीकियों"
+      ]
+    },
+    {
+      "code": "1TI",
+      "language": "hi",
+      "names": [
+        "1 तीमुथियुस"
+      ]
+    },
+    {
+      "code": "2TI",
+      "language": "hi",
+      "names": [
+        "2 तीमुथियुस"
+      ]
+    },
+    {
+      "code": "TIT",
+      "language": "hi",
+      "names": [
+        "तीतुस"
+      ]
+    },
+    {
+      "code": "PHM",
+      "language": "hi",
+      "names": [
+        "फिलेमोन"
+      ]
+    },
+    {
+      "code": "HEB",
+      "language": "hi",
+      "names": [
+        "इब्रानियों"
+      ]
+    },
+    {
+      "code": "JAS",
+      "language": "hi",
+      "names": [
+        "याकूब"
+      ]
+    },
+    {
+      "code": "1PE",
+      "language": "hi",
+      "names": [
+        "1 पतरस"
+      ]
+    },
+    {
+      "code": "2PE",
+      "language": "hi",
+      "names": [
+        "2 पतरस"
+      ]
+    },
+    {
+      "code": "1JN",
+      "language": "hi",
+      "names": [
+        "1 यूहन्ना"
+      ]
+    },
+    {
+      "code": "2JN",
+      "language": "hi",
+      "names": [
+        "2 यूहन्ना"
+      ]
+    },
+    {
+      "code": "3JN",
+      "language": "hi",
+      "names": [
+        "3 यूहन्ना"
+      ]
+    },
+    {
+      "code": "JUD",
+      "language": "hi",
+      "names": [
+        "यहूदा"
+      ]
+    },
+    {
+      "code": "REV",
+      "language": "hi",
+      "names": [
+        "प्रकाशितवाक्य"
+      ]
+    }
+  ]
+}

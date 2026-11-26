@@ -151,20 +151,21 @@ Item {
             panel: trayFrame
             expanded: workspace.host.templateMode || workspace.slidesPanelVisible
             motionEnabled: !workspace.host.templateMode && workspace.visible
-            targetPoint: Qt.point(dock.x + dock.slidesButtonCenter.x - trayFrame.x, dock.y
-                                  + dock.slidesButtonCenter.y - trayFrame.y)
+            targetRect: Qt.rect(compactSlides.x - trayFrame.x, compactSlides.y - trayFrame.y,
+                                compactSlides.width, compactSlides.height)
         }
 
         StudioPanel {
             id: compactSlides
 
             objectName: "compactEditorSlides"
-            visible: !workspace.host.templateMode && !workspace.slidesPanelVisible &&
-                     !panelMotion.animating
-            width: Math.max(70, Math.min(260, bottomControls.width - dock.width - 10))
+            visible: !workspace.host.templateMode && (!workspace.slidesPanelVisible
+                                                      || panelMotion.animating)
+            opacity: Math.max(0, (panelMotion.progress - 0.55) / 0.45)
+            width: Math.max(70, Math.min(dock.width, bottomControls.width))
             height: dock.height
-            x: dock.x + dock.width + 10
-            y: dock.y
+            x: dock.x + (dock.width - width) / 2
+            y: dock.y + dock.height + 12
             z: 2
             backdropSource: backdrop.available ? backdrop.texture : null
             backdropRect: Qt.rect(bottomControls.x + x, bottomControls.y + y, width, height)
@@ -189,10 +190,9 @@ Item {
                                   dock.height)
             objectName: "editorFloatingDock"
             z: 2
-            anchors.bottomMargin: 18 + (trayFrame.height + 12) * (1 - panelMotion.progress)
-            anchors.horizontalCenterOffset: workspace.host.templateMode ? 0 : -(compactSlides.width
-                                                                                + 10) / 2
-                                                                          * panelMotion.progress
+            anchors.bottomMargin: 18 + (trayFrame.height + 12) * (1 - panelMotion.progress) + (
+                                      workspace.host.templateMode ? 0 : (compactSlides.height + 12)
+                                                                    * panelMotion.progress)
             host: workspace.host
             slidesPanelVisible: workspace.slidesPanelVisible
 
@@ -225,7 +225,7 @@ Item {
         anchors {
             horizontalCenter: parent.horizontalCenter
             bottom: parent.bottom
-            bottomMargin: 85
+            bottomMargin: workspace.height - bottomControls.y - dock.y + 12
         }
 
         Text {

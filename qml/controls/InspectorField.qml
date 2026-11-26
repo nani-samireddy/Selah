@@ -5,6 +5,7 @@ Rectangle {
     id: field
 
     property string caption: ""
+    property bool captionInteractive: false
     property string value: ""
     property bool numeric: true
     property real stepSize: 1
@@ -14,6 +15,7 @@ Rectangle {
     readonly property string currentText: input.text
 
     signal committed(string value)
+    signal captionClicked
 
     function step(direction, modifiers) {
         const typed = Number(input.text);
@@ -35,12 +37,47 @@ Rectangle {
     onValueChanged: input.text = value
 
     Text {
+        visible: !field.captionInteractive
         renderType: Text.QtRendering
         x: 10
         anchors.verticalCenter: parent.verticalCenter
         text: field.caption
         color: LibraryStyle.tone("#818181")
         font.pixelSize: 11
+    }
+
+    ToolButton {
+        objectName: field.captionInteractive ? "inspectorUnitButton" : ""
+        visible: field.captionInteractive
+        x: 4
+        width: 40
+        height: field.height - 4
+        anchors.verticalCenter: parent.verticalCenter
+        Accessible.name: "Change " + field.caption + " unit"
+        ToolTip.visible: hovered
+        ToolTip.text: "Change unit"
+
+        background: Item {
+        }
+        contentItem: Row {
+            spacing: 3
+
+            Text {
+                text: field.caption
+                color: LibraryStyle.muted
+                font.pixelSize: 11
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            StudioIcon {
+                name: "chevron-down"
+                width: 8
+                height: 8
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        onClicked: field.captionClicked()
     }
 
     TextField {
@@ -75,7 +112,7 @@ Rectangle {
 
         anchors {
             left: parent.left
-            leftMargin: field.caption.length ? 30 : 6
+            leftMargin: field.captionInteractive ? 48 : field.caption.length ? 30 : 6
             right: parent.right
             rightMargin: 4
             verticalCenter: parent.verticalCenter

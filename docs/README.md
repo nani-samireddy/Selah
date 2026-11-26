@@ -3,6 +3,12 @@
 Start with the [project README](../README.md) for setup and the feature overview.
 
 - [User guides and getting started](user-guide/README.md)
+- [Launch capability boundaries: Luma, NDI and updates](release-capabilities.md)
+- [Windows build and publisher signing](windows-release.md)
+- [macOS and Windows v1 launch checklist](launch-checklist-v1.md)
+- [Accessibility acceptance checklist](accessibility-checklist.md)
+- [Release candidate evidence form](release-candidate-record.md)
+- [End-user update and installation flow](release-updates.md)
 - [Architecture and state ownership](architecture.md)
 - [Coding standards and formatting](coding-standards.md)
 - [Testing and diagnostics](testing.md)

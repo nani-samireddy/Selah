@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
+import ChurchDeck.Formatting
 
 ColumnLayout {
     id: inspector
@@ -18,6 +20,16 @@ ColumnLayout {
         if (typeof value === "number" && !Number.isFinite(value))
             return;
         host.update(key, value);
+    }
+
+    function setLineHeightUnit(unit) {
+        if (unit === value("lineHeightUnit", "percent"))
+            return;
+        const old = value("lineHeight", 1.0), size = Math.max(8, value("fontSize", 36));
+        host.formatText({
+                            lineHeightUnit: unit,
+                            lineHeight: unit === "px" ? old * size : old / size
+                        });
     }
 
     function setFeature(tag, enabled) {
@@ -161,7 +173,10 @@ ColumnLayout {
         Layout.fillWidth: true
 
         TypeField {
+            id: lineHeightField
+
             label: "Line height"
+            unitSelectable: true
             caption: inspector.value("lineHeightUnit", "percent") === "px" ? "px" : "%"
             value: inspector.value("lineHeightUnit", "percent") === "px" ? inspector.value(
                                                                                "lineHeight", 1.0) :
@@ -173,6 +188,86 @@ ColumnLayout {
             onCommitted: amount => inspector.set("lineHeight", inspector.value("lineHeightUnit",
                                                                                "percent") === "px"
                                                  ? amount : amount / 100)
+            onUnitClicked: lineUnitMenu.popup(lineHeightField, 0, lineHeightField.height + 4)
+
+            Menu {
+                id: lineUnitMenu
+
+                objectName: "lineHeightUnitMenu"
+                popupType: Popup.Item
+                implicitWidth: 188
+                padding: 5
+
+                background: SquircleSurface {
+                    radius: 8
+                    color: LibraryStyle.panel
+                    border.color: LibraryStyle.border
+                }
+
+                MenuItem {
+                    id: percentOption
+
+                    objectName: "lineHeightPercentOption"
+                    implicitHeight: 30
+                    autoExclusive: true
+                    text: "Percent (%)"
+                    checkable: true
+                    checked: inspector.value("lineHeightUnit", "percent") === "percent"
+
+                    contentItem: Text {
+                        text: percentOption.text
+                        color: LibraryStyle.text
+                        font.family: LibraryStyle.fontFamily
+                        font.pixelSize: 12
+                        leftPadding: 20
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    indicator: Text {
+                        text: percentOption.checked ? "•" : ""
+                        x: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: LibraryStyle.text
+                    }
+                    background: SquircleSurface {
+                        radius: 5
+                        color: percentOption.highlighted ? LibraryStyle.hover : "transparent"
+                    }
+
+                    onTriggered: inspector.setLineHeightUnit("percent")
+                }
+
+                MenuItem {
+                    id: pixelsOption
+
+                    objectName: "lineHeightPixelsOption"
+                    implicitHeight: 30
+                    autoExclusive: true
+                    text: "Pixels (px)"
+                    checkable: true
+                    checked: inspector.value("lineHeightUnit", "percent") === "px"
+
+                    contentItem: Text {
+                        text: pixelsOption.text
+                        color: LibraryStyle.text
+                        font.family: LibraryStyle.fontFamily
+                        font.pixelSize: 12
+                        leftPadding: 20
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    indicator: Text {
+                        text: pixelsOption.checked ? "•" : ""
+                        x: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: LibraryStyle.text
+                    }
+                    background: SquircleSurface {
+                        radius: 5
+                        color: pixelsOption.highlighted ? LibraryStyle.hover : "transparent"
+                    }
+
+                    onTriggered: inspector.setLineHeightUnit("px")
+                }
+            }
         }
 
         TypeField {
@@ -188,7 +283,7 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
 
-        AlignmentGroup {
+        TextOptionGroup {
             controller: inspector.host
             propertyName: "alignment"
             options: [
@@ -215,7 +310,7 @@ ColumnLayout {
             ]
         }
 
-        AlignmentGroup {
+        TextOptionGroup {
             controller: inspector.host
             propertyName: "verticalAlignment"
             options: [
@@ -239,6 +334,7 @@ ColumnLayout {
     }
 
     LibraryCombo {
+        objectName: "textSizingCombo"
         Layout.fillWidth: true
         model: [
             {
@@ -252,6 +348,10 @@ ColumnLayout {
             {
                 label: "Auto width",
                 value: "autoWidth"
+            },
+            {
+                label: "Shrink to fit",
+                value: "shrink"
             }
         ]
         textRole: "label"
@@ -260,6 +360,36 @@ ColumnLayout {
         Accessible.name: "Text resizing"
 
         onActivated: inspector.set("textSizing", currentValue)
+    }
+
+    RowLayout {
+        visible: inspector.value("textSizing", "fixed") === "shrink"
+        Layout.fillWidth: true
+
+        LibraryCaption {
+            text: "Minimum font size"
+            Layout.fillWidth: true
+        }
+
+        InspectorField {
+            objectName: "textMinimumFontSize"
+            Layout.preferredWidth: 85
+            caption: "px"
+            minimumValue: 8
+            maximumValue: inspector.value("fontSize", 36)
+            value: Math.min(inspector.value("minFontSize", 32), maximumValue)
+
+            onCommitted: value => inspector.set("minFontSize", Number(value))
+        }
+    }
+
+    LibraryCaption {
+        visible: inspector.value("textSizing", "fixed") === "shrink"
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: TextFormatting.display(inspector.host.doc.selectedElement)._fitOverflow
+              ? "Text still overflows at the minimum size. Enlarge the box or lower the minimum." :
+                "Font size is the maximum. Text shrinks only as needed; your original size is preserved."
     }
 
     ColorField {
@@ -290,37 +420,36 @@ ColumnLayout {
             text: "Case & paragraphs"
         }
 
-        LibraryCombo {
-            Layout.fillWidth: true
-            model: [
+        TextOptionGroup {
+            controller: inspector.host
+            propertyName: "textCase"
+            options: [
                 {
+                    value: "original",
                     label: "Original case",
-                    value: "original"
+                    text: "—"
                 },
                 {
+                    value: "upper",
                     label: "UPPERCASE",
-                    value: "upper"
+                    text: "AA"
                 },
                 {
+                    value: "lower",
                     label: "lowercase",
-                    value: "lower"
+                    text: "aa"
                 },
                 {
+                    value: "title",
                     label: "Title Case",
-                    value: "title"
+                    text: "Aa"
                 },
                 {
+                    value: "smallCaps",
                     label: "Small caps",
-                    value: "smallCaps"
+                    text: "ᴀᴀ"
                 }
             ]
-            textRole: "label"
-            valueRole: "value"
-            currentIndex: model.findIndex(row => row.value === inspector.value("textCase",
-                                                                               "original"))
-            Accessible.name: "Text case"
-
-            onActivated: inspector.set("textCase", currentValue)
         }
 
         RowLayout {
@@ -343,57 +472,31 @@ ColumnLayout {
             }
         }
 
-        LibraryCombo {
-            Layout.fillWidth: true
-            model: [
-                {
-                    label: "Line height in percent",
-                    value: "percent"
-                },
-                {
-                    label: "Line height in pixels",
-                    value: "px"
-                }
-            ]
-            textRole: "label"
-            valueRole: "value"
-            currentIndex: model.findIndex(row => row.value === inspector.value("lineHeightUnit",
-                                                                               "percent"))
-            Accessible.name: "Line height unit"
-
-            onActivated: {
-                const old = inspector.value("lineHeight", 1.0), size = inspector.value("fontSize",
-                                                                                       36);
-                inspector.host.formatText({
-                                              lineHeightUnit: currentValue,
-                                              lineHeight: currentValue === "px" ? old * size : old
-                                                                                  / size
-                                          });
-            }
+        LibraryCaption {
+            text: "List style"
+            font.pixelSize: 10
         }
 
-        LibraryCombo {
-            Layout.fillWidth: true
-            model: [
+        TextOptionGroup {
+            controller: inspector.host
+            propertyName: "listStyle"
+            options: [
                 {
+                    value: "none",
                     label: "No list",
-                    value: "none"
+                    path: "M4 6h16M4 12h16M4 18h16"
                 },
                 {
+                    value: "bullet",
                     label: "Bullet list",
-                    value: "bullet"
+                    path: "M4 6h.01M4 12h.01M4 18h.01M9 6h11M9 12h11M9 18h11"
                 },
                 {
+                    value: "number",
                     label: "Numbered list",
-                    value: "number"
+                    path: "M3 4h1v5M3 9h3M2 13h4v3H2v4h4M10 6h10M10 12h10M10 18h10"
                 }
             ]
-            textRole: "label"
-            valueRole: "value"
-            currentIndex: model.findIndex(row => row.value === inspector.value("listStyle", "none"))
-            Accessible.name: "List style"
-
-            onActivated: inspector.set("listStyle", currentValue)
         }
 
         TypeField {
@@ -403,30 +506,31 @@ ColumnLayout {
             onCommitted: amount => inspector.set("listIndent", amount)
         }
 
-        LibraryCombo {
-            Layout.fillWidth: true
-            model: [
+        LibraryCaption {
+            text: "Baseline"
+            font.pixelSize: 10
+        }
+
+        TextOptionGroup {
+            controller: inspector.host
+            propertyName: "baseline"
+            options: [
                 {
+                    value: "normal",
                     label: "Normal baseline",
-                    value: "normal"
+                    text: "x"
                 },
                 {
+                    value: "super",
                     label: "Superscript",
-                    value: "super"
+                    text: "x²"
                 },
                 {
+                    value: "sub",
                     label: "Subscript",
-                    value: "sub"
+                    text: "x₂"
                 }
             ]
-            textRole: "label"
-            valueRole: "value"
-            currentIndex: model.findIndex(row => row.value === inspector.value("baseline",
-                                                                               "normal"))
-
-            Accessible.name: "Baseline"
-
-            onActivated: inspector.set("baseline", currentValue)
         }
 
         RowLayout {
@@ -613,7 +717,7 @@ ColumnLayout {
         }
     }
 
-    component AlignmentGroup: Rectangle {
+    component TextOptionGroup: Rectangle {
         id: group
 
         required property var controller
@@ -663,14 +767,26 @@ ColumnLayout {
                         border.color: LibraryStyle.focus
                     }
                     contentItem: Item {
+                        Text {
+                            visible: !!stateButton.modelData.text
+                            anchors.centerIn: parent
+                            text: stateButton.modelData.text || ""
+                            color: stateButton.checked ? LibraryStyle.text : LibraryStyle.muted
+                            font.family: LibraryStyle.fontFamily
+                            font.pixelSize: 12
+                        }
+
                         StudioIcon {
+                            visible: !!stateButton.modelData.path
                             anchors.centerIn: parent
                             width: 15
                             height: 15
                             tone: stateButton.checked ? LibraryStyle.text : LibraryStyle.muted
-                            source: "data:image/svg+xml," + encodeURIComponent(
-                                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#cccccc" stroke-width="1.5" stroke-linecap="round"><path d="'
-                                        + stateButton.modelData.path + '"/></svg>')
+                            source: stateButton.modelData.path ? "data:image/svg+xml,"
+                                                                 + encodeURIComponent(
+                                                                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#cccccc" stroke-width="1.5" stroke-linecap="round"><path d="'
+                                                                     + stateButton.modelData.path
+                                                                     + '"/></svg>') : ""
                         }
                     }
 
@@ -684,9 +800,11 @@ ColumnLayout {
 
         required property string label
         property string caption: ""
+        property bool unitSelectable: false
         property var value: 0
 
         signal committed(real amount)
+        signal unitClicked
 
         Layout.fillWidth: true
         Layout.preferredWidth: 1
@@ -700,9 +818,11 @@ ColumnLayout {
         InspectorField {
             Layout.fillWidth: true
             caption: typeField.caption
+            captionInteractive: typeField.unitSelectable
             value: typeField.value
 
             onCommitted: value => typeField.committed(Number(value))
+            onCaptionClicked: typeField.unitClicked()
         }
     }
 }

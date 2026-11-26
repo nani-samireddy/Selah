@@ -160,6 +160,30 @@ void runWorkspaceChecks(ContentLibrary &content, EditorDocument &document, Outpu
                 } else {
                     check(false, "Drag controller is available");
                 }
+                auto add = findVisual(window->contentItem(), "programAddItemButton");
+                if (add) {
+                    QMetaObject::invokeMethod(add, "clicked");
+                }
+                QCoreApplication::processEvents();
+                auto saved = findVisual(window->contentItem(), "addSavedPresentation");
+                const auto beforeAdd = programs.items();
+                check(saved && saved->isVisible(), "Add item offers saved presentations");
+                capture("program-add-menu");
+                if (saved) {
+                    QMetaObject::invokeMethod(saved, "triggered");
+                }
+                auto custom = window->findChild<QObject *>("customSlidesPanel");
+                check(custom && custom->property("opened").toBool()
+                        && custom->property("programTarget").value<QObject *>() == &programs
+                        && programs.items() == beforeAdd && outputs.snapshotId() == baseline,
+                    "Presentation picker targets this program without adding or presenting "
+                    "automatically");
+                if (custom) {
+                    QMetaObject::invokeMethod(custom, "close");
+                }
+                if (auto menu = window->findChild<QObject *>("programAddMenu")) {
+                    QMetaObject::invokeMethod(menu, "close");
+                }
                 switchTo("libraries");
             } else if (state->phase == 1) {
                 auto panel = window->findChild<QObject *>("songsPanel");

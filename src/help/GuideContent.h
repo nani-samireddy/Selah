@@ -13,4 +13,5 @@ public:
         : QObject(parent) { }
 
     Q_INVOKABLE QString read(const QString &topic) const;
+    Q_INVOKABLE QString formatted(const QString &topic) const;
 };

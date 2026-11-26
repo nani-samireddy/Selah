@@ -23,35 +23,11 @@ QtObject {
     readonly property bool soundReady: clickSound.status === SoundEffect.Ready
     property SoundEffect clickSound: SoundEffect {
         source: "qrc:/sounds/click.wav"
-        volume: 0.8
+        volume: 0.18
     }
     property SoundEffect selectSound: SoundEffect {
-        source: "qrc:/sounds/select.wav"
-        volume: 0.8
-    }
-    property SoundEffect toggleSound: SoundEffect {
-        source: "qrc:/sounds/toggle.wav"
-        volume: 0.8
-    }
-    property SoundEffect openSound: SoundEffect {
-        source: "qrc:/sounds/switch.wav"
-        volume: 0.8
-    }
-    property SoundEffect closeSound: SoundEffect {
-        source: "qrc:/sounds/back.wav"
-        volume: 0.8
-    }
-    property SoundEffect dropSound: SoundEffect {
-        source: "qrc:/sounds/drop.wav"
-        volume: 0.8
-    }
-    property SoundEffect successSound: SoundEffect {
-        source: "qrc:/sounds/pluck.wav"
-        volume: 0.8
-    }
-    property SoundEffect tickSound: SoundEffect {
-        source: "qrc:/sounds/tick.wav"
-        volume: 0.8
+        source: "qrc:/sounds/click.wav"
+        volume: 0.15
     }
 
     function setSounds(enabled) {
@@ -65,17 +41,7 @@ QtObject {
     function play(kind = "click") {
         if (!soundEnabled || presentationMode || Date.now() - lastPlayed < 70)
             return;
-        const cues = {
-            click: clickSound,
-            select: selectSound,
-            toggle: toggleSound,
-            open: openSound,
-            close: closeSound,
-            drop: dropSound,
-            success: successSound,
-            tick: tickSound
-        };
-        const sound = cues[kind] || clickSound;
+        const sound = kind === "select" ? selectSound : clickSound;
         if (sound.status !== SoundEffect.Ready)
             return;
         lastPlayed = Date.now();
