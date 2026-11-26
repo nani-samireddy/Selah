@@ -19,6 +19,7 @@ add_library(church-deck-test-cases STATIC
     unit/DefaultImageTests.cpp
     unit/NdiWorkerTests.cpp
     unit/SlideFactoryTests.cpp
+    unit/BundleExchangeChecks.cpp
     unit/ProgramSectionsTests.cpp
     unit/ProgramStoreTests.cpp
     unit/TemplateStoreTests.cpp

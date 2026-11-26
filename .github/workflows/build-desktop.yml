@@ -66,6 +66,8 @@ jobs:
           New-Item -ItemType Directory -Force dist/windows-x64 | Out-Null
           ctest --test-dir build --output-on-failure --output-log dist/windows-x64/model-checks.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./build/tests/church-deck-tests.exe --bundle-exchange-import tests/fixtures/macos-service.selahbundle dist/windows-x64/bundle-exchange
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Locate Windows installer compiler
         if: runner.os == 'Windows'
         shell: pwsh

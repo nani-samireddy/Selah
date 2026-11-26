@@ -3,13 +3,16 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-ColumnLayout {
+Item {
     id: controls
 
     required property var programView
     readonly property var store: programView.store
     readonly property string selectedSection: store.selectedItem.section || ""
-    property Dialog sectionDialog: Dialog {
+
+    implicitHeight: sectionFields.implicitHeight
+
+    Dialog {
         id: editor
 
         property string originalName: ""
@@ -89,59 +92,65 @@ ColumnLayout {
         }
     }
 
-    LibraryCaption {
-        text: "Section for selected item"
-    }
+    ColumnLayout {
+        id: sectionFields
 
-    RowLayout {
-        spacing: 4
+        anchors.fill: parent
 
-        LibraryCombo {
-            objectName: "programItemSection"
-            Layout.fillWidth: true
-            model: ["No section"].concat(controls.store.sections)
-            currentIndex: controls.store.sections.indexOf(controls.selectedSection) + 1
-            enabled: controls.store.selected >= 0
-            Accessible.name: "Section for selected service item"
-
-            onActivated: {
-                controls.programView.flushItem();
-                controls.store.setItemSection(currentIndex === 0 ? "" :
-                                                                   controls.store.sections[currentIndex
-                                                                                           - 1]);
-            }
+        LibraryCaption {
+            text: "Section for selected item"
         }
 
-        LibraryButton {
-            iconName: "plus"
-            hint: "Add a service section"
-            enabled: controls.store.id.length > 0
+        RowLayout {
+            spacing: 4
 
-            onClicked: {
-                editor.originalName = "";
-                editor.open();
+            LibraryCombo {
+                objectName: "programItemSection"
+                Layout.fillWidth: true
+                model: ["No section"].concat(controls.store.sections)
+                currentIndex: controls.store.sections.indexOf(controls.selectedSection) + 1
+                enabled: controls.store.selected >= 0
+                Accessible.name: "Section for selected service item"
+
+                onActivated: {
+                    controls.programView.flushItem();
+                    controls.store.setItemSection(currentIndex === 0 ? "" :
+                                                                       controls.store.sections[currentIndex
+                                                                                               - 1]);
+                }
             }
-        }
 
-        LibraryButton {
-            iconName: "pen-tool"
-            hint: "Rename selected section"
-            enabled: controls.selectedSection.length > 0
+            LibraryButton {
+                iconName: "plus"
+                hint: "Add a service section"
+                enabled: controls.store.id.length > 0
 
-            onClicked: {
-                editor.originalName = controls.selectedSection;
-                editor.open();
+                onClicked: {
+                    editor.originalName = "";
+                    editor.open();
+                }
             }
-        }
 
-        LibraryButton {
-            iconName: "trash-2"
-            hint: "Remove section heading and keep its items"
-            enabled: controls.selectedSection.length > 0
+            LibraryButton {
+                iconName: "pen-tool"
+                hint: "Rename selected section"
+                enabled: controls.selectedSection.length > 0
 
-            onClicked: {
-                controls.programView.flushItem();
-                controls.store.removeSection(controls.selectedSection);
+                onClicked: {
+                    editor.originalName = controls.selectedSection;
+                    editor.open();
+                }
+            }
+
+            LibraryButton {
+                iconName: "trash-2"
+                hint: "Remove section heading and keep its items"
+                enabled: controls.selectedSection.length > 0
+
+                onClicked: {
+                    controls.programView.flushItem();
+                    controls.store.removeSection(controls.selectedSection);
+                }
             }
         }
     }

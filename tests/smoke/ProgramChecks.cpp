@@ -9,6 +9,7 @@
 #include <QImage>
 #include <QJSValue>
 #include <QQmlApplicationEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
 
@@ -76,7 +77,14 @@ void runProgramChecks(ProgramStore &programs, ContentLibrary &library, EditorDoc
     programs.save();
     auto panel = engine.newQObject(window->findChild<QObject *>("programPanel"));
     panel.property("open").callWithInstance(panel);
+    panel.property("showEditor").callWithInstance(panel);
     QTimer::singleShot(650, qApp, [&, window, folder, panel]() mutable {
+        const auto sectionControl = window->findChild<QQuickItem *>("programItemSection");
+        if (!sectionControl || !sectionControl->isVisible()) {
+            qCritical() << "Service section control missing from program editor";
+            qApp->exit(129);
+            return;
+        }
         if (!window->grabWindow().save(folder + "/program-prepare.png")) {
             qApp->exit(125);
             return;
