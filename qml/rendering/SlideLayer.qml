@@ -60,6 +60,8 @@ Item {
             font.family: visualLayer.layerData.fontFamily || "Arial"
             font.pixelSize: displayData.fontSize || 36
             readOnly: true
+            Accessible.readOnly: true
+            Accessible.editable: false
             activeFocusOnPress: false
             selectByMouse: false
             wrapMode: visualLayer.layerData.wrap === false ? TextEdit.NoWrap : TextEdit.Wrap

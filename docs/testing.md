@@ -129,3 +129,20 @@ template, reversible color restoration, and actual GPU capture with zero/partial
 alpha. Authored artwork remains opaque, ambient fill shares the canvas alpha, and
 checkerboards do not leak into output. Template model checks cover alpha persistence,
 composition, import/export and undo.
+
+## Cross-platform portable-bundle exchange
+
+The Mac-generated fixture in `tests/fixtures/macos-service.selahbundle` contains
+original bilingual content, a template snapshot, service sections and managed image
+bytes. From a native standalone test runner:
+
+```sh
+build/tests/church-deck-tests --bundle-exchange-import tests/fixtures/macos-service.selahbundle captures/bundle-exchange
+```
+
+On Windows use `build/tests/church-deck-tests.exe`. The check imports offline into
+a temporary profile, checks relocated image pixels/content/sections and re-exports
+`<platform>-roundtrip.selahbundle` for the other OS to verify. It never starts outputs.
+Use `--bundle-exchange-export <file>` to regenerate the original fixture intentionally
+on macOS and record that provenance. This does not replace actual service/codec/font
+or backup migration rehearsals on installed packages.

@@ -41,6 +41,8 @@ Item {
                 placeholderText: "Worship, Sermon, Closing…"
                 Accessible.name: "Section name"
                 maximumLength: 100
+                KeyNavigation.tab: cancelButton
+                KeyNavigation.backtab: confirmButton.enabled ? confirmButton : cancelButton
             }
 
             Text {
@@ -58,12 +60,20 @@ Item {
                 }
 
                 LibraryButton {
+                    id: cancelButton
+
+                    KeyNavigation.tab: confirmButton.enabled ? confirmButton : nameField
+                    KeyNavigation.backtab: nameField
                     text: "Cancel"
 
                     onClicked: editor.close()
                 }
 
                 LibraryButton {
+                    id: confirmButton
+
+                    KeyNavigation.tab: nameField
+                    KeyNavigation.backtab: cancelButton
                     text: editor.originalName.length ? "Save" : "Add section"
                     accented: true
                     enabled: nameField.text.trim().length > 0

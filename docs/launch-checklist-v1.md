@@ -18,7 +18,7 @@ For each gate, attach an issue or evidence record and assign a named owner.
 | P0 | Data and live safety | Recovery, backups, bundles and cues need packaged cross-platform rehearsals | QA owner: assign |
 | P0 | Distribution rights | Audit exact Qt modules, media codecs, Bibles, fonts, sounds and model artifacts before bundling | Release owner: assign |
 | P0 | Updates | Manual download flow exists; exercise a real signed stable release and upgrade path | Release owner: assign |
-| P0 | Test health | Resolve remaining standby-media model-test setup failure and verify rendered video pixels; do not count frame delivery alone as visual proof | Engineering owner: assign |
+| P0 | Test health | Mac model suite and H.264 standby pixel checks pass on 26 November; native Windows and packaged-candidate evidence still required. A tiny MPEG-4 codec issue remains in the media matrix. | Engineering owner: assign |
 | P1 | Luma / NDI | Complete advertised-platform checks, or clearly exclude unavailable capabilities from v1 claims | Engineering owner: assign |
 
 P0 means block public release. P1 means fix or explicitly defer the feature before
@@ -86,6 +86,24 @@ not certify a production artifact.
       Keep developer tests, fixtures and diagnostics out of both production packages.
 - [ ] Publish permanent, versioned release assets, SHA-256 checksums and concise
       release notes. Test downloading those exact files on another computer.
+
+## Implementation and development checks completed on 26 November
+
+These checkmarks apply only to the development build on macOS ARM64/Qt 6.12.0;
+they do not sign off the platform release gates below.
+
+- [x] Correct standby test pause setup; run the complete model suite successfully.
+- [x] Verify H.264 standby video has rendered RGB pixels, loops silently while the
+      underlying program remains paused and resumes the exact service snapshot.
+- [x] Add service sections with custom names, assignment/grouping, rename/remove,
+      Undo/Redo and headings in the Present rail; preserve section metadata on exchange.
+- [x] Exercise dual Scripture, Quick Add arrow navigation, transitions, blackout,
+      stop and audience/stage windowed previews in native Mac diagnostics.
+- [x] Document narrow Luma language evidence, SDK-free NDI limits and manual updates
+      in the [capability boundaries](release-capabilities.md).
+
+See [the launch validation record](validation/launch-2026-11-26.md) for exact scope,
+known codec behavior and Windows execution status.
 
 ## Shared functional gates
 

@@ -126,6 +126,8 @@ ColumnLayout {
                 topPadding: startsSection ? 34 : 8
                 bottomPadding: 8
                 opacity: orderDrag.dragging && orderDrag.sourceId === modelData.id ? 0.35 : 1
+                Accessible.role: Accessible.Button
+                Accessible.selected: index === orderPane.programView.store.selected
                 Accessible.name: (orderItem.index + 1) + ". " + orderItem.modelData.title
 
                 background: SquircleSurface {
@@ -218,6 +220,7 @@ ColumnLayout {
                     }
                 }
 
+                Accessible.onPressAction: orderPane.programView.select(index)
                 onClicked: orderPane.programView.select(index)
 
                 Text {

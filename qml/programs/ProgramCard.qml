@@ -15,6 +15,8 @@ ItemDelegate {
 
     padding: 16
     hoverEnabled: true
+    focusPolicy: Qt.StrongFocus
+    Accessible.role: Accessible.Button
     Accessible.name: "Open " + record.title + (record.date ? ", " + record.date : "")
     ToolTip.visible: hovered
     ToolTip.text: record.title
@@ -192,4 +194,6 @@ ItemDelegate {
             }
         }
     }
+
+    Accessible.onPressAction: clicked()
 }

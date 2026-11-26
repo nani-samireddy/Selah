@@ -17,13 +17,18 @@ build outputs and are not an update feed.
    files do not replace a previous download. Reopening the folder verifies it again.
 3. Stop audience, stage and NDI outputs. The dialog enables **Open download folder**.
 4. On macOS, open the DMG or ZIP, quit Selah and replace the app in Applications.
-   On Windows, extract the ZIP into a new folder, quit the old app and start the
-   new folder's `Selah.cmd`. Keep the previous app copy until the new one works.
+   On Windows, the in-app updater currently downloads the portable ZIP: extract it
+   into a new folder, quit the old app and start the new folder's `Selah.cmd`.
+   For an installed website edition, quit Selah and download/run the newer signed
+   `Selah-<version>-Windows-x64-Setup.exe` from the official website. It updates the
+   same per-user installation; do not uninstall first or delete the data profile.
+   The app does not download or launch that installer automatically. Keep the previous
+   package and an app backup; do not assume older versions can read migrated data.
 5. Reopen Selah. The existing ChurchDeck storage/settings namespace is preserved.
    Quit through the app normally so drafts and the current program are saved.
 
 The app does not replace itself, run an unsigned installer, quit automatically or
-restart itself. Current packages are unsigned archives; their checksum is an
+restart itself. Current testing packages are unsigned archives or installers; their checksum is an
 integrity check, not code-signing identity verification. Review the release notes
 for OS requirements before replacing an installation. Older versions and preview
 releases are not offered through the stable updater.
@@ -35,7 +40,8 @@ release commit with their exact packaging names:
 
 - `Selah-0.2.0-macOS-arm64.dmg` (or `.zip`)
 - `Selah-0.2.0-macOS-x86_64.dmg` (or `.zip`, only if independently built/tested)
-- `Selah-0.2.0-Windows-x64.zip`
+- `Selah-0.2.0-Windows-x64.zip` (selected by the current in-app updater)
+- `Selah-0.2.0-Windows-x64-Setup.exe` (optional website installer; not selected by the updater)
 - `Selah-0.2.0-Linux-x64.tar.gz`
 
 GitHub's release asset API must report `state: uploaded`, a positive size and a
