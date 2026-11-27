@@ -39,6 +39,8 @@ qt_add_resources(church-deck-test-cases standby-fixture PREFIX "/test-fixtures"
     BASE "${PROJECT_SOURCE_DIR}/tests/fixtures" FILES "${PROJECT_SOURCE_DIR}/tests/fixtures/standby.mp4")
 
 if(BUILD_TESTING)
+    file(GLOB_RECURSE COLLECTION_FONT_FIXTURES CONFIGURE_DEPENDS
+        "${PROJECT_SOURCE_DIR}/assets/fonts/selah-collection/*.ttf")
     qt_add_executable(church-deck-tests unit/main.cpp)
     target_link_libraries(church-deck-tests PRIVATE church-deck-test-cases)
     qt_add_resources(church-deck-tests test-fixtures
@@ -55,6 +57,7 @@ if(BUILD_TESTING)
             "${PROJECT_SOURCE_DIR}/assets/fonts/prompt/Prompt-Bold.ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/public-sans/PublicSans[wght].ttf"
             "${PROJECT_SOURCE_DIR}/assets/fonts/freckle-face/FreckleFace-Regular.ttf"
+            ${COLLECTION_FONT_FIXTURES}
     )
     qt_add_resources(church-deck-tests remote-test-assets PREFIX "/remote" BASE "${PROJECT_SOURCE_DIR}/remote" FILES "${PROJECT_SOURCE_DIR}/remote/index.html" "${PROJECT_SOURCE_DIR}/remote/style.css" "${PROJECT_SOURCE_DIR}/remote/app.js")
     qt_add_resources(church-deck-tests google-font-fixtures PREFIX "/google-fonts" BASE "${PROJECT_SOURCE_DIR}/assets/google-fonts" FILES "${PROJECT_SOURCE_DIR}/assets/google-fonts/catalog.json" "${PROJECT_SOURCE_DIR}/assets/google-fonts/OFL.txt")

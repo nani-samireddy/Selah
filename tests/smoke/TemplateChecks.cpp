@@ -63,6 +63,14 @@ void runTemplateChecks(TemplateStore &templates, ProgramStore &programs, EditorD
         return;
     }
     definition = templates.layout(id);
+    auto alternateSlide = slide;
+    alternateSlide["background"] = "#642040";
+    const auto alternateId
+        = templates.saveTemplate("Alternate bilingual preview", "bilingual", alternateSlide);
+    if (alternateId.isEmpty()) {
+        qApp->exit(151);
+        return;
+    }
     const QVariantMap song { { "title", "Together in hope" },
         { "credits", "Original verification lyrics" },
         { "sections",
@@ -86,7 +94,7 @@ void runTemplateChecks(TemplateStore &templates, ProgramStore &programs, EditorD
     panel.property("open").callWithInstance(panel);
     panel.setProperty("searchQuery", "Worship · bilingual narrow");
     QTimer::singleShot(
-        650, qApp, [&, window, folder, panel, id, before, editingModeBefore]() mutable {
+        650, qApp, [&, window, folder, panel, id, alternateId, before, editingModeBefore]() mutable {
             auto card = VisualLookup::find(window->contentItem(), "templateCard_" + id);
             if (!card) {
                 qApp->exit(159);
@@ -106,6 +114,21 @@ void runTemplateChecks(TemplateStore &templates, ProgramStore &programs, EditorD
                 qCritical() << "Program template picker must preview after clicking card padding";
                 qApp->exit(159);
                 return;
+            }
+            panel.setProperty("searchQuery", "");
+            // Switching IDs must update the actual preview immediately, not just its title.
+            for (const auto &candidate : { alternateId, id }) {
+                panel.setProperty("selectedId", candidate);
+                const auto preview = panel.property("result").toVariant().toMap();
+                const auto first = preview["slides"].toList().value(0).toMap();
+                if (first["layoutTemplateId"] != candidate
+                    || first["background"] != templates.layout(candidate)["slide"].toMap()["background"]
+                    || outputs.liveElements() != before
+                    || !programs.selectedItem()["layoutTemplate"].toMap().isEmpty()) {
+                    qCritical() << "Template picker preview does not match selection:" << candidate;
+                    qApp->exit(160);
+                    return;
+                }
             }
             const auto result = panel.property("result").toVariant().toMap();
             if (!result["error"].toString().isEmpty() || result["slides"].toList().size() < 2) {

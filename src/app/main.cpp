@@ -101,6 +101,9 @@ int main(int argc, char *argv[]) {
         assistant.useManagedModel();
     }
     TemplateStore templates;
+    if (!templates.retireLegacyPresets()) {
+        qWarning().noquote() << templates.status();
+    }
     if (const auto error = TemplatePresets::install(templates, &library); !error.isEmpty()) {
         qWarning().noquote() << error;
     }

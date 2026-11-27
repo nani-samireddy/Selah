@@ -1,33 +1,61 @@
-# Reference template packs
+# Selah template collection
 
-Meadow and Garden are individual 1920 × 1080 templates installed in **Libraries → Templates**.
-They do not create Custom Slides entries or change a saved program/editor draft.
+`selected/` contains the 19 layouts approved in the local Canva reference review on
+27 November 2026. Each layout is one editable 1920 × 1080 canvas in **Libraries → Templates**.
+It does not create a presentation deck or modify an existing program.
 
-- **Meadow:** 11 editable presentation layouts and lyrics, bilingual and scripture variants.
-- **Garden:** 9 editable presentation layouts and lyrics, bilingual and scripture variants.
-- Each JSON manifest lists stable template identities and the photographs exposed in Media.
-- Text layers remain editable. Illustrations, rules and panels remain separate image/vector layers.
-- `asset:<pack>/media/<filename>` is resolved by `TemplatePresets` to a durable local file before
-  validation. The application never stores a developer-machine path in bundled definitions.
-- On startup, missing or damaged bundled assets are restored. Existing templates, including user
-  edits and revision numbers, are preserved. Programs retain their independent snapshots.
+| Category | Reference IDs |
+| --- | --- |
+| Lyrics | B03, C03, G03, G07 |
+| Scripture | B06, D03, E02, E07, F07 |
+| Parallel Bibles | E03, I08 |
+| Welcome | A01, H01, K02 |
+| Announcements | F02, K09 |
+| Closing | G12 |
+| Standby | E10, J01 |
 
-## Reference and asset provenance
+Text layers are editable, not flattened into screenshots. Lyrics and Scripture use live content
+bindings, shrink-to-fit, and the existing logical pagination. Parallel Bibles have independent
+body, version, and copyright fields and a single shared reference. The original source's unequal
+columns were adapted to provide balanced reading areas. J01 is currently an editable **static
+poster** based on the video reference; it does not include the source's animation.
 
-Source: the user's Canva design, https://www.canva.com/design/DAHbkiFibr0/edit, inspected in Chrome.
-Garden images were extracted from the user's 12-page PowerPoint export; Meadow images and
-illustrations from the later 11-page export. They retain their Canva-source licensing and are
-not covered by the repository's code or font licenses. The user/account's applicable Canva rights
-must cover any redistribution of those assets.
+## Assets and release status
 
-`meadow/media/meadow-wide.jpg` is a widescreen crop of the exported clouds/meadow photograph.
-Other photos and illustrations are original exported media. Small SVG rules/panels are authored
-for these layouts. Sample wording replaces the source's placeholder text and fictional church
-identity. These are reference-inspired layouts, not a general PowerPoint importer.
+Backgrounds were extracted from the user's exported Canva PDFs. Source text and rasterized text
+effects were removed while retaining the background images, cropping, and decorative shapes.
+E03 reuses the E02 background to remove the source's baked list bullets. No generated image is used.
+The original decoded images and reference PDFs remain in the ignored local `captures/` directory.
 
-## Fonts
+`selected/sources.json` records each project/page, source fonts, and provenance. These Canva-source
+assets are **not covered by the repository's code or font licenses**. Their individual redistribution
+rights have not been verified. The collection is a local review candidate: `releaseReady` remains
+false until the applicable Canva/content rights are checked for shipping editable app templates.
+See https://www.canva.com/policies/content-license-agreement/ .
 
-Garden uses Cardo Regular/Bold and Prompt Bold, matching the reference. Meadow uses Public Sans
-for body text. Hertical Rough, the source's heading font, is commercially licensed and is not
-included; Freckle Face provides an editable, freely distributable display alternative. These
-Google Fonts are bundled for offline use with their individual OFL notices in `assets/fonts`.
+`asset:selected/media/<filename>` resolves to a hash-named durable local file on startup. Missing or
+damaged files are repaired, existing user edits are preserved, and program snapshots remain
+independent. Meadow/Garden are no longer included in the resource bundle. Untouched old templates
+are archived in `retired_templates`; edited old templates and their existing media remain intact.
+
+## Offline fonts
+
+The collection bundles OFL fonts from Google Fonts with individual license notices and pinned
+source URLs in `assets/fonts/selah-collection/sources.json`.
+
+| Source | Selah font |
+| --- | --- |
+| Cormorant Garamond | Cormorant Garamond |
+| Antic Didone | Antic Didone |
+| Bebas Neue | Bebas Neue |
+| Lato | Lato |
+| New Icon Condensed / Snell Roundhand | Cormorant Garamond / Allura |
+| Open Sauce One | Public Sans |
+| Darts | Patrick Hand |
+| Road Race Stamp | Barlow Condensed |
+| Hertical Sans Rough | Freckle Face |
+| Akhand Telugu / other Telugu content | Noto Sans Telugu |
+
+C03 uses the source's clean body-text treatment with Public Sans rather than embedding Micky Rinse.
+No proprietary font files were extracted from the PDFs. Existing bundled Noto script fallbacks
+remain available for Telugu and Devanagari.

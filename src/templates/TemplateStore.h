@@ -25,6 +25,8 @@ public:
     Q_INVOKABLE bool exportTemplate(const QString &id, const QUrl &url);
     // Bundled layouts have stable identities. Startup must never overwrite a user's edits.
     bool installPreset(const QVariantMap &definition);
+    // Retire the old stock pack without deleting saved edits or its durable media.
+    bool retireLegacyPresets();
     static int selfTest();
 signals:
     void changed();

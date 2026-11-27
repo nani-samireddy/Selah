@@ -132,6 +132,50 @@ bool TemplateStore::installPreset(const QVariantMap &definition) {
     return !layout(id).isEmpty() || !persist(definition).isEmpty();
 }
 
+bool TemplateStore::retireLegacyPresets() {
+    if (!m_db.transaction()) {
+        setStatus("Could not archive the previous template pack: " + m_db.lastError().text());
+        return false;
+    }
+    QSqlQuery statement(m_db);
+    if (!statement.exec("CREATE TABLE IF NOT EXISTS retired_templates("
+                        "id TEXT PRIMARY KEY,name TEXT NOT NULL,data TEXT NOT NULL)")) {
+        m_db.rollback();
+        setStatus("Could not archive the previous template pack: " + statement.lastError().text());
+        return false;
+    }
+    // Every edit through saveTemplate increments revision. Only untouched stock entries retire.
+    for (const auto &value : layouts()) {
+        const auto definition = value.toMap();
+        const auto id = definition["id"].toString();
+        if ((!id.startsWith("preset-meadow-") && !id.startsWith("preset-garden-"))
+            || definition["revision"].toInt() != 1) {
+            continue;
+        }
+        statement.prepare("INSERT OR IGNORE INTO retired_templates SELECT * FROM templates WHERE id=?");
+        statement.addBindValue(id);
+        if (!statement.exec()) {
+            m_db.rollback();
+            setStatus("Could not archive the previous template pack: " + statement.lastError().text());
+            return false;
+        }
+        statement.prepare("DELETE FROM templates WHERE id=?");
+        statement.addBindValue(id);
+        if (!statement.exec()) {
+            m_db.rollback();
+            setStatus("Could not retire the previous template pack: " + statement.lastError().text());
+            return false;
+        }
+    }
+    if (!m_db.commit()) {
+        m_db.rollback();
+        setStatus("Could not retire the previous template pack: " + m_db.lastError().text());
+        return false;
+    }
+    emit changed();
+    return true;
+}
+
 QVariantMap TemplateStore::preview(const QString &id) const {
     const auto definition = layout(id);
     QString error;
@@ -139,8 +183,8 @@ QVariantMap TemplateStore::preview(const QString &id) const {
     if (definition["kind"] == "presentation") {
         slides = { definition["slide"] };
     } else if (definition["kind"] == "scripture") {
-        QVariantMap sample { { "text", "Sample scripture text in the second Bible." },
-            { "reference", "Sample 1:1" }, { "abbreviation", "Second" } };
+        QVariantMap sample { { "text", "నీ వాక్యము నా పాదములకు దీపమును నా త్రోవకు వెలుగునైయున్నది." },
+            { "reference", "Sample 1:1" }, { "abbreviation", "తెలుగు" } };
         const bool dual
             = TemplateDefinition::hasVisibleBinding(definition, "Secondary scripture text");
         slides = TemplateComposer::scriptureSlides(

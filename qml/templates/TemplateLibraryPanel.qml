@@ -36,7 +36,10 @@ Popup {
             return;
         if (!records.some(record => record.id === selectedId))
             selectedId = records.length ? records[0].id : "";
-        result = selectedId ? (programTarget ? programTarget.previewLayout(definition) :
+        // selectedIdChanged can run before the derived definition binding updates.
+        // Resolve the ID directly so the preview and Apply always use the same layout.
+        const selectedDefinition = selectedId ? library.layout(selectedId) : ({});
+        result = selectedId ? (programTarget ? programTarget.previewLayout(selectedDefinition) :
                                                library.preview(selectedId)) : ({
                                                                                    slides: [],
                                                                                    error: ""

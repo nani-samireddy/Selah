@@ -1,0 +1,60 @@
+[
+  {
+    "family": "cormorantgaramond",
+    "files": [
+      "CormorantGaramond[wght].ttf",
+      "CormorantGaramond-Italic[wght].ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/cormorantgaramond"
+  },
+  {
+    "family": "anticdidone",
+    "files": [
+      "AnticDidone-Regular.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/anticdidone"
+  },
+  {
+    "family": "bebasneue",
+    "files": [
+      "BebasNeue-Regular.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/bebasneue"
+  },
+  {
+    "family": "allura",
+    "files": [
+      "Allura-Regular.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/allura"
+  },
+  {
+    "family": "patrickhand",
+    "files": [
+      "PatrickHand-Regular.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/patrickhand"
+  },
+  {
+    "family": "barlowcondensed",
+    "files": [
+      "BarlowCondensed-SemiBold.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/barlowcondensed"
+  },
+  {
+    "family": "lato",
+    "files": [
+      "Lato-Regular.ttf",
+      "Lato-Bold.ttf"
+    ],
+    "license": "SIL Open Font License 1.1",
+    "source": "https://github.com/google/fonts/tree/5026800714d07231937d92eb4cceabf06e05d74e/ofl/lato"
+  }
+]

@@ -1,6 +1,7 @@
 #include "ApplicationSetup.h"
 #include "FontLibrary.h"
 #include "ModelChecks.h"
+#include "TemplatePresets.h"
 #include <QGuiApplication>
 #include <QStandardPaths>
 int exportBundleExchangeFixture(const QString &path);
@@ -15,6 +16,9 @@ int main(int argc, char **argv) {
     app.setApplicationName("Church Deck Unit Verification");
     QStandardPaths::setTestModeEnabled(true);
     ApplicationSetup::registerBundledFonts();
+    if (app.arguments().contains("--template-presets")) {
+        return TemplatePresets::selfTest();
+    }
     const int bibleIndex = app.arguments().indexOf("--bible-xml-file");
     if (bibleIndex >= 0) {
         return runBibleXmlChecks(app.arguments().value(bibleIndex + 1));

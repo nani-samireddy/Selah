@@ -56,7 +56,7 @@ QString TemplatePresets::install(
         = (directory.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
                                : directory)
         + "/template-assets";
-    for (const auto &pack : { QString("meadow"), QString("garden") }) {
+    for (const auto &pack : { QString("selected") }) {
         QFile manifest(":/template-presets/" + pack + "/templates.json");
         if (!manifest.open(QIODevice::ReadOnly)) {
             return "Could not load bundled templates: " + pack;
@@ -95,7 +95,8 @@ QString TemplatePresets::install(
             slide["elements"] = elements;
             definition["slide"] = slide;
             if (!store.installPreset(definition)) {
-                return "Could not install bundled template: " + store.status();
+                return "Could not install bundled template " + definition["name"].toString()
+                    + ": " + store.status();
             }
         }
         // Photos are available for reuse in Media; decorative rules stay out of that catalog.

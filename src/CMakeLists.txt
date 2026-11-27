@@ -49,11 +49,11 @@ qt_add_library(church-deck-core STATIC
     broadcast/NdiWorker.cpp broadcast/NdiWorker.h
 )
 file(GLOB_RECURSE TEMPLATE_PRESET_ASSETS CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.json"
-    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.jpeg"
-    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.jpg"
-    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.png"
-    "${PROJECT_SOURCE_DIR}/assets/template-packs/*.svg"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/selected/*.json"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/selected/*.jpeg"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/selected/*.jpg"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/selected/*.png"
+    "${PROJECT_SOURCE_DIR}/assets/template-packs/selected/*.svg"
 )
 qt_add_resources(church-deck-core template_presets PREFIX "/template-presets"
     BASE "${PROJECT_SOURCE_DIR}/assets/template-packs" FILES ${TEMPLATE_PRESET_ASSETS})

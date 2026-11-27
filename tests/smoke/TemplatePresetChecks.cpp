@@ -46,7 +46,7 @@ struct Capture : std::enable_shared_from_this<Capture> {
                 qApp->exit(275);
                 return;
             }
-            qInfo() << "Rendered 26 preset layouts; text overflows:" << overflows;
+            qInfo() << "Rendered" << layouts.size() << "preset layouts; text overflows:" << overflows;
             qApp->exit(overflows ? 272 : 0);
             return;
         }
@@ -122,7 +122,7 @@ void runTemplatePresetChecks(QQmlApplicationEngine &engine, const QString &folde
             capture->layouts.append(value);
         }
     }
-    if (capture->layouts.size() != 26) {
+    if (capture->layouts.size() != 19) {
         qApp->exit(270);
         return;
     }

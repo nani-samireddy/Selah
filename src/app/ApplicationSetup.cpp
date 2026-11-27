@@ -103,7 +103,15 @@ void ApplicationSetup::configure(QGuiApplication &app) {
 void ApplicationSetup::registerBundledFonts() {
     for (const auto &font :
         { "cardo/Cardo-Regular.ttf", "cardo/Cardo-Bold.ttf", "prompt/Prompt-Bold.ttf",
-            "public-sans/PublicSans[wght].ttf", "freckle-face/FreckleFace-Regular.ttf" }) {
+            "public-sans/PublicSans[wght].ttf", "freckle-face/FreckleFace-Regular.ttf",
+            "selah-collection/cormorantgaramond/CormorantGaramond[wght].ttf",
+            "selah-collection/cormorantgaramond/CormorantGaramond-Italic[wght].ttf",
+            "selah-collection/anticdidone/AnticDidone-Regular.ttf",
+            "selah-collection/bebasneue/BebasNeue-Regular.ttf",
+            "selah-collection/allura/Allura-Regular.ttf",
+            "selah-collection/patrickhand/PatrickHand-Regular.ttf",
+            "selah-collection/barlowcondensed/BarlowCondensed-SemiBold.ttf",
+            "selah-collection/lato/Lato-Regular.ttf", "selah-collection/lato/Lato-Bold.ttf" }) {
         QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/" + QString(font));
     }
     QFontDatabase::addApplicationFont(":/qt/qml/ChurchDeck/assets/fonts/Inter.ttf");
